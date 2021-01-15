@@ -92,6 +92,15 @@ sourceSets {
             include("**/*.java")
         }
     }
+
+    test {
+        java {
+            setSrcDirs(listOf("test"))
+
+            // want to include java files for the source. 'setSrcDirs' resets includes...
+            include("**/*.java")
+        }
+    }
 }
 
 repositories {
@@ -119,6 +128,8 @@ tasks.jar.get().apply {
 dependencies {
     // listed as compileOnly, since we will be using netty bytebuf utils if we ALREADY are using netty byte buffs. **We don't want a hard dependency.**
     compileOnly("io.netty:netty-buffer:4.1.58.Final")
+
+    testImplementation("junit:junit:4.13")
 }
 
 publishToSonatype {
