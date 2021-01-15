@@ -1,0 +1,29 @@
+ - ByteUtilties - Byte manipulation and Unsigned Number Utilities
+   [The Apache Software License, Version 2.0]
+   https://git.dorkbox.com/dorkbox/ByteUtilities
+   Copyright 2021
+     Dorkbox LLC
+
+   Extra license information
+     - Byte Utils (UByte, UInteger, ULong, Unsigned, UNumber, UShort) - 
+       [The Apache Software License, Version 2.0]
+       https://github.com/jOOQ/jOOQ/tree/master/jOOQ/src/main/java/org/jooq/types
+       Copyright 2017
+         Data Geekery GmbH (http://www.datageekery.com)
+         Lukas Eder
+         Ed Schaller
+         Jens Nerche
+         Ivan Sokolov
+
+     - Kryo Serialization - 
+       [BSD 3-Clause License]
+       https://github.com/EsotericSoftware/kryo
+       Copyright 2020
+         Nathan Sweet
+
+     - Netty - An event-driven asynchronous network application framework
+       [The Apache Software License, Version 2.0]
+       https://netty.io
+       Copyright 2021
+         The Netty Project
+         Contributors. See source NOTICE
