@@ -14,24 +14,20 @@
  * limitations under the License.
  */
 
-import java.time.Instant
-
 ///////////////////////////////
 //////    PUBLISH TO SONATYPE / MAVEN CENTRAL
 ////// TESTING : (to local maven repo) <'publish and release' - 'publishToMavenLocal'>
 ////// RELEASE : (to sonatype/maven central), <'publish and release' - 'publishToSonatypeAndRelease'>
 ///////////////////////////////
+import java.time.Instant
 
 gradle.startParameter.showStacktrace = ShowStacktrace.ALWAYS   // always show the stacktrace!
-gradle.startParameter.warningMode = WarningMode.All
 
 plugins {
-    java
-
-    id("com.dorkbox.GradleUtils") version "1.12"
-    id("com.dorkbox.Licensing") version "2.5.3"
-    id("com.dorkbox.VersionUpdate") version "2.1"
-    id("com.dorkbox.GradlePublish") version "1.9"
+    id("com.dorkbox.GradleUtils") version "2.9"
+    id("com.dorkbox.Licensing") version "2.8.1"
+    id("com.dorkbox.VersionUpdate") version "2.4"
+    id("com.dorkbox.GradlePublish") version "1.11"
 }
 
 object Extras {
@@ -54,10 +50,9 @@ object Extras {
 /////  assign 'Extras'
 ///////////////////////////////
 GradleUtils.load("$projectDir/../../gradle.properties", Extras)
-GradleUtils.fixIntellijPaths()
-GradleUtils.defaultResolutionStrategy()
+GradleUtils.defaults()
 GradleUtils.compileConfiguration(JavaVersion.VERSION_1_8)
-
+GradleUtils.jpms(JavaVersion.VERSION_1_9)
 
 licensing {
     license(License.APACHE_2) {
@@ -66,46 +61,21 @@ licensing {
         url(Extras.url)
 
         extra("Byte Utils (UByte, UInteger, ULong, Unsigned, UNumber, UShort)", License.APACHE_2) {
-            it.url("https://github.com/jOOQ/jOOQ/tree/master/jOOQ/src/main/java/org/jooq/types")
-            it.copyright(2017)
-            it.author("Data Geekery GmbH (http://www.datageekery.com)")
-            it.author("Lukas Eder")
-            it.author("Ed Schaller")
-            it.author("Jens Nerche")
-            it.author("Ivan Sokolov")
+            url("https://github.com/jOOQ/jOOQ/tree/master/jOOQ/src/main/java/org/jooq/types")
+            copyright(2017)
+            author("Data Geekery GmbH (http://www.datageekery.com)")
+            author("Lukas Eder")
+            author("Ed Schaller")
+            author("Jens Nerche")
+            author("Ivan Sokolov")
         }
 
         extra("Kryo Serialization", License.BSD_3) {
-            it.copyright(2020)
-            it.author("Nathan Sweet")
-            it.url("https://github.com/EsotericSoftware/kryo")
+            copyright(2020)
+            author("Nathan Sweet")
+            url("https://github.com/EsotericSoftware/kryo")
         }
     }
-}
-
-sourceSets {
-    main {
-        java {
-            setSrcDirs(listOf("src"))
-
-            // want to include java files for the source. 'setSrcDirs' resets includes...
-            include("**/*.java")
-        }
-    }
-
-    test {
-        java {
-            setSrcDirs(listOf("test"))
-
-            // want to include java files for the source. 'setSrcDirs' resets includes...
-            include("**/*.java")
-        }
-    }
-}
-
-repositories {
-    mavenLocal() // this must be first!
-    jcenter()
 }
 
 tasks.jar.get().apply {
@@ -127,7 +97,7 @@ tasks.jar.get().apply {
 
 dependencies {
     // listed as compileOnly, since we will be using netty bytebuf utils if we ALREADY are using netty byte buffs. **We don't want a hard dependency.**
-    compileOnly("io.netty:netty-buffer:4.1.58.Final")
+    compileOnly("io.netty:netty-buffer:4.1.65.Final")
 
     testImplementation("junit:junit:4.13")
 }
