@@ -32,796 +32,759 @@
  * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
  * NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-package dorkbox.bytes;
+package dorkbox.bytes
 
-import java.io.DataOutput;
-import java.io.IOException;
-import java.io.OutputStream;
-
-import com.esotericsoftware.kryo.KryoException;
-import com.esotericsoftware.kryo.io.Output;
-import com.esotericsoftware.kryo.util.Util;
-
-import io.netty.buffer.ByteBuf;
-import io.netty.buffer.Unpooled;
+import com.esotericsoftware.kryo.KryoException
+import com.esotericsoftware.kryo.io.Output
+import com.esotericsoftware.kryo.util.Util
+import io.netty.buffer.ByteBuf
+import io.netty.buffer.Unpooled
+import java.io.IOException
+import java.io.OutputStream
 
 /**
- * An {@link OutputStream} which writes data to a {@link ByteBuf}.
- * <p>
- * A write operation against this stream will occur at the {@code writerIndex}
- * of its underlying buffer and the {@code writerIndex} will increase during
+ * An [OutputStream] which writes data to a [ByteBuf].
+ *
+ *
+ * A write operation against this stream will occur at the `writerIndex`
+ * of its underlying buffer and the `writerIndex` will increase during
  * the write operation.
- * <p>
- * This stream implements {@link DataOutput} for your convenience.
+ *
+ *
+ * This stream implements [DataOutput] for your convenience.
  * The endianness of the stream is not always big endian but depends on
  * the endianness of the underlying buffer.
  *
- * <p>
+ *
+ *
  * Utility methods are provided for efficiently reading primitive types and strings.
  *
  * Modified from KRYO to use ByteBuf.
  */
-public class ByteBufOutput extends Output {
-
+class ByteBufOutput : Output {
+    /** Returns the buffer. The bytes between zero and [.position] are the data that has been written.  */
     // NOTE: capacity IS NOT USED!
+    var byteBuf: ByteBuf? = null
+        private set
+    private var initialReaderIndex = 0
+    private var initialWriterIndex = 0
 
-    private ByteBuf byteBuf;
-    private int initialReaderIndex = 0;
-    private int initialWriterIndex = 0;
-
-
-    /** Creates an uninitialized Output, {@link #setBuffer(ByteBuf)} must be called before the Output is used. */
-    public ByteBufOutput () {
-    }
-
-    /** Creates a new Output for writing to a direct {@link ByteBuf}.
-     * @param bufferSize The size of the buffer. An exception is thrown if more bytes than this are written and {@link #flush()}
-     *           does not empty the buffer. */
-    public ByteBufOutput (int bufferSize) {
-        this(bufferSize, bufferSize);
-    }
-
+    /** Creates an uninitialized Output, [.setBuffer] must be called before the Output is used.  */
+    constructor() {}
     /** Creates a new Output for writing to a direct ByteBuffer.
      * @param bufferSize The initial size of the buffer.
-     * @param maxBufferSize If {@link #flush()} does not empty the buffer, the buffer is doubled as needed until it exceeds
-     *           maxBufferSize and an exception is thrown. Can be -1 for no maximum. */
-    public ByteBufOutput (int bufferSize, int maxBufferSize) {
-        if (maxBufferSize < -1) throw new IllegalArgumentException("maxBufferSize cannot be < -1: " + maxBufferSize);
-        this.maxCapacity = maxBufferSize == -1 ? Util.maxArraySize : maxBufferSize;
-        byteBuf = Unpooled.buffer(bufferSize);
+     * @param maxBufferSize If [.flush] does not empty the buffer, the buffer is doubled as needed until it exceeds
+     * maxBufferSize and an exception is thrown. Can be -1 for no maximum.
+     */
+    /** Creates a new Output for writing to a direct [ByteBuf].
+     * @param bufferSize The size of the buffer. An exception is thrown if more bytes than this are written and [.flush]
+     * does not empty the buffer.
+     */
+    @JvmOverloads
+    constructor(bufferSize: Int, maxBufferSize: Int = bufferSize) {
+        require(maxBufferSize >= -1) { "maxBufferSize cannot be < -1: $maxBufferSize" }
+        maxCapacity = if (maxBufferSize == -1) Util.maxArraySize else maxBufferSize
+        byteBuf = Unpooled.buffer(bufferSize)
     }
 
-    /** Creates a new Output for writing to a ByteBuffer. */
-    public ByteBufOutput (ByteBuf buffer) {
-        setBuffer(buffer);
+    /** Creates a new Output for writing to a ByteBuffer.  */
+    constructor(buffer: ByteBuf) {
+        setBuffer(buffer)
     }
 
     /** Creates a new Output for writing to a ByteBuffer.
-     * @param maxBufferSize If {@link #flush()} does not empty the buffer, the buffer is doubled as needed until it exceeds
-     *           maxBufferSize and an exception is thrown. Can be -1 for no maximum. */
-    public ByteBufOutput (ByteBuf buffer, int maxBufferSize) {
-        setBuffer(buffer, maxBufferSize);
+     * @param maxBufferSize If [.flush] does not empty the buffer, the buffer is doubled as needed until it exceeds
+     * maxBufferSize and an exception is thrown. Can be -1 for no maximum.
+     */
+    constructor(buffer: ByteBuf?, maxBufferSize: Int) {
+        setBuffer(buffer, maxBufferSize)
     }
 
-    /** @see Output#Output(OutputStream) */
-    public ByteBufOutput (OutputStream outputStream) {
-        this(4096, 4096);
-        if (outputStream == null) throw new IllegalArgumentException("outputStream cannot be null.");
-        this.outputStream = outputStream;
+    /** @see Output.Output
+     */
+    constructor(outputStream: OutputStream?) : this(4096, 4096) {
+        requireNotNull(outputStream) { "outputStream cannot be null." }
+        this.outputStream = outputStream
     }
 
-    /** @see Output#Output(OutputStream, int) */
-    public ByteBufOutput (OutputStream outputStream, int bufferSize) {
-        this(bufferSize, bufferSize);
-        if (outputStream == null) throw new IllegalArgumentException("outputStream cannot be null.");
-        this.outputStream = outputStream;
+    /** @see Output.Output
+     */
+    constructor(outputStream: OutputStream?, bufferSize: Int) : this(bufferSize, bufferSize) {
+        requireNotNull(outputStream) { "outputStream cannot be null." }
+        this.outputStream = outputStream
     }
 
-    @Override
-    public OutputStream getOutputStream () {
-        return outputStream;
+    override fun getOutputStream(): OutputStream {
+        return outputStream
     }
 
-    /** Throws {@link UnsupportedOperationException} because this output uses a ByteBuffer, not a byte[].
-     * @deprecated
-     * @see #getByteBuf() */
-    @Override
-    @Deprecated
-    public byte[] getBuffer () {
-        throw new UnsupportedOperationException("This buffer does not used a byte[], see #getByteBuffer().");
+    /** Throws [UnsupportedOperationException] because this output uses a ByteBuffer, not a byte[].
+     * @see .getByteBuf
+     */
+    @Deprecated(" ")
+    override fun getBuffer(): ByteArray {
+        throw UnsupportedOperationException("This buffer does not used a byte[], see #getByteBuffer().")
     }
 
-    /** Throws {@link UnsupportedOperationException} because this output uses a ByteBuffer, not a byte[].
-     * @deprecated
-     * @see #getByteBuf() */
-    @Override
-    @Deprecated
-    public void setBuffer (byte[] buffer) {
-        setBuffer(Unpooled.wrappedBuffer(buffer));
-    }
-
-    /** Allocates a new direct ByteBuffer with the specified bytes and sets it as the new buffer.
-     * @see #setBuffer(ByteBuf) */
-    @Override
-    @Deprecated
-    public void setBuffer (byte[] buffer, int maxBufferSize) {
-        setBuffer(Unpooled.wrappedBuffer(buffer));
+    /** Throws [UnsupportedOperationException] because this output uses a ByteBuffer, not a byte[].
+     * @see .getByteBuf
+     */
+    @Deprecated(" ")
+    override fun setBuffer(buffer: ByteArray) {
+        setBuffer(Unpooled.wrappedBuffer(buffer))
     }
 
     /** Allocates a new direct ByteBuffer with the specified bytes and sets it as the new buffer.
-     * @see #setBuffer(ByteBuf) */
-    public void setBuffer (byte[] bytes, int offset, int count) {
-        setBuffer(Unpooled.wrappedBuffer(bytes, offset, count));
+     * @see .setBuffer
+     */
+    @Deprecated("")
+    override fun setBuffer(buffer: ByteArray, maxBufferSize: Int) {
+        setBuffer(Unpooled.wrappedBuffer(buffer))
+    }
+
+    /** Allocates a new direct ByteBuffer with the specified bytes and sets it as the new buffer.
+     * @see .setBuffer
+     */
+    fun setBuffer(bytes: ByteArray?, offset: Int, count: Int) {
+        setBuffer(Unpooled.wrappedBuffer(bytes, offset, count))
     }
 
     /** Sets a new buffer to write to. The max size is the buffer's length.
-     * @see #setBuffer(ByteBuf, int) */
-    public void setBuffer (ByteBuf buffer) {
-        setBuffer(buffer, buffer.capacity());
+     * @see .setBuffer
+     */
+    fun setBuffer(buffer: ByteBuf) {
+        setBuffer(buffer, buffer.capacity())
     }
 
     /** Sets a new buffer to write to. The bytes are not copied, the old buffer is discarded and the new buffer used in its place.
      * The position and capacity are set to match the specified buffer. The total is reset. The
-     * {@link #setOutputStream(OutputStream) OutputStream} is set to null.
-     * @param maxBufferSize If {@link #flush()} does not empty the buffer, the buffer is doubled as needed until it exceeds
-     *           maxBufferSize and an exception is thrown. Can be -1 for no maximum. */
-    public void setBuffer (ByteBuf buffer, int maxBufferSize) {
-        if (buffer == null) throw new IllegalArgumentException("buffer cannot be null.");
-        if (maxBufferSize < -1) throw new IllegalArgumentException("maxBufferSize cannot be < -1: " + maxBufferSize);
-
-        initialReaderIndex = buffer.readerIndex();
-        initialWriterIndex = buffer.writerIndex();
-
-        this.byteBuf = buffer;
-        this.maxCapacity = maxBufferSize == -1 ? Util.maxArraySize : maxBufferSize;
-        position = initialWriterIndex;
-        total = 0;
-        outputStream = null;
+     * [OutputStream][.setOutputStream] is set to null.
+     * @param maxBufferSize If [.flush] does not empty the buffer, the buffer is doubled as needed until it exceeds
+     * maxBufferSize and an exception is thrown. Can be -1 for no maximum.
+     */
+    fun setBuffer(buffer: ByteBuf?, maxBufferSize: Int) {
+        requireNotNull(buffer) { "buffer cannot be null." }
+        require(maxBufferSize >= -1) { "maxBufferSize cannot be < -1: $maxBufferSize" }
+        initialReaderIndex = buffer.readerIndex()
+        initialWriterIndex = buffer.writerIndex()
+        byteBuf = buffer
+        maxCapacity = if (maxBufferSize == -1) Util.maxArraySize else maxBufferSize
+        position = initialWriterIndex
+        total = 0
+        outputStream = null
     }
 
-    /** Returns the buffer. The bytes between zero and {@link #position()} are the data that has been written. */
-    public ByteBuf getByteBuf () {
-        return byteBuf;
+    override fun toBytes(): ByteArray {
+        val newBuffer = ByteArray(position)
+        byteBuf!!.readerIndex(initialReaderIndex)
+        byteBuf!!.getBytes(initialReaderIndex, newBuffer, 0, position)
+        return newBuffer
     }
 
-    @Override
-    public byte[] toBytes () {
-        byte[] newBuffer = new byte[position];
-        byteBuf.readerIndex(initialReaderIndex);
-        byteBuf.getBytes(initialReaderIndex, newBuffer, 0, position);
-        return newBuffer;
+    override fun setPosition(position: Int) {
+        this.position = position
+        byteBuf!!.writerIndex(position)
     }
 
-    @Override
-    public void setPosition (int position) {
-        this.position = position;
-        this.byteBuf.writerIndex(position);
-    }
-
-    @Override
-    public void reset () {
-        super.reset();
-        byteBuf.setIndex(initialReaderIndex, initialWriterIndex);
+    override fun reset() {
+        super.reset()
+        byteBuf!!.setIndex(initialReaderIndex, initialWriterIndex)
     }
 
     /**
      * Ensures the buffer is large enough to read the specified number of bytes.
      * @return true if the buffer has been resized.
      */
-    @Override
-    protected boolean require (int required) throws KryoException {
-        if (byteBuf.isWritable(required)) {
-            return false;
+    @Throws(KryoException::class)
+    override fun require(required: Int): Boolean {
+        if (byteBuf!!.isWritable(required)) {
+            return false
         }
-
-        int origCode = byteBuf.ensureWritable(required, true);
-
+        var origCode = byteBuf!!.ensureWritable(required, true)
         if (origCode == 0) {
             // 0 if the buffer has enough writable bytes, and its capacity is unchanged.
-            return false;
-        }
-        else if (origCode == 2) {
+            return false
+        } else if (origCode == 2) {
             // 2 if the buffer has enough writable bytes, and its capacity has been increased.
-            return true;
-        }
-        else if (origCode == 3) {
+            return true
+        } else if (origCode == 3) {
             // 3 if the buffer does not have enough bytes, but its capacity has been increased to its maximum.
-            return true;
-        }
-        else {
+            return true
+        } else {
             // flush and try again.
-            flush();
+            flush()
         }
 
         // only got here because we were unable to resize the buffer! So we flushed it first to try again!
-        origCode = byteBuf.ensureWritable(required, true);
-
-        if (origCode == 0) {
+        origCode = byteBuf!!.ensureWritable(required, true)
+        return if (origCode == 0) {
             // 0 if the buffer has enough writable bytes, and its capacity is unchanged.
-            return false;
+            false
         } else if (origCode == 1) {
             // 1 if the buffer does not have enough bytes, and its capacity is unchanged.
-            throw new KryoException("Buffer overflow. Max capacity: " + maxCapacity + ", required: " + required);
-        }
-        else if (origCode == 2) {
+            throw KryoException("Buffer overflow. Max capacity: $maxCapacity, required: $required")
+        } else if (origCode == 2) {
             // 2 if the buffer has enough writable bytes, and its capacity has been increased.
-            return true;
-        }
-        else if (origCode == 3) {
+            true
+        } else if (origCode == 3) {
             // 3 if the buffer does not have enough bytes, but its capacity has been increased to its maximum.
-            return true;
-        }
-        else {
-            throw new KryoException("Unknown buffer resize code: " + origCode);
+            true
+        } else {
+            throw KryoException("Unknown buffer resize code: $origCode")
         }
     }
 
     // OutputStream:
-
-    @Override
-    public void flush () throws KryoException {
-        if (outputStream == null) return;
+    @Throws(KryoException::class)
+    override fun flush() {
+        if (outputStream == null) return
         try {
-            byte[] tmp = new byte[position];
-            byteBuf.getBytes(initialReaderIndex, tmp);
-            byteBuf.readerIndex(initialReaderIndex);
-            outputStream.write(tmp, 0, position);
-        } catch (IOException ex) {
-            throw new KryoException(ex);
+            val tmp = ByteArray(position)
+            byteBuf!!.getBytes(initialReaderIndex, tmp)
+            byteBuf!!.readerIndex(initialReaderIndex)
+            outputStream.write(tmp, 0, position)
+        } catch (ex: IOException) {
+            throw KryoException(ex)
         }
-        total += position;
-        position = 0;
+        total += position.toLong()
+        position = 0
     }
 
-    @Override
-    public void close () throws KryoException {
-        flush();
+    @Throws(KryoException::class)
+    override fun close() {
+        flush()
         if (outputStream != null) {
             try {
-                outputStream.close();
-            } catch (IOException ignored) {
+                outputStream.close()
+            } catch (ignored: IOException) {
             }
         }
     }
 
-    @Override
-    public void write (int value) throws KryoException {
-        require(1);
-        byteBuf.writeByte((byte)value);
-        position++;
+    @Throws(KryoException::class)
+    override fun write(value: Int) {
+        require(1)
+        byteBuf!!.writeByte(value.toByte().toInt())
+        position++
     }
 
-    @Override
-    public void write (byte[] bytes) throws KryoException {
-        if (bytes == null) throw new IllegalArgumentException("bytes cannot be null.");
-        writeBytes(bytes, 0, bytes.length);
+    @Throws(KryoException::class)
+    override fun write(bytes: ByteArray) {
+        requireNotNull(bytes) { "bytes cannot be null." }
+        writeBytes(bytes, 0, bytes.size)
     }
 
-    @Override
-    public void write (byte[] bytes, int offset, int length) throws KryoException {
-        writeBytes(bytes, offset, length);
+    @Throws(KryoException::class)
+    override fun write(bytes: ByteArray, offset: Int, length: Int) {
+        writeBytes(bytes, offset, length)
     }
 
     // byte:
-
-    @Override
-    public void writeByte (byte value) throws KryoException {
-        require(1);
-        byteBuf.writeByte(value);
-        position++;
+    @Throws(KryoException::class)
+    override fun writeByte(value: Byte) {
+        require(1)
+        byteBuf!!.writeByte(value.toInt())
+        position++
     }
 
-    @Override
-    public void writeByte (int value) throws KryoException {
-        require(1);
-        byteBuf.writeByte((byte)value);
-        position++;
+    @Throws(KryoException::class)
+    override fun writeByte(value: Int) {
+        require(1)
+        byteBuf!!.writeByte(value.toByte().toInt())
+        position++
     }
 
-    @Override
-    public void writeBytes (byte[] bytes) throws KryoException {
-        if (bytes == null) throw new IllegalArgumentException("bytes cannot be null.");
-        writeBytes(bytes, 0, bytes.length);
+    @Throws(KryoException::class)
+    override fun writeBytes(bytes: ByteArray) {
+        requireNotNull(bytes) { "bytes cannot be null." }
+        writeBytes(bytes, 0, bytes.size)
     }
 
-    @Override
-    public void writeBytes (byte[] bytes, int offset, int count) throws KryoException {
-        if (bytes == null) throw new IllegalArgumentException("bytes cannot be null.");
-
-        require(count);
-        byteBuf.writeBytes(bytes, offset, count);
-        position += count;
+    @Throws(KryoException::class)
+    override fun writeBytes(bytes: ByteArray, offset: Int, count: Int) {
+        requireNotNull(bytes) { "bytes cannot be null." }
+        require(count)
+        byteBuf!!.writeBytes(bytes, offset, count)
+        position += count
     }
 
     // int:
-
-    @Override
-    public void writeInt (int value) throws KryoException {
-        require(4);
-        position += 4;
-        ByteBuf byteBuf = this.byteBuf;
-        byteBuf.writeByte((byte)value);
-        byteBuf.writeByte((byte)(value >> 8));
-        byteBuf.writeByte((byte)(value >> 16));
-        byteBuf.writeByte((byte)(value >> 24));
+    @Throws(KryoException::class)
+    override fun writeInt(value: Int) {
+        require(4)
+        position += 4
+        byteBuf!!.writeInt(value)
     }
 
-    @Override
-    public int writeVarInt (int value, boolean optimizePositive) throws KryoException {
-        if (!optimizePositive) value = (value << 1) ^ (value >> 31);
-        if (value >>> 7 == 0) {
-            require(1);
-            position++;
-            byteBuf.writeByte((byte)value);
-            return 1;
+    @Throws(KryoException::class)
+    override fun writeVarInt(value: Int, optimizePositive: Boolean): Int {
+        var value = value
+        if (!optimizePositive) value = value shl 1 xor (value shr 31)
+        if (value ushr 7 == 0) {
+            require(1)
+            position++
+            byteBuf!!.writeByte(value.toByte().toInt())
+            return 1
         }
-        if (value >>> 14 == 0) {
-            require(2);
-            position += 2;
-            byteBuf.writeByte((byte)((value & 0x7F) | 0x80));
-            byteBuf.writeByte((byte)(value >>> 7));
-            return 2;
+        if (value ushr 14 == 0) {
+            require(2)
+            position += 2
+            byteBuf!!.writeByte((value and 0x7F or 0x80).toByte().toInt())
+            byteBuf!!.writeByte((value ushr 7).toByte().toInt())
+            return 2
         }
-        if (value >>> 21 == 0) {
-            require(3);
-            position += 3;
-            ByteBuf byteBuf = this.byteBuf;
-            byteBuf.writeByte((byte)((value & 0x7F) | 0x80));
-            byteBuf.writeByte((byte)(value >>> 7 | 0x80));
-            byteBuf.writeByte((byte)(value >>> 14));
-            return 3;
+        if (value ushr 21 == 0) {
+            require(3)
+            position += 3
+            val byteBuf = byteBuf
+            byteBuf!!.writeByte((value and 0x7F or 0x80).toByte().toInt())
+            byteBuf.writeByte((value ushr 7 or 0x80).toByte().toInt())
+            byteBuf.writeByte((value ushr 14).toByte().toInt())
+            return 3
         }
-        if (value >>> 28 == 0) {
-            require(4);
-            position += 4;
-            ByteBuf byteBuf = this.byteBuf;
-            byteBuf.writeByte((byte)((value & 0x7F) | 0x80));
-            byteBuf.writeByte((byte)(value >>> 7 | 0x80));
-            byteBuf.writeByte((byte)(value >>> 14 | 0x80));
-            byteBuf.writeByte((byte)(value >>> 21));
-            return 4;
+        if (value ushr 28 == 0) {
+            require(4)
+            position += 4
+            val byteBuf = byteBuf
+            byteBuf!!.writeByte((value and 0x7F or 0x80).toByte().toInt())
+            byteBuf.writeByte((value ushr 7 or 0x80).toByte().toInt())
+            byteBuf.writeByte((value ushr 14 or 0x80).toByte().toInt())
+            byteBuf.writeByte((value ushr 21).toByte().toInt())
+            return 4
         }
-        require(5);
-        position += 5;
-        ByteBuf byteBuf = this.byteBuf;
-        byteBuf.writeByte((byte)((value & 0x7F) | 0x80));
-        byteBuf.writeByte((byte)(value >>> 7 | 0x80));
-        byteBuf.writeByte((byte)(value >>> 14 | 0x80));
-        byteBuf.writeByte((byte)(value >>> 21 | 0x80));
-        byteBuf.writeByte((byte)(value >>> 28));
-        return 5;
+        require(5)
+        position += 5
+        val byteBuf = byteBuf
+        byteBuf!!.writeByte((value and 0x7F or 0x80).toByte().toInt())
+        byteBuf.writeByte((value ushr 7 or 0x80).toByte().toInt())
+        byteBuf.writeByte((value ushr 14 or 0x80).toByte().toInt())
+        byteBuf.writeByte((value ushr 21 or 0x80).toByte().toInt())
+        byteBuf.writeByte((value ushr 28).toByte().toInt())
+        return 5
     }
 
-    @Override
-    public int writeVarIntFlag (boolean flag, int value, boolean optimizePositive) throws KryoException {
-        if (!optimizePositive) value = (value << 1) ^ (value >> 31);
-        int first = (value & 0x3F) | (flag ? 0x80 : 0); // Mask first 6 bits, bit 8 is the flag.
-        if (value >>> 6 == 0) {
-            require(1);
-            byteBuf.writeByte((byte)first);
-            position++;
-            return 1;
+    @Throws(KryoException::class)
+    override fun writeVarIntFlag(flag: Boolean, value: Int, optimizePositive: Boolean): Int {
+        var value = value
+        if (!optimizePositive) value = value shl 1 xor (value shr 31)
+        val first = value and 0x3F or if (flag) 0x80 else 0 // Mask first 6 bits, bit 8 is the flag.
+        if (value ushr 6 == 0) {
+            require(1)
+            byteBuf!!.writeByte(first.toByte().toInt())
+            position++
+            return 1
         }
-        if (value >>> 13 == 0) {
-            require(2);
-            position += 2;
-            byteBuf.writeByte((byte)(first | 0x40)); // Set bit 7.
-            byteBuf.writeByte((byte)(value >>> 6));
-            return 2;
+        if (value ushr 13 == 0) {
+            require(2)
+            position += 2
+            byteBuf!!.writeByte((first or 0x40).toByte().toInt()) // Set bit 7.
+            byteBuf!!.writeByte((value ushr 6).toByte().toInt())
+            return 2
         }
-        if (value >>> 20 == 0) {
-            require(3);
-            position += 3;
-            ByteBuf byteBuf = this.byteBuf;
-            byteBuf.writeByte((byte)(first | 0x40)); // Set bit 7.
-            byteBuf.writeByte((byte)((value >>> 6) | 0x80)); // Set bit 8.
-            byteBuf.writeByte((byte)(value >>> 13));
-            return 3;
+        if (value ushr 20 == 0) {
+            require(3)
+            position += 3
+            val byteBuf = byteBuf
+            byteBuf!!.writeByte((first or 0x40).toByte().toInt()) // Set bit 7.
+            byteBuf.writeByte((value ushr 6 or 0x80).toByte().toInt()) // Set bit 8.
+            byteBuf.writeByte((value ushr 13).toByte().toInt())
+            return 3
         }
-        if (value >>> 27 == 0) {
-            require(4);
-            position += 4;
-            ByteBuf byteBuf = this.byteBuf;
-            byteBuf.writeByte((byte)(first | 0x40)); // Set bit 7.
-            byteBuf.writeByte((byte)((value >>> 6) | 0x80)); // Set bit 8.
-            byteBuf.writeByte((byte)((value >>> 13) | 0x80)); // Set bit 8.
-            byteBuf.writeByte((byte)(value >>> 20));
-            return 4;
+        if (value ushr 27 == 0) {
+            require(4)
+            position += 4
+            val byteBuf = byteBuf
+            byteBuf!!.writeByte((first or 0x40).toByte().toInt()) // Set bit 7.
+            byteBuf.writeByte((value ushr 6 or 0x80).toByte().toInt()) // Set bit 8.
+            byteBuf.writeByte((value ushr 13 or 0x80).toByte().toInt()) // Set bit 8.
+            byteBuf.writeByte((value ushr 20).toByte().toInt())
+            return 4
         }
-        require(5);
-        position += 5;
-        ByteBuf byteBuf = this.byteBuf;
-        byteBuf.writeByte((byte)(first | 0x40)); // Set bit 7.
-        byteBuf.writeByte((byte)((value >>> 6) | 0x80)); // Set bit 8.
-        byteBuf.writeByte((byte)((value >>> 13) | 0x80)); // Set bit 8.
-        byteBuf.writeByte((byte)((value >>> 20) | 0x80)); // Set bit 8.
-        byteBuf.writeByte((byte)(value >>> 27));
-        return 5;
+        require(5)
+        position += 5
+        val byteBuf = byteBuf
+        byteBuf!!.writeByte((first or 0x40).toByte().toInt()) // Set bit 7.
+        byteBuf.writeByte((value ushr 6 or 0x80).toByte().toInt()) // Set bit 8.
+        byteBuf.writeByte((value ushr 13 or 0x80).toByte().toInt()) // Set bit 8.
+        byteBuf.writeByte((value ushr 20 or 0x80).toByte().toInt()) // Set bit 8.
+        byteBuf.writeByte((value ushr 27).toByte().toInt())
+        return 5
     }
 
     // long:
-
-    @Override
-    public void writeLong (long value) throws KryoException {
-        require(8);
-        position += 8;
-        ByteBuf byteBuf = this.byteBuf;
-        byteBuf.writeByte((byte)value);
-        byteBuf.writeByte((byte)(value >>> 8));
-        byteBuf.writeByte((byte)(value >>> 16));
-        byteBuf.writeByte((byte)(value >>> 24));
-        byteBuf.writeByte((byte)(value >>> 32));
-        byteBuf.writeByte((byte)(value >>> 40));
-        byteBuf.writeByte((byte)(value >>> 48));
-        byteBuf.writeByte((byte)(value >>> 56));
+    @Throws(KryoException::class)
+    override fun writeLong(value: Long) {
+        require(8)
+        position += 8
+        byteBuf!!.writeLong(value)
     }
 
-    @Override
-    public int writeVarLong (long value, boolean optimizePositive) throws KryoException {
-        if (!optimizePositive) value = (value << 1) ^ (value >> 63);
-        if (value >>> 7 == 0) {
-            require(1);
-            position++;
-            byteBuf.writeByte((byte)value);
-            return 1;
+    @Throws(KryoException::class)
+    override fun writeVarLong(value: Long, optimizePositive: Boolean): Int {
+        var value = value
+        if (!optimizePositive) value = value shl 1 xor (value shr 63)
+        if (value ushr 7 == 0L) {
+            require(1)
+            position++
+            byteBuf!!.writeByte(value.toByte().toInt())
+            return 1
         }
-        if (value >>> 14 == 0) {
-            require(2);
-            position += 2;
-            byteBuf.writeByte((byte)((value & 0x7F) | 0x80));
-            byteBuf.writeByte((byte)(value >>> 7));
-            return 2;
+        if (value ushr 14 == 0L) {
+            require(2)
+            position += 2
+            byteBuf!!.writeByte((value and 0x7F or 0x80).toByte().toInt())
+            byteBuf!!.writeByte((value ushr 7).toByte().toInt())
+            return 2
         }
-        if (value >>> 21 == 0) {
-            require(3);
-            position += 3;
-            ByteBuf byteBuf = this.byteBuf;
-            byteBuf.writeByte((byte)((value & 0x7F) | 0x80));
-            byteBuf.writeByte((byte)(value >>> 7 | 0x80));
-            byteBuf.writeByte((byte)(value >>> 14));
-            return 3;
+        if (value ushr 21 == 0L) {
+            require(3)
+            position += 3
+            val byteBuf = byteBuf
+            byteBuf!!.writeByte((value and 0x7F or 0x80).toByte().toInt())
+            byteBuf.writeByte((value ushr 7 or 0x80).toByte().toInt())
+            byteBuf.writeByte((value ushr 14).toByte().toInt())
+            return 3
         }
-        if (value >>> 28 == 0) {
-            require(4);
-            position += 4;
-            ByteBuf byteBuf = this.byteBuf;
-            byteBuf.writeByte((byte)((value & 0x7F) | 0x80));
-            byteBuf.writeByte((byte)(value >>> 7 | 0x80));
-            byteBuf.writeByte((byte)(value >>> 14 | 0x80));
-            byteBuf.writeByte((byte)(value >>> 21));
-            return 4;
+        if (value ushr 28 == 0L) {
+            require(4)
+            position += 4
+            val byteBuf = byteBuf
+            byteBuf!!.writeByte((value and 0x7F or 0x80).toByte().toInt())
+            byteBuf.writeByte((value ushr 7 or 0x80).toByte().toInt())
+            byteBuf.writeByte((value ushr 14 or 0x80).toByte().toInt())
+            byteBuf.writeByte((value ushr 21).toByte().toInt())
+            return 4
         }
-        if (value >>> 35 == 0) {
-            require(5);
-            position += 5;
-            ByteBuf byteBuf = this.byteBuf;
-            byteBuf.writeByte((byte)((value & 0x7F) | 0x80));
-            byteBuf.writeByte((byte)(value >>> 7 | 0x80));
-            byteBuf.writeByte((byte)(value >>> 14 | 0x80));
-            byteBuf.writeByte((byte)(value >>> 21 | 0x80));
-            byteBuf.writeByte((byte)(value >>> 28));
-            return 5;
+        if (value ushr 35 == 0L) {
+            require(5)
+            position += 5
+            val byteBuf = byteBuf
+            byteBuf!!.writeByte((value and 0x7F or 0x80).toByte().toInt())
+            byteBuf.writeByte((value ushr 7 or 0x80).toByte().toInt())
+            byteBuf.writeByte((value ushr 14 or 0x80).toByte().toInt())
+            byteBuf.writeByte((value ushr 21 or 0x80).toByte().toInt())
+            byteBuf.writeByte((value ushr 28).toByte().toInt())
+            return 5
         }
-        if (value >>> 42 == 0) {
-            require(6);
-            position += 6;
-            ByteBuf byteBuf = this.byteBuf;
-            byteBuf.writeByte((byte)((value & 0x7F) | 0x80));
-            byteBuf.writeByte((byte)(value >>> 7 | 0x80));
-            byteBuf.writeByte((byte)(value >>> 14 | 0x80));
-            byteBuf.writeByte((byte)(value >>> 21 | 0x80));
-            byteBuf.writeByte((byte)(value >>> 28 | 0x80));
-            byteBuf.writeByte((byte)(value >>> 35));
-            return 6;
+        if (value ushr 42 == 0L) {
+            require(6)
+            position += 6
+            val byteBuf = byteBuf
+            byteBuf!!.writeByte((value and 0x7F or 0x80).toByte().toInt())
+            byteBuf.writeByte((value ushr 7 or 0x80).toByte().toInt())
+            byteBuf.writeByte((value ushr 14 or 0x80).toByte().toInt())
+            byteBuf.writeByte((value ushr 21 or 0x80).toByte().toInt())
+            byteBuf.writeByte((value ushr 28 or 0x80).toByte().toInt())
+            byteBuf.writeByte((value ushr 35).toByte().toInt())
+            return 6
         }
-        if (value >>> 49 == 0) {
-            require(7);
-            position += 7;
-            ByteBuf byteBuf = this.byteBuf;
-            byteBuf.writeByte((byte)((value & 0x7F) | 0x80));
-            byteBuf.writeByte((byte)(value >>> 7 | 0x80));
-            byteBuf.writeByte((byte)(value >>> 14 | 0x80));
-            byteBuf.writeByte((byte)(value >>> 21 | 0x80));
-            byteBuf.writeByte((byte)(value >>> 28 | 0x80));
-            byteBuf.writeByte((byte)(value >>> 35 | 0x80));
-            byteBuf.writeByte((byte)(value >>> 42));
-            return 7;
+        if (value ushr 49 == 0L) {
+            require(7)
+            position += 7
+            val byteBuf = byteBuf
+            byteBuf!!.writeByte((value and 0x7F or 0x80).toByte().toInt())
+            byteBuf.writeByte((value ushr 7 or 0x80).toByte().toInt())
+            byteBuf.writeByte((value ushr 14 or 0x80).toByte().toInt())
+            byteBuf.writeByte((value ushr 21 or 0x80).toByte().toInt())
+            byteBuf.writeByte((value ushr 28 or 0x80).toByte().toInt())
+            byteBuf.writeByte((value ushr 35 or 0x80).toByte().toInt())
+            byteBuf.writeByte((value ushr 42).toByte().toInt())
+            return 7
         }
-        if (value >>> 56 == 0) {
-            require(8);
-            position += 8;
-            ByteBuf byteBuf = this.byteBuf;
-            byteBuf.writeByte((byte)((value & 0x7F) | 0x80));
-            byteBuf.writeByte((byte)(value >>> 7 | 0x80));
-            byteBuf.writeByte((byte)(value >>> 14 | 0x80));
-            byteBuf.writeByte((byte)(value >>> 21 | 0x80));
-            byteBuf.writeByte((byte)(value >>> 28 | 0x80));
-            byteBuf.writeByte((byte)(value >>> 35 | 0x80));
-            byteBuf.writeByte((byte)(value >>> 42 | 0x80));
-            byteBuf.writeByte((byte)(value >>> 49));
-            return 8;
+        if (value ushr 56 == 0L) {
+            require(8)
+            position += 8
+            val byteBuf = byteBuf
+            byteBuf!!.writeByte((value and 0x7F or 0x80).toByte().toInt())
+            byteBuf.writeByte((value ushr 7 or 0x80).toByte().toInt())
+            byteBuf.writeByte((value ushr 14 or 0x80).toByte().toInt())
+            byteBuf.writeByte((value ushr 21 or 0x80).toByte().toInt())
+            byteBuf.writeByte((value ushr 28 or 0x80).toByte().toInt())
+            byteBuf.writeByte((value ushr 35 or 0x80).toByte().toInt())
+            byteBuf.writeByte((value ushr 42 or 0x80).toByte().toInt())
+            byteBuf.writeByte((value ushr 49).toByte().toInt())
+            return 8
         }
-        require(9);
-        position += 9;
-        ByteBuf byteBuf = this.byteBuf;
-        byteBuf.writeByte((byte)((value & 0x7F) | 0x80));
-        byteBuf.writeByte((byte)(value >>> 7 | 0x80));
-        byteBuf.writeByte((byte)(value >>> 14 | 0x80));
-        byteBuf.writeByte((byte)(value >>> 21 | 0x80));
-        byteBuf.writeByte((byte)(value >>> 28 | 0x80));
-        byteBuf.writeByte((byte)(value >>> 35 | 0x80));
-        byteBuf.writeByte((byte)(value >>> 42 | 0x80));
-        byteBuf.writeByte((byte)(value >>> 49 | 0x80));
-        byteBuf.writeByte((byte)(value >>> 56));
-        return 9;
+        require(9)
+        position += 9
+        val byteBuf = byteBuf
+        byteBuf!!.writeByte((value and 0x7F or 0x80).toByte().toInt())
+        byteBuf.writeByte((value ushr 7 or 0x80).toByte().toInt())
+        byteBuf.writeByte((value ushr 14 or 0x80).toByte().toInt())
+        byteBuf.writeByte((value ushr 21 or 0x80).toByte().toInt())
+        byteBuf.writeByte((value ushr 28 or 0x80).toByte().toInt())
+        byteBuf.writeByte((value ushr 35 or 0x80).toByte().toInt())
+        byteBuf.writeByte((value ushr 42 or 0x80).toByte().toInt())
+        byteBuf.writeByte((value ushr 49 or 0x80).toByte().toInt())
+        byteBuf.writeByte((value ushr 56).toByte().toInt())
+        return 9
     }
 
     // float:
-
-    @Override
-    public void writeFloat (float value) throws KryoException {
-        require(4);
-        ByteBuf byteBuf = this.byteBuf;
-        position += 4;
-        int intValue = Float.floatToIntBits(value);
-        byteBuf.writeByte((byte)intValue);
-        byteBuf.writeByte((byte)(intValue >> 8));
-        byteBuf.writeByte((byte)(intValue >> 16));
-        byteBuf.writeByte((byte)(intValue >> 24));
+    @Throws(KryoException::class)
+    override fun writeFloat(value: Float) {
+        require(4)
+        val byteBuf = byteBuf
+        position += 4
+        byteBuf!!.writeFloat(value)
     }
 
     // double:
-
-    @Override
-    public void writeDouble (double value) throws KryoException {
-        require(8);
-        position += 8;
-        ByteBuf byteBuf = this.byteBuf;
-        long longValue = Double.doubleToLongBits(value);
-        byteBuf.writeByte((byte)longValue);
-        byteBuf.writeByte((byte)(longValue >>> 8));
-        byteBuf.writeByte((byte)(longValue >>> 16));
-        byteBuf.writeByte((byte)(longValue >>> 24));
-        byteBuf.writeByte((byte)(longValue >>> 32));
-        byteBuf.writeByte((byte)(longValue >>> 40));
-        byteBuf.writeByte((byte)(longValue >>> 48));
-        byteBuf.writeByte((byte)(longValue >>> 56));
+    @Throws(KryoException::class)
+    override fun writeDouble(value: Double) {
+        require(8)
+        position += 8
+        val byteBuf = byteBuf
+        byteBuf!!.writeDouble(value)
     }
 
     // short:
-
-    @Override
-    public void writeShort (int value) throws KryoException {
-        require(2);
-        position += 2;
-        byteBuf.writeByte((byte)value);
-        byteBuf.writeByte((byte)(value >>> 8));
+    @Throws(KryoException::class)
+    override fun writeShort(value: Int) {
+        require(2)
+        position += 2
+        byteBuf!!.writeShort(value)
     }
 
     // char:
-
-    @Override
-    public void writeChar (char value) throws KryoException {
-        require(2);
-        position += 2;
-        byteBuf.writeByte((byte)value);
-        byteBuf.writeByte((byte)(value >>> 8));
+    @Throws(KryoException::class)
+    override fun writeChar(value: Char) {
+        require(2)
+        position += 2
+        byteBuf!!.writeChar(value.code)
     }
 
     // boolean:
-
-    @Override
-    public void writeBoolean (boolean value) throws KryoException {
-        require(1);
-        byteBuf.writeByte((byte)(value ? 1 : 0));
-        position++;
+    @Throws(KryoException::class)
+    override fun writeBoolean(value: Boolean) {
+        require(1)
+        byteBuf!!.writeByte((if (value) 1 else 0).toByte().toInt())
+        position++
     }
 
     // String:
-
-    @Override
-    public void writeString (String value) throws KryoException {
+    @Throws(KryoException::class)
+    override fun writeString(value: String?) {
         if (value == null) {
-            writeByte(0x80); // 0 means null, bit 8 means UTF8.
-            return;
-        }
-        int charCount = value.length();
-        if (charCount == 0) {
-            writeByte(1 | 0x80); // 1 means empty string, bit 8 means UTF8.
-            return;
+            writeByte(0x80) // 0 means null, bit 8 means UTF8.
+            return
         }
 
-        require(charCount); // must be able to write this number of chars
+        val charCount = value.length
+        if (charCount == 0) {
+            writeByte(1 or 0x80) // 1 means empty string, bit 8 means UTF8.
+            return
+        }
+        require(charCount) // must be able to write this number of chars
 
         // Detect ASCII, we only do this for small strings
         // since 1 char is used for bit-masking if we use for 1 char string, reading the string will not work!
-        boolean permitAscii = charCount >= 2 && charCount <= 32;
-
+        var permitAscii = charCount in 2..32
         if (permitAscii) {
-            for (int i = 0; i < charCount; i++) {
-                if (value.charAt(i) > 127) {
-                    permitAscii = false;
-                    break; // not ascii
+            for (i in 0 until charCount) {
+                if (value[i].code > 127) {
+                    permitAscii = false
+                    break // not ascii
                 }
+            }
+
+
+            if (permitAscii) {
+                // this is ascii
+                var i = 0
+                val n = value.length
+                while (i < n) {
+                    byteBuf!!.writeByte(value[i].code.toByte().toInt())
+                    ++i
+                }
+                position += charCount
+
+                // mod the last written byte with 0x80 so we can use that when reading ascii bytes to see what the end of the string is
+                val value1: Byte = (byteBuf!!.getByte(position - 1).toInt() or 0x80).toByte()
+                byteBuf!!.setByte(position - 1, value1.toInt())
+                return
             }
         }
 
-        if (permitAscii) {
-            // this is ascii
-            for (int i = 0, n = value.length(); i < n; ++i) {
-                byteBuf.writeByte((byte)value.charAt(i));
+        // UTF8 (or ASCII with length 1 or length > 32
+        writeVarIntFlag(true, charCount + 1, true)
+        var charIndex = 0
+        // Try to write 7 bit chars.
+        val byteBuf = byteBuf!!
+        while (true) {
+            val c = value[charIndex].code
+            if (c > 127) break
+            byteBuf.writeByte(c.toByte().toInt())
+            charIndex++
+            if (charIndex == charCount) {
+                position = byteBuf.writerIndex()
+                return
             }
-            position += charCount;
-
-            // mod the last written byte with 0x80 so we can use that when reading ascii bytes to see what the end of the string is
-            byte value1 = (byte) (byteBuf.getByte(position - 1) | 0x80);
-            byteBuf.setByte(position - 1, value1);
-        } else {
-            writeVarIntFlag(true, charCount + 1, true);
-
-            int charIndex = 0;
-            // Try to write 7 bit chars.
-            ByteBuf byteBuf = this.byteBuf;
-            while (true) {
-                int c = value.charAt(charIndex);
-                if (c > 127) break;
-                byteBuf.writeByte((byte)c);
-                charIndex++;
-                if (charIndex == charCount) {
-                    position = byteBuf.writerIndex();
-                    return;
-                }
-            }
-            position = byteBuf.writerIndex();
-
-            if (charIndex < charCount) writeUtf8_slow(value, charCount, charIndex);
         }
+        position = byteBuf.writerIndex()
+        if (charIndex < charCount) writeUtf8_slow(value, charCount, charIndex)
     }
 
-    @Override
-    public void writeAscii (String value) throws KryoException {
+    @Throws(KryoException::class)
+    override fun writeAscii(value: String) {
         if (value == null) {
-            writeByte(0x80); // 0 means null, bit 8 means UTF8.
-            return;
+            writeByte(0x80) // 0 means null, bit 8 means UTF8.
+            return
         }
-        int charCount = value.length();
+        val charCount = value.length
         if (charCount == 0) {
-            writeByte(1 | 0x80); // 1 means empty string, bit 8 means UTF8.
-            return;
+            writeByte(1 or 0x80) // 1 means empty string, bit 8 means UTF8.
+            return
         }
-
-        require(charCount); // must be able to write this number of chars
-
-        ByteBuf byteBuf = this.byteBuf;
-        for (int i = 0, n = value.length(); i < n; ++i) {
-            byteBuf.writeByte((byte)value.charAt(i));
+        require(charCount) // must be able to write this number of chars
+        val byteBuf = byteBuf
+        var i = 0
+        val n = value.length
+        while (i < n) {
+            byteBuf!!.writeByte(value[i].code.toByte().toInt())
+            ++i
         }
-
-        position += charCount;
-        byteBuf.setByte(position - 1, (byte)(byteBuf.getByte(position - 1) | 0x80)); // Bit 8 means end of ASCII.
+        position += charCount
+        byteBuf!!.setByte(position - 1, (byteBuf.getByte(position - 1).toInt() or 0x80).toByte().toInt()) // Bit 8 means end of ASCII.
     }
 
-    private void writeUtf8_slow (String value, int charCount, int charIndex) {
-        for (; charIndex < charCount; charIndex++) {
-            int c = value.charAt(charIndex);
+    private fun writeUtf8_slow(value: String, charCount: Int, charIndex: Int) {
+        var charIndex = charIndex
+        while (charIndex < charCount) {
+            val c = value[charIndex].code
+
             if (c <= 0x007F) {
-                writeByte((byte)c);
-            }
-            else if (c > 0x07FF) {
-                require(3);
-                byteBuf.writeByte((byte)(0xE0 | c >> 12 & 0x0F));
-                byteBuf.writeByte((byte)(0x80 | c >> 6 & 0x3F));
-                byteBuf.writeByte((byte)(0x80 | c & 0x3F));
-                position += 3;
+                writeByte(c.toByte())
+            } else if (c > 0x07FF) {
+                require(3)
+                byteBuf!!.writeByte((0xE0 or (c shr 12 and 0x0F)).toByte().toInt())
+                byteBuf!!.writeByte((0x80 or (c shr 6 and 0x3F)).toByte().toInt())
+                byteBuf!!.writeByte((0x80 or (c and 0x3F)).toByte().toInt())
+                position += 3
             } else {
-                require(2);
-                byteBuf.writeByte((byte)(0xC0 | c >> 6 & 0x1F));
-                byteBuf.writeByte((byte)(0x80 | c & 0x3F));
-                position += 2;
+                require(2)
+                byteBuf!!.writeByte((0xC0 or (c shr 6 and 0x1F)).toByte().toInt())
+                byteBuf!!.writeByte((0x80 or (c and 0x3F)).toByte().toInt())
+                position += 2
             }
+            charIndex++
         }
     }
 
     // Primitive arrays:
-
-    @Override
-    public void writeInts (int[] array, int offset, int count) throws KryoException {
-        require(count << 2);
-
-        ByteBuf byteBuf = this.byteBuf;
-        for (int n = offset + count; offset < n; offset++) {
-            int value = array[offset];
-            byteBuf.writeByte((byte)value);
-            byteBuf.writeByte((byte)(value >> 8));
-            byteBuf.writeByte((byte)(value >> 16));
-            byteBuf.writeByte((byte)(value >> 24));
+    @Throws(KryoException::class)
+    override fun writeInts(array: IntArray, offset: Int, count: Int) {
+        var offset = offset
+        require(count shl 2)
+        val byteBuf = byteBuf
+        val n = offset + count
+        while (offset < n) {
+            val value = array[offset]
+            byteBuf!!.writeByte(value.toByte().toInt())
+            byteBuf.writeByte((value shr 8).toByte().toInt())
+            byteBuf.writeByte((value shr 16).toByte().toInt())
+            byteBuf.writeByte((value shr 24).toByte().toInt())
+            offset++
         }
-        position = byteBuf.writerIndex();
+        position = byteBuf!!.writerIndex()
     }
 
-    @Override
-    public void writeLongs (long[] array, int offset, int count) throws KryoException {
-        require(count << 3);
-
-        ByteBuf byteBuf = this.byteBuf;
-        for (int n = offset + count; offset < n; offset++) {
-            long value = array[offset];
-            byteBuf.writeByte((byte)value);
-            byteBuf.writeByte((byte)(value >>> 8));
-            byteBuf.writeByte((byte)(value >>> 16));
-            byteBuf.writeByte((byte)(value >>> 24));
-            byteBuf.writeByte((byte)(value >>> 32));
-            byteBuf.writeByte((byte)(value >>> 40));
-            byteBuf.writeByte((byte)(value >>> 48));
-            byteBuf.writeByte((byte)(value >>> 56));
+    @Throws(KryoException::class)
+    override fun writeLongs(array: LongArray, offset: Int, count: Int) {
+        var offset = offset
+        require(count shl 3)
+        val byteBuf = byteBuf
+        val n = offset + count
+        while (offset < n) {
+            val value = array[offset]
+            byteBuf!!.writeByte(value.toByte().toInt())
+            byteBuf.writeByte((value ushr 8).toByte().toInt())
+            byteBuf.writeByte((value ushr 16).toByte().toInt())
+            byteBuf.writeByte((value ushr 24).toByte().toInt())
+            byteBuf.writeByte((value ushr 32).toByte().toInt())
+            byteBuf.writeByte((value ushr 40).toByte().toInt())
+            byteBuf.writeByte((value ushr 48).toByte().toInt())
+            byteBuf.writeByte((value ushr 56).toByte().toInt())
+            offset++
         }
-        position = byteBuf.writerIndex();
+        position = byteBuf!!.writerIndex()
     }
 
-    @Override
-    public void writeFloats (float[] array, int offset, int count) throws KryoException {
-        require(count << 2);
-
-        ByteBuf byteBuf = this.byteBuf;
-        for (int n = offset + count; offset < n; offset++) {
-            int value = Float.floatToIntBits(array[offset]);
-            byteBuf.writeByte((byte)value);
-            byteBuf.writeByte((byte)(value >> 8));
-            byteBuf.writeByte((byte)(value >> 16));
-            byteBuf.writeByte((byte)(value >> 24));
+    @Throws(KryoException::class)
+    override fun writeFloats(array: FloatArray, offset: Int, count: Int) {
+        var offset = offset
+        require(count shl 2)
+        val byteBuf = byteBuf
+        val n = offset + count
+        while (offset < n) {
+            val value = java.lang.Float.floatToIntBits(array[offset])
+            byteBuf!!.writeByte(value.toByte().toInt())
+            byteBuf.writeByte((value shr 8).toByte().toInt())
+            byteBuf.writeByte((value shr 16).toByte().toInt())
+            byteBuf.writeByte((value shr 24).toByte().toInt())
+            offset++
         }
-        position = byteBuf.writerIndex();
+        position = byteBuf!!.writerIndex()
     }
 
-    @Override
-    public void writeDoubles (double[] array, int offset, int count) throws KryoException {
-        require(count << 3);
-
-        ByteBuf byteBuf = this.byteBuf;
-        for (int n = offset + count; offset < n; offset++) {
-            long value = Double.doubleToLongBits(array[offset]);
-            byteBuf.writeByte((byte)value);
-            byteBuf.writeByte((byte)(value >>> 8));
-            byteBuf.writeByte((byte)(value >>> 16));
-            byteBuf.writeByte((byte)(value >>> 24));
-            byteBuf.writeByte((byte)(value >>> 32));
-            byteBuf.writeByte((byte)(value >>> 40));
-            byteBuf.writeByte((byte)(value >>> 48));
-            byteBuf.writeByte((byte)(value >>> 56));
+    @Throws(KryoException::class)
+    override fun writeDoubles(array: DoubleArray, offset: Int, count: Int) {
+        var offset = offset
+        require(count shl 3)
+        val byteBuf = byteBuf
+        val n = offset + count
+        while (offset < n) {
+            val value = java.lang.Double.doubleToLongBits(array[offset])
+            byteBuf!!.writeByte(value.toByte().toInt())
+            byteBuf.writeByte((value ushr 8).toByte().toInt())
+            byteBuf.writeByte((value ushr 16).toByte().toInt())
+            byteBuf.writeByte((value ushr 24).toByte().toInt())
+            byteBuf.writeByte((value ushr 32).toByte().toInt())
+            byteBuf.writeByte((value ushr 40).toByte().toInt())
+            byteBuf.writeByte((value ushr 48).toByte().toInt())
+            byteBuf.writeByte((value ushr 56).toByte().toInt())
+            offset++
         }
-        position = byteBuf.writerIndex();
+        position = byteBuf!!.writerIndex()
     }
 
-    @Override
-    public void writeShorts (short[] array, int offset, int count) throws KryoException {
-        require(count << 1);
-
-        for (int n = offset + count; offset < n; offset++) {
-            int value = array[offset];
-            byteBuf.writeByte((byte)value);
-            byteBuf.writeByte((byte)(value >>> 8));
+    @Throws(KryoException::class)
+    override fun writeShorts(array: ShortArray, offset: Int, count: Int) {
+        var offset = offset
+        require(count shl 1)
+        val n = offset + count
+        while (offset < n) {
+            val value = array[offset].toInt()
+            byteBuf!!.writeByte(value.toByte().toInt())
+            byteBuf!!.writeByte((value ushr 8).toByte().toInt())
+            offset++
         }
-        position = byteBuf.writerIndex();
+        position = byteBuf!!.writerIndex()
     }
 
-    @Override
-    public void writeChars (char[] array, int offset, int count) throws KryoException {
-        require(count << 1);
-
-        for (int n = offset + count; offset < n; offset++) {
-            int value = array[offset];
-            byteBuf.writeByte((byte)value);
-            byteBuf.writeByte((byte)(value >>> 8));
+    @Throws(KryoException::class)
+    override fun writeChars(array: CharArray, offset: Int, count: Int) {
+        var offset = offset
+        require(count shl 1)
+        val n = offset + count
+        while (offset < n) {
+            val value = array[offset].toInt()
+            byteBuf!!.writeByte(value.toByte().toInt())
+            byteBuf!!.writeByte((value ushr 8).toByte().toInt())
+            offset++
         }
-        position = byteBuf.writerIndex();
+        position = byteBuf!!.writerIndex()
     }
 
-    @Override
-    public void writeBooleans (boolean[] array, int offset, int count) throws KryoException {
-        require(count);
-
-        for (int n = offset + count; offset < n; offset++)
-            byteBuf.writeByte(array[offset] ? (byte)1 : 0);
-        position = byteBuf.writerIndex();
+    @Throws(KryoException::class)
+    override fun writeBooleans(array: BooleanArray, offset: Int, count: Int) {
+        var offset = offset
+        require(count)
+        val n = offset + count
+        while (offset < n) {
+            byteBuf!!.writeByte(if (array[offset]) 1 else 0)
+            offset++
+        }
+        position = byteBuf!!.writerIndex()
     }
 }

@@ -32,192 +32,172 @@
  * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
  * NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-package dorkbox.bytes;
+package dorkbox.bytes
 
-import java.io.DataInput;
-import java.io.IOException;
-import java.io.InputStream;
-
-import com.esotericsoftware.kryo.KryoException;
-import com.esotericsoftware.kryo.io.Input;
-import com.esotericsoftware.kryo.util.Util;
-
-import io.netty.buffer.ByteBuf;
-import io.netty.buffer.Unpooled;
+import com.esotericsoftware.kryo.KryoException
+import com.esotericsoftware.kryo.io.Input
+import com.esotericsoftware.kryo.util.Util
+import io.netty.buffer.ByteBuf
+import io.netty.buffer.Unpooled
+import java.io.IOException
+import java.io.InputStream
 
 /**
- * An {@link InputStream} which reads data from a {@link ByteBuf}.
- * <p/>
- * A read operation against this stream will occur at the {@code readerIndex}
- * of its underlying buffer and the {@code readerIndex} will increase during
+ * An [InputStream] which reads data from a [ByteBuf].
+ *
+ *
+ * A read operation against this stream will occur at the `readerIndex`
+ * of its underlying buffer and the `readerIndex` will increase during
  * the read operation.
- * <p/>
- * This stream implements {@link DataInput} for your convenience.
+ *
+ *
+ * This stream implements [DataInput] for your convenience.
  * The endianness of the stream is not always big endian but depends on
  * the endianness of the underlying buffer.
- * <p/>
+ *
+ *
  * Utility methods are provided for efficiently reading primitive types and strings.
- * <p/>
- * <p/>
- * <p/>
- * <p/>
+ *
+ *
  * Modified from KRYO ByteBufferInput to use ByteBuf instead of ByteBuffer.
  */
+class ByteBufInput : Input {
+    var byteBuf: ByteBuf? = null
+        private set
+    private var initialReaderIndex = 0
+    private var initialWriterIndex = 0
+    private var tempBuffer: ByteArray? = null
 
-public
-class ByteBufInput extends Input {
-    private ByteBuf byteBuf;
-    private int initialReaderIndex = 0;
-    private int initialWriterIndex = 0;
+    /** Creates an uninitialized Input, [.setBuffer] must be called before the Input is used.  */
+    constructor() {}
 
-    private byte[] tempBuffer;
-
-    /** Creates an uninitialized Input, {@link #setBuffer(ByteBuf)} must be called before the Input is used. */
-    public ByteBufInput () {
-    }
-
-    /** Creates a new Input for reading from a direct {@link ByteBuf}.
+    /** Creates a new Input for reading from a direct [ByteBuf].
      * @param bufferSize The size of the buffer. An exception is thrown if more bytes than this are read and
-     *           {@link #fill(ByteBuf, int, int)} does not supply more bytes. */
-    public ByteBufInput (int bufferSize) {
-        this.capacity = bufferSize;
-        byteBuf = Unpooled.buffer(bufferSize);
+     * [.fill] does not supply more bytes.
+     */
+    constructor(bufferSize: Int) {
+        capacity = bufferSize
+        byteBuf = Unpooled.buffer(bufferSize)
+    }
+    /** Creates a new Input for reading from a [ByteBuf] which is filled with the specified bytes.
+     * @see .setBuffer
+     */
+    /** Creates a new Input for reading from a [ByteBuf] which is filled with the specified bytes.  */
+    @JvmOverloads
+    constructor(bytes: ByteArray?, offset: Int = 0, count: Int = bytes!!.size) {
+        requireNotNull(bytes) { "bytes cannot be null." }
+        setBuffer(Unpooled.wrappedBuffer(bytes, offset, count))
     }
 
-    /** Creates a new Input for reading from a {@link ByteBuf} which is filled with the specified bytes. */
-    public ByteBufInput (byte[] bytes) {
-        this(bytes, 0, bytes.length);
+    /** Creates a new Input for reading from a ByteBuffer.  */
+    constructor(buffer: ByteBuf?) {
+        setBuffer(buffer)
     }
 
-    /** Creates a new Input for reading from a {@link ByteBuf} which is filled with the specified bytes.
-     * @see #setBuffer(byte[], int, int) */
-    public ByteBufInput (byte[] bytes, int offset, int count) {
-        if (bytes == null) throw new IllegalArgumentException("bytes cannot be null.");
-
-        setBuffer(Unpooled.wrappedBuffer(bytes, offset, count));
+    /** @see Input.Input
+     */
+    constructor(inputStream: InputStream?) : this(4096) {
+        requireNotNull(inputStream) { "inputStream cannot be null." }
+        this.inputStream = inputStream
     }
 
-    /** Creates a new Input for reading from a ByteBuffer. */
-    public ByteBufInput (ByteBuf buffer) {
-        setBuffer(buffer);
+    /** @see Input.Input
+     */
+    constructor(inputStream: InputStream?, bufferSize: Int) : this(bufferSize) {
+        requireNotNull(inputStream) { "inputStream cannot be null." }
+        this.inputStream = inputStream
     }
 
-    /** @see Input#Input(InputStream) */
-    public ByteBufInput (InputStream inputStream) {
-        this(4096);
-        if (inputStream == null) throw new IllegalArgumentException("inputStream cannot be null.");
-        this.inputStream = inputStream;
+    /** Throws [UnsupportedOperationException] because this input uses a ByteBuffer, not a byte[].
+     * @see .getByteBuf
+     */
+    @Deprecated(" ")
+    override fun getBuffer(): ByteArray {
+        throw UnsupportedOperationException("This input does not used a byte[], see #getByteBuf().")
     }
 
-    /** @see Input#Input(InputStream, int) */
-    public ByteBufInput (InputStream inputStream, int bufferSize) {
-        this(bufferSize);
-        if (inputStream == null) throw new IllegalArgumentException("inputStream cannot be null.");
-        this.inputStream = inputStream;
+    /** Throws [UnsupportedOperationException] because this input uses a ByteBuffer, not a byte[].
+     * @see .setBuffer
+     */
+    @Deprecated(" ")
+    override fun setBuffer(bytes: ByteArray) {
+        throw UnsupportedOperationException("This input does not used a byte[], see #setByteBuf(ByteBuf).")
     }
 
-    /** Throws {@link UnsupportedOperationException} because this input uses a ByteBuffer, not a byte[].
-     * @deprecated
-     * @see #getByteBuf() */
-    @Override
-    @Deprecated
-    public byte[] getBuffer () {
-        throw new UnsupportedOperationException("This input does not used a byte[], see #getByteBuf().");
-    }
-
-    /** Throws {@link UnsupportedOperationException} because this input uses a ByteBuffer, not a byte[].
-     * @deprecated
-     * @see #setBuffer(ByteBuf) */
-    @Override
-    @Deprecated
-    public void setBuffer (byte[] bytes) {
-        throw new UnsupportedOperationException("This input does not used a byte[], see #setByteBuf(ByteBuf).");
-    }
-
-    /** Throws {@link UnsupportedOperationException} because this input uses a ByteBuffer, not a byte[].
-     * @deprecated
-     * @see #setBuffer(ByteBuf) */
-    @Override
-    @Deprecated
-    public void setBuffer (byte[] bytes, int offset, int count) {
-        throw new UnsupportedOperationException("This input does not used a byte[], see #setByteBuf().");
+    /** Throws [UnsupportedOperationException] because this input uses a ByteBuffer, not a byte[].
+     * @see .setBuffer
+     */
+    @Deprecated(" ")
+    override fun setBuffer(bytes: ByteArray, offset: Int, count: Int) {
+        throw UnsupportedOperationException("This input does not used a byte[], see #setByteBuf().")
     }
 
     /** Sets a new buffer to read from. The bytes are not copied, the old buffer is discarded and the new buffer used in its place.
      * The position, limit, and capacity are set to match the specified buffer. The total is reset. The
-     * {@link #setInputStream(InputStream) InputStream} is set to null. */
-    public void setBuffer(ByteBuf buffer) {
-        if (buffer == null) throw new IllegalArgumentException("buffer cannot be null.");
-        byteBuf = buffer;
-
-        initialReaderIndex = byteBuf.readerIndex(); // where the object starts...
-        initialWriterIndex = byteBuf.writerIndex(); // where the object ends...
-
-        position = initialReaderIndex;
-        limit = initialWriterIndex;
-        capacity = buffer.capacity();
-        total = 0;
-        inputStream = null;
+     * [InputStream][.setInputStream] is set to null.  */
+    fun setBuffer(buffer: ByteBuf?) {
+        requireNotNull(buffer) { "buffer cannot be null." }
+        byteBuf = buffer
+        initialReaderIndex = byteBuf!!.readerIndex() // where the object starts...
+        initialWriterIndex = byteBuf!!.writerIndex() // where the object ends...
+        position = initialReaderIndex
+        limit = initialWriterIndex
+        capacity = buffer.capacity()
+        total = 0
+        inputStream = null
     }
 
-    public ByteBuf getByteBuf () {
-        return byteBuf;
+    override fun setInputStream(inputStream: InputStream) {
+        this.inputStream = inputStream
+        limit = 0
+        reset()
     }
 
-    @Override
-    public void setInputStream (InputStream inputStream) {
-        this.inputStream = inputStream;
-        limit = 0;
-        reset();
+    override fun reset() {
+        super.reset()
+        byteBuf!!.setIndex(initialReaderIndex, initialWriterIndex)
     }
 
-    @Override
-    public void reset () {
-        super.reset();
-
-        byteBuf.setIndex(initialReaderIndex, initialWriterIndex);
-    }
-
-    /** Fills the buffer with more bytes. The default implementation reads from the {@link #getInputStream() InputStream}, if set.
-     * Can be overridden to fill the bytes from another source. */
-    protected int fill (ByteBuf buffer, int offset, int count) throws KryoException {
-        if (inputStream == null) return -1;
-        try {
-            if (tempBuffer == null) tempBuffer = new byte[2048];
-            buffer.readerIndex(offset);
-            int total = 0;
+    /** Fills the buffer with more bytes. The default implementation reads from the [InputStream][.getInputStream], if set.
+     * Can be overridden to fill the bytes from another source.  */
+    @Throws(KryoException::class)
+    protected fun fill(buffer: ByteBuf?, offset: Int, count: Int): Int {
+        var count = count
+        return if (inputStream == null) -1 else try {
+            if (tempBuffer == null) tempBuffer = ByteArray(2048)
+            buffer!!.readerIndex(offset)
+            var total = 0
             while (count > 0) {
-                int read = inputStream.read(tempBuffer, 0, Math.min(tempBuffer.length, count));
+                val read = inputStream.read(tempBuffer, 0, Math.min(tempBuffer!!.size, count))
                 if (read == -1) {
-                    if (total == 0) return -1;
-                    break;
+                    if (total == 0) return -1
+                    break
                 }
-                buffer.writeBytes(tempBuffer, 0, read);
-                count -= read;
-                total += read;
+                buffer.writeBytes(tempBuffer, 0, read)
+                count -= read
+                total += read
             }
-            buffer.readerIndex(offset);
-            return total;
-        } catch (IOException ex) {
-            throw new KryoException(ex);
+            buffer.readerIndex(offset)
+            total
+        } catch (ex: IOException) {
+            throw KryoException(ex)
         }
     }
 
-    @Override
-    protected int require (int required) throws KryoException {
-        int remaining = limit - position;
-        if (remaining >= required) return remaining;
-        if (required > capacity) throw new KryoException("Buffer too small: capacity: " + capacity + ", required: " + required);
-
-        int count;
+    @Throws(KryoException::class)
+    override fun require(required: Int): Int {
+        var remaining = limit - position
+        if (remaining >= required) return remaining
+        if (required > capacity) throw KryoException("Buffer too small: capacity: $capacity, required: $required")
+        val count: Int
         // Try to fill the buffer.
         if (remaining > 0) {
-            count = fill(byteBuf, limit, capacity - limit);
-            if (count == -1) throw new KryoException("Buffer underflow.");
-            remaining += count;
+            count = fill(byteBuf, limit, capacity - limit)
+            if (count == -1) throw KryoException("Buffer underflow.")
+            remaining += count
             if (remaining >= required) {
-                limit += count;
-                return remaining;
+                limit += count
+                return remaining
             }
         }
 
@@ -239,26 +219,28 @@ class ByteBufInput extends Input {
         // }
         // limit = remaining;
         // byteBuffer.position(0);
-        return remaining;
+        return remaining
     }
 
     /** Fills the buffer with at least the number of bytes specified, if possible.
      * @param optional Must be > 0.
-     * @return the number of bytes remaining, but not more than optional, or -1 if {@link #fill(ByteBuf, int, int)} is unable to
-     *         provide more bytes. */
-    @Override
-    protected int optional (int optional) throws KryoException {
-        int remaining = limit - position;
-        if (remaining >= optional) return optional;
-        optional = Math.min(optional, capacity);
+     * @return the number of bytes remaining, but not more than optional, or -1 if [.fill] is unable to
+     * provide more bytes.
+     */
+    @Throws(KryoException::class)
+    override fun optional(optional: Int): Int {
+        var optional = optional
+        var remaining = limit - position
+        if (remaining >= optional) return optional
+        optional = Math.min(optional, capacity)
 
         // Try to fill the buffer.
-        int count = fill(byteBuf, limit, capacity - limit);
-        if (count == -1) return remaining == 0 ? -1 : Math.min(remaining, optional);
-        remaining += count;
+        val count = fill(byteBuf, limit, capacity - limit)
+        if (count == -1) return if (remaining == 0) -1 else Math.min(remaining, optional)
+        remaining += count
         if (remaining >= optional) {
-            limit += count;
-            return optional;
+            limit += count
+            return optional
         }
 
         // Compact.
@@ -275,327 +257,311 @@ class ByteBufInput extends Input {
         // }
         // limit = remaining;
         // byteBuffer.position(position);
-        return remaining == 0 ? -1 : Math.min(remaining, optional);
+        return if (remaining == 0) -1 else Math.min(remaining, optional)
     }
 
     // InputStream:
-
-    @Override
-    public int read () throws KryoException {
-        if (optional(1) <= 0) return -1;
-        position++;
-        return byteBuf.readByte() & 0xFF;
+    @Throws(KryoException::class)
+    override fun read(): Int {
+        if (optional(1) <= 0) return -1
+        position++
+        return byteBuf!!.readByte().toInt() and 0xFF
     }
 
-    @Override
-    public int read (byte[] bytes) throws KryoException {
-        return read(bytes, 0, bytes.length);
+    @Throws(KryoException::class)
+    override fun read(bytes: ByteArray): Int {
+        return read(bytes, 0, bytes.size)
     }
 
-    @Override
-    public int read (byte[] bytes, int offset, int count) throws KryoException {
-        if (bytes == null) throw new IllegalArgumentException("bytes cannot be null.");
-        int startingCount = count;
-        int copyCount = Math.min(limit - position, count);
+    @Throws(KryoException::class)
+    override fun read(bytes: ByteArray, offset: Int, count: Int): Int {
+        var offset = offset
+        var count = count
+        requireNotNull(bytes) { "bytes cannot be null." }
+        val startingCount = count
+        var copyCount = Math.min(limit - position, count)
         while (true) {
-            byteBuf.getBytes(position, bytes, offset, copyCount);
-            position += copyCount;
-            count -= copyCount;
-            if (count == 0) break;
-            offset += copyCount;
-            copyCount = optional(count);
+            byteBuf!!.getBytes(position, bytes, offset, copyCount)
+            position += copyCount
+            count -= copyCount
+            if (count == 0) break
+            offset += copyCount
+            copyCount = optional(count)
             if (copyCount == -1) {
                 // End of data.
-                if (startingCount == count) return -1;
-                break;
+                if (startingCount == count) return -1
+                break
             }
-            if (position == limit) break;
+            if (position == limit) break
         }
-        return startingCount - count;
+        return startingCount - count
     }
 
-    @Override
-    public void setPosition (int position) {
-        this.position = position;
-        byteBuf.readerIndex(position);
+    override fun setPosition(position: Int) {
+        this.position = position
+        byteBuf!!.readerIndex(position)
     }
 
-    @Override
-    public void setLimit (int limit) {
-        this.limit = limit;
-        byteBuf.writerIndex(limit);
+    override fun setLimit(limit: Int) {
+        this.limit = limit
+        byteBuf!!.writerIndex(limit)
     }
 
-    @Override
-    public void skip (int count) throws KryoException {
-        super.skip(count);
-        byteBuf.readerIndex(position);
+    @Throws(KryoException::class)
+    override fun skip(count: Int) {
+        super.skip(count)
+        byteBuf!!.readerIndex(position)
     }
 
-    @Override
-    public long skip (long count) throws KryoException {
-        long remaining = count;
+    @Throws(KryoException::class)
+    override fun skip(count: Long): Long {
+        var remaining = count
         while (remaining > 0) {
-            int skip = (int)Math.min(Util.maxArraySize, remaining);
-            skip(skip);
-            remaining -= skip;
+            val skip = Math.min(Util.maxArraySize.toLong(), remaining).toInt()
+            skip(skip)
+            remaining -= skip.toLong()
         }
-        return count;
+        return count
     }
 
-    @Override
-    public void close () throws KryoException {
+    @Throws(KryoException::class)
+    override fun close() {
         if (inputStream != null) {
             try {
-                inputStream.close();
-            } catch (IOException ignored) {
+                inputStream.close()
+            } catch (ignored: IOException) {
             }
         }
     }
 
     // byte:
-
-    @Override
-    public byte readByte () throws KryoException {
-        if (position == limit) require(1);
-        position++;
-        return byteBuf.readByte();
+    @Throws(KryoException::class)
+    override fun readByte(): Byte {
+        if (position == limit) require(1)
+        position++
+        return byteBuf!!.readByte()
     }
 
-    @Override
-    public int readByteUnsigned () throws KryoException {
-        if (position == limit) require(1);
-        position++;
-        return byteBuf.readByte() & 0xFF;
+    @Throws(KryoException::class)
+    override fun readByteUnsigned(): Int {
+        if (position == limit) require(1)
+        position++
+        return byteBuf!!.readByte().toInt() and 0xFF
     }
 
-    @Override
-    public byte[] readBytes (int length) throws KryoException {
-        byte[] bytes = new byte[length];
-        readBytes(bytes, 0, length);
-        return bytes;
+    @Throws(KryoException::class)
+    override fun readBytes(length: Int): ByteArray {
+        val bytes = ByteArray(length)
+        readBytes(bytes, 0, length)
+        return bytes
     }
 
-    @Override
-    public void readBytes (byte[] bytes, int offset, int count) throws KryoException {
-        if (bytes == null) throw new IllegalArgumentException("bytes cannot be null.");
-        int copyCount = Math.min(limit - position, count);
+    @Throws(KryoException::class)
+    override fun readBytes(bytes: ByteArray, offset: Int, count: Int) {
+        var offset = offset
+        var count = count
+        requireNotNull(bytes) { "bytes cannot be null." }
+        var copyCount = Math.min(limit - position, count)
         while (true) {
-            byteBuf.readBytes(bytes, offset, copyCount);
-            position += copyCount;
-            count -= copyCount;
-            if (count == 0) break;
-            offset += copyCount;
-            copyCount = Math.min(count, capacity);
-            require(copyCount);
+            byteBuf!!.readBytes(bytes, offset, copyCount)
+            position += copyCount
+            count -= copyCount
+            if (count == 0) break
+            offset += copyCount
+            copyCount = Math.min(count, capacity)
+            require(copyCount)
         }
     }
 
     // int:
-
-    @Override
-    public int readInt () throws KryoException {
-        require(4);
-        position += 4;
-        ByteBuf byteBuf = this.byteBuf;
-        return byteBuf.readByte() & 0xFF //
-               | (byteBuf.readByte() & 0xFF) << 8 //
-               | (byteBuf.readByte() & 0xFF) << 16 //
-               | (byteBuf.readByte() & 0xFF) << 24;
+    @Throws(KryoException::class)
+    override fun readInt(): Int {
+        require(4)
+        position += 4
+        return byteBuf!!.readInt()
     }
 
-    @Override
-    public int readVarInt (boolean optimizePositive) throws KryoException {
-        if (require(1) < 5) return readVarInt_slow(optimizePositive);
-        int b = byteBuf.readByte();
-        int result = b & 0x7F;
-        if ((b & 0x80) != 0) {
-            ByteBuf byteBuf = this.byteBuf;
-            b = byteBuf.readByte();
-            result |= (b & 0x7F) << 7;
-            if ((b & 0x80) != 0) {
-                b = byteBuf.readByte();
-                result |= (b & 0x7F) << 14;
-                if ((b & 0x80) != 0) {
-                    b = byteBuf.readByte();
-                    result |= (b & 0x7F) << 21;
-                    if ((b & 0x80) != 0) {
-                        b = byteBuf.readByte();
-                        result |= (b & 0x7F) << 28;
+    @Throws(KryoException::class)
+    override fun readVarInt(optimizePositive: Boolean): Int {
+        if (require(1) < 5) return readVarInt_slow(optimizePositive)
+        val byteBuf = byteBuf!!
+        var b = byteBuf.readByte().toInt()
+        var result = b and 0x7F
+        if (b and 0x80 != 0) {
+            b = byteBuf.readByte().toInt()
+            result = result or (b and 0x7F shl 7)
+            if (b and 0x80 != 0) {
+                b = byteBuf.readByte().toInt()
+                result = result or (b and 0x7F shl 14)
+                if (b and 0x80 != 0) {
+                    b = byteBuf.readByte().toInt()
+                    result = result or (b and 0x7F shl 21)
+                    if (b and 0x80 != 0) {
+                        b = byteBuf.readByte().toInt()
+                        result = result or (b and 0x7F shl 28)
                     }
                 }
             }
         }
-        position = byteBuf.readerIndex();
-        return optimizePositive ? result : ((result >>> 1) ^ -(result & 1));
+        position = byteBuf.readerIndex()
+        return if (optimizePositive) result else result ushr 1 xor -(result and 1)
     }
 
-    private int readVarInt_slow (boolean optimizePositive) {
+    private fun readVarInt_slow(optimizePositive: Boolean): Int {
         // The buffer is guaranteed to have at least 1 byte.
-        position++;
-        int b = byteBuf.readByte();
-        int result = b & 0x7F;
-        if ((b & 0x80) != 0) {
-            if (position == limit) require(1);
-            ByteBuf byteBuf = this.byteBuf;
-            position++;
-            b = byteBuf.readByte();
-            result |= (b & 0x7F) << 7;
-            if ((b & 0x80) != 0) {
-                if (position == limit) require(1);
-                position++;
-                b = byteBuf.readByte();
-                result |= (b & 0x7F) << 14;
-                if ((b & 0x80) != 0) {
-                    if (position == limit) require(1);
-                    position++;
-                    b = byteBuf.readByte();
-                    result |= (b & 0x7F) << 21;
-                    if ((b & 0x80) != 0) {
-                        if (position == limit) require(1);
-                        position++;
-                        b = byteBuf.readByte();
-                        result |= (b & 0x7F) << 28;
+        position++
+        val byteBuf = byteBuf!!
+        var b = byteBuf.readByte().toInt()
+        var result = b and 0x7F
+        if (b and 0x80 != 0) {
+            if (position == limit) require(1)
+            position++
+            b = byteBuf.readByte().toInt()
+            result = result or (b and 0x7F shl 7)
+            if (b and 0x80 != 0) {
+                if (position == limit) require(1)
+                position++
+                b = byteBuf.readByte().toInt()
+                result = result or (b and 0x7F shl 14)
+                if (b and 0x80 != 0) {
+                    if (position == limit) require(1)
+                    position++
+                    b = byteBuf.readByte().toInt()
+                    result = result or (b and 0x7F shl 21)
+                    if (b and 0x80 != 0) {
+                        if (position == limit) require(1)
+                        position++
+                        b = byteBuf.readByte().toInt()
+                        result = result or (b and 0x7F shl 28)
                     }
                 }
             }
         }
-        return optimizePositive ? result : ((result >>> 1) ^ -(result & 1));
+        return if (optimizePositive) result else result ushr 1 xor -(result and 1)
     }
 
-    @Override
-    public boolean canReadVarInt () throws KryoException {
-        if (limit - position >= 5) return true;
-        if (optional(5) <= 0) return false;
-        int p = position, limit = this.limit;
-        ByteBuf byteBuf = this.byteBuf;
-        if ((byteBuf.getByte(p++) & 0x80) == 0) return true;
-        if (p == limit) return false;
-        if ((byteBuf.getByte(p++) & 0x80) == 0) return true;
-        if (p == limit) return false;
-        if ((byteBuf.getByte(p++) & 0x80) == 0) return true;
-        if (p == limit) return false;
-        if ((byteBuf.getByte(p++) & 0x80) == 0) return true;
-        if (p == limit) return false;
-        return true;
+    @Throws(KryoException::class)
+    override fun canReadVarInt(): Boolean {
+        if (limit - position >= 5) return true
+        if (optional(5) <= 0) return false
+        var p = position
+        val limit = limit
+        val byteBuf = byteBuf!!
+        if (byteBuf.getByte(p++).toInt() and 0x80 == 0) return true
+        if (p == limit) return false
+        if (byteBuf.getByte(p++).toInt() and 0x80 == 0) return true
+        if (p == limit) return false
+        if (byteBuf.getByte(p++).toInt() and 0x80 == 0) return true
+        if (p == limit) return false
+        if (byteBuf.getByte(p++).toInt() and 0x80 == 0) return true
+        return if (p == limit) false else true
     }
 
-    /** Reads the boolean part of a varint flag. The position is not advanced, {@link #readVarIntFlag(boolean)} should be used to
-     * advance the position. */
-    @Override
-    public boolean readVarIntFlag () {
-        if (position == limit) require(1);
-        return (byteBuf.getByte(position) & 0x80) != 0;
+    /** Reads the boolean part of a varint flag. The position is not advanced, [.readVarIntFlag] should be used to
+     * advance the position.  */
+    override fun readVarIntFlag(): Boolean {
+        if (position == limit) require(1)
+        return byteBuf!!.getByte(position).toInt() and 0x80 != 0
     }
 
     /** Reads the 1-5 byte int part of a varint flag. The position is advanced so if the boolean part is needed it should be read
-     * first with {@link #readVarIntFlag()}. */
-    @Override
-    public int readVarIntFlag (boolean optimizePositive) {
-        if (require(1) < 5) return readVarIntFlag_slow(optimizePositive);
-        ByteBuf byteBuf = this.byteBuf;
-        int b = byteBuf.readByte();
-        int result = b & 0x3F; // Mask first 6 bits.
-        if ((b & 0x40) != 0) { // Bit 7 means another byte, bit 8 means UTF8.
-            b = byteBuf.readByte();
-            result |= (b & 0x7F) << 6;
-            if ((b & 0x80) != 0) {
-                b = byteBuf.readByte();
-                result |= (b & 0x7F) << 13;
-                if ((b & 0x80) != 0) {
-                    b = byteBuf.readByte();
-                    result |= (b & 0x7F) << 20;
-                    if ((b & 0x80) != 0) {
-                        b = byteBuf.readByte();
-                        result |= (b & 0x7F) << 27;
+     * first with [.readVarIntFlag].  */
+    override fun readVarIntFlag(optimizePositive: Boolean): Int {
+        if (require(1) < 5) return readVarIntFlag_slow(optimizePositive)
+        val byteBuf = byteBuf
+        var b = byteBuf!!.readByte().toInt()
+        var result = b and 0x3F // Mask first 6 bits.
+        if (b and 0x40 != 0) { // Bit 7 means another byte, bit 8 means UTF8.
+            b = byteBuf.readByte().toInt()
+            result = result or (b and 0x7F shl 6)
+            if (b and 0x80 != 0) {
+                b = byteBuf.readByte().toInt()
+                result = result or (b and 0x7F shl 13)
+                if (b and 0x80 != 0) {
+                    b = byteBuf.readByte().toInt()
+                    result = result or (b and 0x7F shl 20)
+                    if (b and 0x80 != 0) {
+                        b = byteBuf.readByte().toInt()
+                        result = result or (b and 0x7F shl 27)
                     }
                 }
             }
         }
-        position = byteBuf.readerIndex();
-        return optimizePositive ? result : ((result >>> 1) ^ -(result & 1));
+        position = byteBuf.readerIndex()
+        return if (optimizePositive) result else result ushr 1 xor -(result and 1)
     }
 
-    private int readVarIntFlag_slow (boolean optimizePositive) {
+    private fun readVarIntFlag_slow(optimizePositive: Boolean): Int {
         // The buffer is guaranteed to have at least 1 byte.
-        position++;
-        int b = byteBuf.readByte();
-        int result = b & 0x3F;
-        if ((b & 0x40) != 0) {
-            if (position == limit) require(1);
-            position++;
-            ByteBuf byteBuf = this.byteBuf;
-            b = byteBuf.readByte();
-            result |= (b & 0x7F) << 6;
-            if ((b & 0x80) != 0) {
-                if (position == limit) require(1);
-                position++;
-                b = byteBuf.readByte();
-                result |= (b & 0x7F) << 13;
-                if ((b & 0x80) != 0) {
-                    if (position == limit) require(1);
-                    position++;
-                    b = byteBuf.readByte();
-                    result |= (b & 0x7F) << 20;
-                    if ((b & 0x80) != 0) {
-                        if (position == limit) require(1);
-                        position++;
-                        b = byteBuf.readByte();
-                        result |= (b & 0x7F) << 27;
+        position++
+        var b = byteBuf!!.readByte().toInt()
+        var result = b and 0x3F
+        if (b and 0x40 != 0) {
+            if (position == limit) require(1)
+            position++
+            val byteBuf = byteBuf
+            b = byteBuf!!.readByte().toInt()
+            result = result or (b and 0x7F shl 6)
+            if (b and 0x80 != 0) {
+                if (position == limit) require(1)
+                position++
+                b = byteBuf.readByte().toInt()
+                result = result or (b and 0x7F shl 13)
+                if (b and 0x80 != 0) {
+                    if (position == limit) require(1)
+                    position++
+                    b = byteBuf.readByte().toInt()
+                    result = result or (b and 0x7F shl 20)
+                    if (b and 0x80 != 0) {
+                        if (position == limit) require(1)
+                        position++
+                        b = byteBuf.readByte().toInt()
+                        result = result or (b and 0x7F shl 27)
                     }
                 }
             }
         }
-        return optimizePositive ? result : ((result >>> 1) ^ -(result & 1));
+        return if (optimizePositive) result else result ushr 1 xor -(result and 1)
     }
 
     // long:
-
-    @Override
-    public long readLong () throws KryoException {
-        require(8);
-        position += 8;
-        ByteBuf byteBuf = this.byteBuf;
-        return byteBuf.readByte() & 0xFF //
-               | (byteBuf.readByte() & 0xFF) << 8 //
-               | (byteBuf.readByte() & 0xFF) << 16 //
-               | (long)(byteBuf.readByte() & 0xFF) << 24 //
-               | (long)(byteBuf.readByte() & 0xFF) << 32 //
-               | (long)(byteBuf.readByte() & 0xFF) << 40 //
-               | (long)(byteBuf.readByte() & 0xFF) << 48 //
-               | (long)byteBuf.readByte() << 56;
+    @Throws(KryoException::class)
+    override fun readLong(): Long {
+        require(8)
+        position += 8
+        return byteBuf!!.readLong()
     }
 
-    @Override
-    public long readVarLong (boolean optimizePositive) throws KryoException {
-        if (require(1) < 9) return readVarLong_slow(optimizePositive);
-        int b = byteBuf.readByte();
-        long result = b & 0x7F;
-        if ((b & 0x80) != 0) {
-            ByteBuf byteBuf = this.byteBuf;
-            b = byteBuf.readByte();
-            result |= (b & 0x7F) << 7;
-            if ((b & 0x80) != 0) {
-                b = byteBuf.readByte();
-                result |= (b & 0x7F) << 14;
-                if ((b & 0x80) != 0) {
-                    b = byteBuf.readByte();
-                    result |= (b & 0x7F) << 21;
-                    if ((b & 0x80) != 0) {
-                        b = byteBuf.readByte();
-                        result |= (long)(b & 0x7F) << 28;
-                        if ((b & 0x80) != 0) {
-                            b = byteBuf.readByte();
-                            result |= (long)(b & 0x7F) << 35;
-                            if ((b & 0x80) != 0) {
-                                b = byteBuf.readByte();
-                                result |= (long)(b & 0x7F) << 42;
-                                if ((b & 0x80) != 0) {
-                                    b = byteBuf.readByte();
-                                    result |= (long)(b & 0x7F) << 49;
-                                    if ((b & 0x80) != 0) {
-                                        b = byteBuf.readByte();
-                                        result |= (long)b << 56;
+    @Throws(KryoException::class)
+    override fun readVarLong(optimizePositive: Boolean): Long {
+        if (require(1) < 9) return readVarLong_slow(optimizePositive)
+        val byteBuf = byteBuf!!
+        var b = byteBuf.readByte().toInt()
+        var result = (b and 0x7F).toLong()
+        if (b and 0x80 != 0) {
+            b = byteBuf.readByte().toInt()
+            result = result or (b and 0x7F shl 7).toLong()
+            if (b and 0x80 != 0) {
+                b = byteBuf.readByte().toInt()
+                result = result or (b and 0x7F shl 14).toLong()
+                if (b and 0x80 != 0) {
+                    b = byteBuf.readByte().toInt()
+                    result = result or (b and 0x7F shl 21).toLong()
+                    if (b and 0x80 != 0) {
+                        b = byteBuf.readByte().toInt()
+                        result = result or ((b and 0x7F).toLong() shl 28)
+                        if (b and 0x80 != 0) {
+                            b = byteBuf.readByte().toInt()
+                            result = result or ((b and 0x7F).toLong() shl 35)
+                            if (b and 0x80 != 0) {
+                                b = byteBuf.readByte().toInt()
+                                result = result or ((b and 0x7F).toLong() shl 42)
+                                if (b and 0x80 != 0) {
+                                    b = byteBuf.readByte().toInt()
+                                    result = result or ((b and 0x7F).toLong() shl 49)
+                                    if (b and 0x80 != 0) {
+                                        b = byteBuf.readByte().toInt()
+                                        result = result or (b.toLong() shl 56)
                                     }
                                 }
                             }
@@ -604,56 +570,56 @@ class ByteBufInput extends Input {
                 }
             }
         }
-        position = byteBuf.readerIndex();
-        return optimizePositive ? result : ((result >>> 1) ^ -(result & 1));
+        position = byteBuf.readerIndex()
+        return if (optimizePositive) result else result ushr 1 xor -(result and 1)
     }
 
-    private long readVarLong_slow (boolean optimizePositive) {
+    private fun readVarLong_slow(optimizePositive: Boolean): Long {
         // The buffer is guaranteed to have at least 1 byte.
-        position++;
-        int b = byteBuf.readByte();
-        long result = b & 0x7F;
-        if ((b & 0x80) != 0) {
-            if (position == limit) require(1);
-            ByteBuf byteBuf = this.byteBuf;
-            position++;
-            b = byteBuf.readByte();
-            result |= (b & 0x7F) << 7;
-            if ((b & 0x80) != 0) {
-                if (position == limit) require(1);
-                position++;
-                b = byteBuf.readByte();
-                result |= (b & 0x7F) << 14;
-                if ((b & 0x80) != 0) {
-                    if (position == limit) require(1);
-                    position++;
-                    b = byteBuf.readByte();
-                    result |= (b & 0x7F) << 21;
-                    if ((b & 0x80) != 0) {
-                        if (position == limit) require(1);
-                        position++;
-                        b = byteBuf.readByte();
-                        result |= (long)(b & 0x7F) << 28;
-                        if ((b & 0x80) != 0) {
-                            if (position == limit) require(1);
-                            position++;
-                            b = byteBuf.readByte();
-                            result |= (long)(b & 0x7F) << 35;
-                            if ((b & 0x80) != 0) {
-                                if (position == limit) require(1);
-                                position++;
-                                b = byteBuf.readByte();
-                                result |= (long)(b & 0x7F) << 42;
-                                if ((b & 0x80) != 0) {
-                                    if (position == limit) require(1);
-                                    position++;
-                                    b = byteBuf.readByte();
-                                    result |= (long)(b & 0x7F) << 49;
-                                    if ((b & 0x80) != 0) {
-                                        if (position == limit) require(1);
-                                        position++;
-                                        b = byteBuf.readByte();
-                                        result |= (long)b << 56;
+        position++
+        val byteBuf = byteBuf!!
+        var b = byteBuf.readByte().toInt()
+        var result = (b and 0x7F).toLong()
+        if (b and 0x80 != 0) {
+            if (position == limit) require(1)
+            position++
+            b = byteBuf.readByte().toInt()
+            result = result or (b and 0x7F shl 7).toLong()
+            if (b and 0x80 != 0) {
+                if (position == limit) require(1)
+                position++
+                b = byteBuf.readByte().toInt()
+                result = result or (b and 0x7F shl 14).toLong()
+                if (b and 0x80 != 0) {
+                    if (position == limit) require(1)
+                    position++
+                    b = byteBuf.readByte().toInt()
+                    result = result or (b and 0x7F shl 21).toLong()
+                    if (b and 0x80 != 0) {
+                        if (position == limit) require(1)
+                        position++
+                        b = byteBuf.readByte().toInt()
+                        result = result or ((b and 0x7F).toLong() shl 28)
+                        if (b and 0x80 != 0) {
+                            if (position == limit) require(1)
+                            position++
+                            b = byteBuf.readByte().toInt()
+                            result = result or ((b and 0x7F).toLong() shl 35)
+                            if (b and 0x80 != 0) {
+                                if (position == limit) require(1)
+                                position++
+                                b = byteBuf.readByte().toInt()
+                                result = result or ((b and 0x7F).toLong() shl 42)
+                                if (b and 0x80 != 0) {
+                                    if (position == limit) require(1)
+                                    position++
+                                    b = byteBuf.readByte().toInt()
+                                    result = result or ((b and 0x7F).toLong() shl 49)
+                                    if (b and 0x80 != 0) {
+                                        if (position == limit) require(1)
+                                        position++
+                                        b = byteBuf.readByte().toInt()
+                                        result = result or (b.toLong() shl 56)
                                     }
                                 }
                             }
@@ -662,359 +628,301 @@ class ByteBufInput extends Input {
                 }
             }
         }
-        return optimizePositive ? result : ((result >>> 1) ^ -(result & 1));
+        return if (optimizePositive) result else result ushr 1 xor -(result and 1)
     }
 
-    @Override
-    public boolean canReadVarLong () throws KryoException {
-        if (limit - position >= 9) return true;
-        if (optional(5) <= 0) return false;
-        int p = position, limit = this.limit;
-        ByteBuf byteBuf = this.byteBuf;
-        if ((byteBuf.getByte(p++) & 0x80) == 0) return true;
-        if (p == limit) return false;
-        if ((byteBuf.getByte(p++) & 0x80) == 0) return true;
-        if (p == limit) return false;
-        if ((byteBuf.getByte(p++) & 0x80) == 0) return true;
-        if (p == limit) return false;
-        if ((byteBuf.getByte(p++) & 0x80) == 0) return true;
-        if (p == limit) return false;
-        if ((byteBuf.getByte(p++) & 0x80) == 0) return true;
-        if (p == limit) return false;
-        if ((byteBuf.getByte(p++) & 0x80) == 0) return true;
-        if (p == limit) return false;
-        if ((byteBuf.getByte(p++) & 0x80) == 0) return true;
-        if (p == limit) return false;
-        if ((byteBuf.getByte(p++) & 0x80) == 0) return true;
-        if (p == limit) return false;
-        return true;
+    @Throws(KryoException::class)
+    override fun canReadVarLong(): Boolean {
+        if (limit - position >= 9) return true
+        if (optional(5) <= 0) return false
+        var p = position
+        val limit = limit
+        val byteBuf = byteBuf
+        if (byteBuf!!.getByte(p++).toInt() and 0x80 == 0) return true
+        if (p == limit) return false
+        if (byteBuf.getByte(p++).toInt() and 0x80 == 0) return true
+        if (p == limit) return false
+        if (byteBuf.getByte(p++).toInt() and 0x80 == 0) return true
+        if (p == limit) return false
+        if (byteBuf.getByte(p++).toInt() and 0x80 == 0) return true
+        if (p == limit) return false
+        if (byteBuf.getByte(p++).toInt() and 0x80 == 0) return true
+        if (p == limit) return false
+        if (byteBuf.getByte(p++).toInt() and 0x80 == 0) return true
+        if (p == limit) return false
+        if (byteBuf.getByte(p++).toInt() and 0x80 == 0) return true
+        if (p == limit) return false
+        if (byteBuf.getByte(p++).toInt() and 0x80 == 0) return true
+        return if (p == limit) false else true
     }
 
     // float:
-
-    @Override
-    public float readFloat () throws KryoException {
-        require(4);
-        ByteBuf byteBuf = this.byteBuf;
-        int p = this.position;
-        this.position = p + 4;
-        return Float.intBitsToFloat(byteBuf.readByte() & 0xFF //
-                                    | (byteBuf.readByte() & 0xFF) << 8 //
-                                    | (byteBuf.readByte() & 0xFF) << 16 //
-                                    | (byteBuf.readByte() & 0xFF) << 24);
+    @Throws(KryoException::class)
+    override fun readFloat(): Float {
+        require(4)
+        val p = position
+        position = p + 4
+        return byteBuf!!.readFloat()
     }
 
     // double:
-
-    @Override
-    public double readDouble () throws KryoException {
-        require(8);
-        ByteBuf byteBuf = this.byteBuf;
-        int p = position;
-        position = p + 8;
-        return Double.longBitsToDouble(byteBuf.readByte() & 0xFF //
-                                       | (byteBuf.readByte() & 0xFF) << 8 //
-                                       | (byteBuf.readByte() & 0xFF) << 16 //
-                                       | (long)(byteBuf.readByte() & 0xFF) << 24 //
-                                       | (long)(byteBuf.readByte() & 0xFF) << 32 //
-                                       | (long)(byteBuf.readByte() & 0xFF) << 40 //
-                                       | (long)(byteBuf.readByte() & 0xFF) << 48 //
-                                       | (long)byteBuf.readByte() << 56);
+    @Throws(KryoException::class)
+    override fun readDouble(): Double {
+        require(8)
+        val p = position
+        position = p + 8
+        return byteBuf!!.readDouble()
     }
 
     // boolean:
-
-    @Override
-    public boolean readBoolean () throws KryoException {
-        if (position == limit) require(1);
-        position++;
-        return byteBuf.readByte() == 1 ? true : false;
+    @Throws(KryoException::class)
+    override fun readBoolean(): Boolean {
+        if (position == limit) require(1)
+        position++
+        return if (byteBuf!!.readByte().toInt() == 1) true else false
     }
 
     // short:
-
-    @Override
-    public short readShort () throws KryoException {
-        require(2);
-        position += 2;
-        return (short)((byteBuf.readByte() & 0xFF) | ((byteBuf.readByte() & 0xFF) << 8));
+    @Throws(KryoException::class)
+    override fun readShort(): Short {
+        require(2)
+        position += 2
+        return byteBuf!!.readShort()
     }
 
-    @Override
-    public int readShortUnsigned () throws KryoException {
-        require(2);
-        position += 2;
-        return (byteBuf.readByte() & 0xFF) | ((byteBuf.readByte() & 0xFF) << 8);
+    @Throws(KryoException::class)
+    override fun readShortUnsigned(): Int {
+        require(2)
+        position += 2
+        return byteBuf!!.readUnsignedShort()
     }
 
     // char:
-
-    @Override
-    public char readChar () throws KryoException {
-        require(2);
-        position += 2;
-        return (char)((byteBuf.readByte() & 0xFF) | ((byteBuf.readByte() & 0xFF) << 8));
+    @Throws(KryoException::class)
+    override fun readChar(): Char {
+        require(2)
+        position += 2
+        return byteBuf!!.readChar()
     }
 
     // String:
-
-    @Override
-    public String readString () {
-        if (!readVarIntFlag()) return readAsciiString(); // ASCII.
+    override fun readString(): String? {
+        if (!readVarIntFlag()) return readAsciiString() // ASCII.
         // Null, empty, or UTF8.
-        int charCount = readVarIntFlag(true);
-        switch (charCount) {
-            case 0:
-                return null;
-            case 1:
-                return "";
+        var charCount = readVarIntFlag(true)
+        when (charCount) {
+            0 -> return null
+            1 -> return ""
         }
-        charCount--; // make count adjustment
-        readUtf8Chars(charCount);
-        return new String(chars, 0, charCount);
+
+        charCount-- // make count adjustment
+        readUtf8Chars(charCount)
+        return String(chars, 0, charCount)
     }
 
-    @Override
-    public StringBuilder readStringBuilder () {
-        if (!readVarIntFlag()) return new StringBuilder(readAsciiString()); // ASCII.
+    override fun readStringBuilder(): StringBuilder? {
+        if (!readVarIntFlag()) return StringBuilder(readAsciiString()) // ASCII.
         // Null, empty, or UTF8.
-        int charCount = readVarIntFlag(true);
-        switch (charCount) {
-            case 0:
-                return null;
-            case 1:
-                return new StringBuilder("");
+        var charCount = readVarIntFlag(true)
+        when (charCount) {
+            0 -> return null
+            1 -> return StringBuilder("")
         }
-        charCount--;
-        readUtf8Chars(charCount);
-        StringBuilder builder = new StringBuilder(charCount);
-        builder.append(chars, 0, charCount);
-        return builder;
+        charCount--
+        readUtf8Chars(charCount)
+        val builder = StringBuilder(charCount)
+        builder.append(chars, 0, charCount)
+        return builder
     }
 
-    private void readUtf8Chars (int charCount) {
-        if (chars.length < charCount) chars = new char[charCount];
-        char[] chars = this.chars;
+    private fun readUtf8Chars(charCount: Int) {
+        if (chars.size < charCount) chars = CharArray(charCount)
+        val chars = chars
         // Try to read 7 bit ASCII chars.
-        ByteBuf byteBuf = this.byteBuf;
-        int charIndex = 0;
-        int count = Math.min(require(1), charCount);
+        val byteBuf = byteBuf!!
+        var charIndex = 0
+        val count = require(1).coerceAtMost(charCount)
         while (charIndex < count) {
-            int b = byteBuf.readByte();
-            if (b < 0) break;
-            chars[charIndex++] = (char)b;
+            val b = byteBuf.readByte().toInt()
+            if (b < 0) break
+            chars[charIndex++] = b.toChar()
         }
-        position += charIndex;
+        position += charIndex
+
         // If buffer didn't hold all chars or any were not ASCII, use slow path for remainder.
         if (charIndex < charCount) {
-            byteBuf.readerIndex(position);
-            readUtf8Chars_slow(charCount, charIndex);
+            byteBuf.readerIndex(position)
+            readUtf8Chars_slow(charCount, charIndex)
         }
     }
 
-    private void readUtf8Chars_slow (int charCount, int charIndex) {
-        ByteBuf byteBuf = this.byteBuf;
-        char[] chars = this.chars;
-        while (charIndex < charCount) {
-            if (position == limit) require(1);
-            position++;
-            int b = byteBuf.readByte() & 0xFF;
-            switch (b >> 4) {
-                case 0:
-                case 1:
-                case 2:
-                case 3:
-                case 4:
-                case 5:
-                case 6:
-                case 7:
-                    chars[charIndex] = (char)b;
-                    break;
-                case 12:
-                case 13:
-                    if (position == limit) require(1);
-                    position++;
-                    chars[charIndex] = (char)((b & 0x1F) << 6 | byteBuf.readByte() & 0x3F);
-                    break;
-                case 14:
-                    require(2);
-                    position += 2;
-                    int b2 = byteBuf.readByte();
-                    int b3 = byteBuf.readByte();
-                    chars[charIndex] = (char)((b & 0x0F) << 12 | (b2 & 0x3F) << 6 | b3 & 0x3F);
-                    break;
+    private fun readUtf8Chars_slow(charCount: Int, charIndex: Int) {
+        var index = charIndex
+        val byteBuf = byteBuf!!
+        val chars = chars
+
+        while (index < charCount) {
+            if (position == limit) require(1)
+
+            position++
+            val b: Int = byteBuf.readByte().toInt() and 0xFF
+            when (b shr 4) {
+                0, 1, 2, 3, 4, 5, 6, 7 -> chars[index] = b.toChar()
+                12, 13 -> {
+                    if (position == limit) require(1)
+                    position++
+                    chars[index] = (b and 0x1F shl 6 or (byteBuf.readByte().toInt() and 0x3F)).toChar()
+                }
+                14 -> {
+                    require(2)
+                    position += 2
+                    val b2 = byteBuf.readByte().toInt()
+                    val b3 = byteBuf.readByte().toInt()
+                    chars[index] = (b and 0x0F shl 12 or (b2 and 0x3F shl 6) or (b3 and 0x3F)).toChar()
+                }
             }
-            charIndex++;
+            index++
         }
     }
 
-    private String readAsciiString () {
-        char[] chars = this.chars;
-        ByteBuf byteBuf = this.byteBuf;
-        int charCount = 0;
-
-        for (int n = Math.min(chars.length, limit - position); charCount < n; charCount++) {
-            int b = byteBuf.readByte();
-            if ((b & 0x80) == 0x80) {
-                position = byteBuf.readerIndex();
-                chars[charCount] = (char)(b & 0x7F);
-                return new String(chars, 0, charCount + 1);
+    private fun readAsciiString(): String {
+        val chars = chars
+        val byteBuf = byteBuf
+        var charCount = 0
+        val n = Math.min(chars.size, limit - position)
+        while (charCount < n) {
+            val b = byteBuf!!.readByte().toInt()
+            if (b and 0x80 == 0x80) {
+                position = byteBuf.readerIndex()
+                chars[charCount] = (b and 0x7F).toChar()
+                return String(chars, 0, charCount + 1)
             }
-            chars[charCount] = (char)b;
+            chars[charCount] = b.toChar()
+            charCount++
         }
-        position = byteBuf.readerIndex();
-        return readAscii_slow(charCount);
+        position = byteBuf!!.readerIndex()
+        return readAscii_slow(charCount)
     }
 
-    private String readAscii_slow (int charCount) {
-        char[] chars = this.chars;
-        ByteBuf byteBuf = this.byteBuf;
+    private fun readAscii_slow(charCount: Int): String {
+        var charCount = charCount
+        var chars = chars
+        val byteBuf = byteBuf
         while (true) {
-            if (position == limit) require(1);
-            position++;
-            int b = byteBuf.readByte();
-            if (charCount == chars.length) {
-                char[] newChars = new char[charCount * 2];
-                System.arraycopy(chars, 0, newChars, 0, charCount);
-                chars = newChars;
-                this.chars = newChars;
+            if (position == limit) require(1)
+            position++
+            val b = byteBuf!!.readByte().toInt()
+            if (charCount == chars.size) {
+                val newChars = CharArray(charCount * 2)
+                System.arraycopy(chars, 0, newChars, 0, charCount)
+                chars = newChars
+                this.chars = newChars
             }
-            if ((b & 0x80) == 0x80) {
-                chars[charCount] = (char)(b & 0x7F);
-                return new String(chars, 0, charCount + 1);
+            if (b and 0x80 == 0x80) {
+                chars[charCount] = (b and 0x7F).toChar()
+                return String(chars, 0, charCount + 1)
             }
-            chars[charCount++] = (char)b;
+            chars[charCount++] = b.toChar()
         }
     }
 
     // Primitive arrays:
-
-    @Override
-    public int[] readInts (int length) throws KryoException {
-        int[] array = new int[length];
-        if (optional(length << 2) == length << 2) {
-            ByteBuf byteBuf = this.byteBuf;
-            for (int i = 0; i < length; i++) {
-                array[i] = byteBuf.readByte() & 0xFF //
-                           | (byteBuf.readByte() & 0xFF) << 8 //
-                           | (byteBuf.readByte() & 0xFF) << 16 //
-                           | (byteBuf.readByte() & 0xFF) << 24;
+    @Throws(KryoException::class)
+    override fun readInts(length: Int): IntArray {
+        val array = IntArray(length)
+        if (optional(length shl 2) == length shl 2) {
+            val byteBuf = byteBuf
+            for (i in 0 until length) {
+                array[i] = byteBuf!!.readInt()
             }
-            position = byteBuf.readerIndex();
+            position = byteBuf!!.readerIndex()
         } else {
-            for (int i = 0; i < length; i++)
-                array[i] = readInt();
+            for (i in 0 until length) array[i] = readInt()
         }
-        return array;
+        return array
     }
 
-    @Override
-    public long[] readLongs (int length) throws KryoException {
-        long[] array = new long[length];
-        if (optional(length << 3) == length << 3) {
-            ByteBuf byteBuf = this.byteBuf;
-            for (int i = 0; i < length; i++) {
-                array[i] = byteBuf.readByte() & 0xFF//
-                           | (byteBuf.readByte() & 0xFF) << 8 //
-                           | (byteBuf.readByte() & 0xFF) << 16 //
-                           | (long)(byteBuf.readByte() & 0xFF) << 24 //
-                           | (long)(byteBuf.readByte() & 0xFF) << 32 //
-                           | (long)(byteBuf.readByte() & 0xFF) << 40 //
-                           | (long)(byteBuf.readByte() & 0xFF) << 48 //
-                           | (long)byteBuf.readByte() << 56;
+    @Throws(KryoException::class)
+    override fun readLongs(length: Int): LongArray {
+        val array = LongArray(length)
+        if (optional(length shl 3) == length shl 3) {
+            val byteBuf = byteBuf!!
+            for (i in 0 until length) {
+                array[i] = byteBuf.readLong()
             }
-            position = byteBuf.readerIndex();
+            position = byteBuf.readerIndex()
         } else {
-            for (int i = 0; i < length; i++)
-                array[i] = readLong();
+            for (i in 0 until length) array[i] = readLong()
         }
-        return array;
+        return array
     }
 
-    @Override
-    public float[] readFloats (int length) throws KryoException {
-        float[] array = new float[length];
-        if (optional(length << 2) == length << 2) {
-            ByteBuf byteBuf = this.byteBuf;
-            for (int i = 0; i < length; i++) {
-                array[i] = Float.intBitsToFloat(byteBuf.readByte() & 0xFF //
-                                                | (byteBuf.readByte() & 0xFF) << 8 //
-                                                | (byteBuf.readByte() & 0xFF) << 16 //
-                                                | (byteBuf.readByte() & 0xFF) << 24);
+    @Throws(KryoException::class)
+    override fun readFloats(length: Int): FloatArray {
+        val array = FloatArray(length)
+        if (optional(length shl 2) == length shl 2) {
+            val byteBuf = byteBuf!!
+            for (i in 0 until length) {
+                array[i] = byteBuf.readFloat()
             }
-            position = byteBuf.readerIndex();
+            position = byteBuf.readerIndex()
         } else {
-            for (int i = 0; i < length; i++)
-                array[i] = readFloat();
+            for (i in 0 until length) array[i] = readFloat()
         }
-        return array;
+        return array
     }
 
-    @Override
-    public double[] readDoubles (int length) throws KryoException {
-        double[] array = new double[length];
-        if (optional(length << 3) == length << 3) {
-            ByteBuf byteBuf = this.byteBuf;
-            for (int i = 0; i < length; i++) {
-                array[i] = Double.longBitsToDouble(byteBuf.readByte() & 0xFF //
-                                                   | (byteBuf.readByte() & 0xFF) << 8 //
-                                                   | (byteBuf.readByte() & 0xFF) << 16 //
-                                                   | (long)(byteBuf.readByte() & 0xFF) << 24 //
-                                                   | (long)(byteBuf.readByte() & 0xFF) << 32 //
-                                                   | (long)(byteBuf.readByte() & 0xFF) << 40 //
-                                                   | (long)(byteBuf.readByte() & 0xFF) << 48 //
-                                                   | (long)byteBuf.readByte() << 56);
+    @Throws(KryoException::class)
+    override fun readDoubles(length: Int): DoubleArray {
+        val array = DoubleArray(length)
+        if (optional(length shl 3) == length shl 3) {
+            val byteBuf = byteBuf!!
+            for (i in 0 until length) {
+                array[i] = byteBuf.readDouble()
             }
-            position = byteBuf.readerIndex();
+            position = byteBuf.readerIndex()
         } else {
-            for (int i = 0; i < length; i++)
-                array[i] = readDouble();
+            for (i in 0 until length) array[i] = readDouble()
         }
-        return array;
+        return array
     }
 
-    @Override
-    public short[] readShorts (int length) throws KryoException {
-        short[] array = new short[length];
-        if (optional(length << 1) == length << 1) {
-            ByteBuf byteBuf = this.byteBuf;
-            for (int i = 0; i < length; i++)
-                array[i] = (short)((byteBuf.readByte() & 0xFF) | ((byteBuf.readByte() & 0xFF) << 8));
-            position = byteBuf.readerIndex();
+    @Throws(KryoException::class)
+    override fun readShorts(length: Int): ShortArray {
+        val array = ShortArray(length)
+        if (optional(length shl 1) == length shl 1) {
+            val byteBuf = byteBuf
+            for (i in 0 until length) array[i] = (byteBuf!!.readByte().toInt() and 0xFF or (byteBuf.readByte().toInt() and 0xFF shl 8)).toShort()
+            position = byteBuf!!.readerIndex()
         } else {
-            for (int i = 0; i < length; i++)
-                array[i] = readShort();
+            for (i in 0 until length) array[i] = readShort()
         }
-        return array;
+        return array
     }
 
-    @Override
-    public char[] readChars (int length) throws KryoException {
-        char[] array = new char[length];
-        if (optional(length << 1) == length << 1) {
-            ByteBuf byteBuf = this.byteBuf;
-            for (int i = 0; i < length; i++)
-                array[i] = (char)((byteBuf.readByte() & 0xFF) | ((byteBuf.readByte() & 0xFF) << 8));
-            position = byteBuf.readerIndex();
+    @Throws(KryoException::class)
+    override fun readChars(length: Int): CharArray {
+        val array = CharArray(length)
+        if (optional(length shl 1) == length shl 1) {
+            val byteBuf = byteBuf
+            for (i in 0 until length) array[i] = (byteBuf!!.readByte().toInt() and 0xFF or (byteBuf.readByte().toInt() and 0xFF shl 8)).toChar()
+            position = byteBuf!!.readerIndex()
         } else {
-            for (int i = 0; i < length; i++)
-                array[i] = readChar();
+            for (i in 0 until length) array[i] = readChar()
         }
-        return array;
+        return array
     }
 
-    @Override
-    public boolean[] readBooleans (int length) throws KryoException {
-        boolean[] array = new boolean[length];
+    @Throws(KryoException::class)
+    override fun readBooleans(length: Int): BooleanArray {
+        val array = BooleanArray(length)
         if (optional(length) == length) {
-            ByteBuf byteBuf = this.byteBuf;
-            for (int i = 0; i < length; i++)
-                array[i] = byteBuf.readByte() != 0;
-            position = byteBuf.readerIndex();
+            val byteBuf = byteBuf
+            for (i in 0 until length) array[i] = byteBuf!!.readByte().toInt() != 0
+            position = byteBuf!!.readerIndex()
         } else {
-            for (int i = 0; i < length; i++)
-                array[i] = readBoolean();
+            for (i in 0 until length) array[i] = readBoolean()
         }
-        return array;
+        return array
     }
 }
