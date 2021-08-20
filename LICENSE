@@ -1,5 +1,6 @@
  - ByteUtilties - Byte manipulation and Unsigned Number Utilities
    [The Apache Software License, Version 2.0]
+   https://git.dorkbox.com/dorkbox/ByteUtilities
    Copyright 2021
      Dorkbox LLC
 
@@ -26,3 +27,25 @@
        Copyright 2021
          The Netty Project
          Contributors. See source NOTICE
+
+     - Kryo - Fast and efficient binary object graph serialization framework for Java
+       [BSD 3-Clause License]
+       https://github.com/EsotericSoftware/kryo
+       Copyright 2021
+         Nathan Sweet
+
+       Extra license information
+         - ReflectASM - 
+           [BSD 3-Clause License]
+           https://github.com/EsotericSoftware/reflectasm
+             Nathan Sweet
+
+         - Objenesis  - 
+           [The Apache Software License, Version 2.0]
+           http://objenesis.org
+             Objenesis Team and all contributors
+
+         - MinLog-SLF4J - 
+           [BSD 3-Clause License]
+           https://github.com/EsotericSoftware/minlog
+             Nathan Sweet
