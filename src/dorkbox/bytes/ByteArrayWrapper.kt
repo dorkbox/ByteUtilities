@@ -13,102 +13,83 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package dorkbox.bytes;
+package dorkbox.bytes
 
-import java.util.Arrays;
+import java.util.*
 
 /**
  * Necessary to provide equals and hashcode methods on a byte arrays, if they are to be used as keys in a map/set/etc
  */
-public
-class ByteArrayWrapper {
-    private byte[] data;
-    private Integer hashCode;
-
-    private
-    ByteArrayWrapper() {
-        // this is necessary for kryo
-    }
+class ByteArrayWrapper(
+    data: ByteArray,
 
     /**
-     * Permits the re-use of a byte array.
-     *
-     * @param copyBytes if TRUE, then the byteArray is copied. if FALSE, the byte array is used as-is.
-     *                  Using FALSE IS DANGEROUS!!!! If the underlying byte array is modified, this changes as well.
+     * if TRUE, then the byteArray is copied. if FALSE, the byte array is used as-is.
+     * Using FALSE IS DANGEROUS!!!! If the underlying byte array is modified, this changes as well.
      */
-    public
-    ByteArrayWrapper(byte[] data, boolean copyBytes) {
-        if (data == null) {
-            throw new NullPointerException();
+    copyBytes: Boolean = true
+) {
+    companion object {
+        /**
+         * Makes a safe copy of the byte array, so that changes to the original do not affect the wrapper.
+         * One side effect is that additional memory is used.
+         */
+        fun copy(data: ByteArray?): ByteArrayWrapper? {
+            return if (data == null) {
+                null
+            } else {
+                ByteArrayWrapper(data, true)
+            }
         }
-        int length = data.length;
 
+        /**
+         * Does not make a copy of the data, so changes to the original will also affect the wrapper.
+         * One side effect is that no extra memory is needed.
+         */
+        fun wrap(data: ByteArray?): ByteArrayWrapper? {
+            return if (data == null) {
+                null
+            } else {
+                ByteArrayWrapper(data, false)
+            }
+        }
+    }
+
+
+    val bytes: ByteArray
+    private var hashCode: Int? = null
+
+
+    init {
+        val length = data.size
         if (copyBytes) {
-            this.data = new byte[length];
+            bytes = ByteArray(length)
             // copy so it's immutable as a key.
-            System.arraycopy(data, 0, this.data, 0, length);
-        }
-        else {
-            this.data = data;
+            System.arraycopy(data, 0, bytes, 0, length)
+        } else {
+            bytes = data
         }
     }
 
-    /**
-     * Makes a safe copy of the byte array, so that changes to the original do not affect the wrapper.
-     * Side affect is additional memory is used.
-     */
-    public static
-    ByteArrayWrapper copy(byte[] data) {
-        if (data == null) {
-            return null;
-        }
-
-        return new ByteArrayWrapper(data, true);
-    }
-
-    /**
-     * Does not make a copy of the data, so changes to the original will also affect the wrapper.
-     * Side affect is no extra memory is needed.
-     */
-    public static
-    ByteArrayWrapper wrap(byte[] data) {
-        if (data == null) {
-            return null;
-        }
-        return new ByteArrayWrapper(data, false);
-    }
-
-    public
-    byte[] getBytes() {
-        return this.data;
-    }
-
-    @Override
-    public
-    int hashCode() {
+    override fun hashCode(): Int {
         // might be null for a thread because it's stale. who cares, get the value again
-        Integer hashCode = this.hashCode;
+        var hashCode = hashCode
         if (hashCode == null) {
-            hashCode = Arrays.hashCode(this.data);
-            this.hashCode = hashCode;
+            hashCode = Arrays.hashCode(bytes)
+            this.hashCode = hashCode
         }
-        return hashCode;
+        return hashCode
     }
 
-    @Override
-    public
-    boolean equals(Object other) {
-        if (!(other instanceof ByteArrayWrapper)) {
-            return false;
-        }
+    override fun equals(other: Any?): Boolean {
+        return if (other !is ByteArrayWrapper) {
+            false
+        } else Arrays.equals(bytes, other.bytes)
 
         // CANNOT be null, so we don't have to null check!
-        return Arrays.equals(this.data, ((ByteArrayWrapper) other).data);
     }
 
-    @Override
-    public
-    String toString() {
-        return "ByteArrayWrapper " + java.util.Arrays.toString(this.data);
+    override fun toString(): String {
+        return "ByteArrayWrapper " + Arrays.toString(bytes)
     }
 }
