@@ -318,6 +318,7 @@ class ByteBufOutput : Output {
 
     @Throws(KryoException::class)
     override fun writeVarInt(value: Int, optimizePositive: Boolean): Int {
+        @Suppress("NAME_SHADOWING")
         var value = value
         if (!optimizePositive) value = value shl 1 xor (value shr 31)
         if (value ushr 7 == 0) {
@@ -649,6 +650,7 @@ class ByteBufOutput : Output {
     }
 
     private fun writeUtf8_slow(value: String, charCount: Int, charIndex: Int) {
+        @Suppress("NAME_SHADOWING")
         var charIndex = charIndex
         while (charIndex < charCount) {
             val c = value[charIndex].code
