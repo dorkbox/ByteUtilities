@@ -1,4 +1,4 @@
-/*
+    /*
  * Copyright 2021 dorkbox, llc
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -32,12 +32,14 @@
  *
  * Modified by dorkbox, llc
  */
-package dorkbox.bytes;
+package dorkbox.bytes
 
-import java.nio.BufferUnderflowException;
-import java.util.Arrays;
+import java.io.IOException
+import java.nio.BufferUnderflowException
+import java.util.*
+import kotlin.experimental.and
 
-/**
+    /**
  * A self-growing byte array wrapper.
  *
  * Utility methods are provided for efficiently writing primitive types and strings.
@@ -45,352 +47,363 @@ import java.util.Arrays;
  * Encoding of integers: BIG_ENDIAN is used for storing fixed native size integer values LITTLE_ENDIAN is used for a variable
  * length encoding of integer values
  *
- * @author Nathan Sweet <misc@n4te.com>
+ * @author Nathan Sweet <misc></misc>@n4te.com>
  */
-@SuppressWarnings({"unused", "DuplicatedCode", "ForLoopReplaceableByForEach"})
-public class ByteBuffer2 {
-    private int capacity;  // exactly how many bytes have been allocated
-    private int maxCapacity;  // how large we can grow
-
-
-    private int position;  // current pointer to the point where data is read/written
-
-    private byte[] bytes; // the backing buffer
-    private char[] chars = new char[32]; // small buffer for reading strings
-
-    /**
-     * Creates an uninitialized object. {@link #setBuffer(byte[], int)} must be called before the object is used.
-     */
-    public ByteBuffer2() {
-    }
-
-    /**
-     * Creates a new object for writing to a byte array.
-     *
-     * @param bufferSize
-     *            The initial and maximum size of the buffer. An exception is thrown if this size is exceeded.
-     */
-    public ByteBuffer2(int bufferSize) {
-        this(bufferSize, bufferSize);
-    }
-
-    /**
-     * Creates a new object for writing to a byte array.
-     *
-     * @param bufferSize
-     *            The initial size of the buffer.
-     * @param maxBufferSize
-     *            The buffer is doubled as needed until it exceeds maxBufferSize and an exception is thrown. Can be -1
-     *            for no maximum.
-     */
-    public ByteBuffer2(int bufferSize, int maxBufferSize) {
-        if (maxBufferSize < -1) {
-            throw new IllegalArgumentException("maxBufferSize cannot be < -1: " + maxBufferSize);
+@Suppress("unused", "DuplicatedCode", "DuplicatedCode", "MemberVisibilityCanBePrivate")
+class ByteBuffer2 {
+    companion object {
+        /**
+         * Returns the number of bytes that would be written with [.writeInt].
+         */
+        fun intLength(value: Int, optimizePositive: Boolean): Int {
+            @Suppress("NAME_SHADOWING")
+            var value = value
+            if (!optimizePositive) {
+                value = value shl 1 xor value shr 31
+            }
+            if (value ushr 7 == 0) {
+                return 1
+            }
+            if (value ushr 14 == 0) {
+                return 2
+            }
+            if (value ushr 21 == 0) {
+                return 3
+            }
+            return if (value ushr 28 == 0) {
+                4
+            } else 5
         }
 
-        this.capacity = bufferSize;
-        this.maxCapacity = maxBufferSize == -1 ? Integer.MAX_VALUE : maxBufferSize;
-        this.bytes = new byte[bufferSize];
-    }
-
-    /**
-     * Creates a new object for writing to a byte array.
-     *
-     * @see #setBuffer(byte[])
-     */
-    public ByteBuffer2(byte[] buffer) {
-        this(buffer, buffer.length);
-    }
-
-    /**
-     * Creates a new object for writing to a byte array.
-     *
-     * @see #setBuffer(byte[], int)
-     */
-    public ByteBuffer2(byte[] buffer, int maxBufferSize) {
-        if (buffer == null) {
-            throw new IllegalArgumentException("buffer cannot be null.");
+        /**
+         * Returns the number of bytes that would be written with [.writeLong].
+         */
+        fun longLength(value: Long, optimizePositive: Boolean): Int {
+            @Suppress("NAME_SHADOWING")
+            var value = value
+            if (!optimizePositive) {
+                value = value shl 1 xor value shr 63
+            }
+            if (value ushr 7 == 0L) {
+                return 1
+            }
+            if (value ushr 14 == 0L) {
+                return 2
+            }
+            if (value ushr 21 == 0L) {
+                return 3
+            }
+            if (value ushr 28 == 0L) {
+                return 4
+            }
+            if (value ushr 35 == 0L) {
+                return 5
+            }
+            if (value ushr 42 == 0L) {
+                return 6
+            }
+            if (value ushr 49 == 0L) {
+                return 7
+            }
+            return if (value ushr 56 == 0L) {
+                8
+            } else 9
         }
-        setBuffer(buffer, maxBufferSize);
+    }
+
+
+    private var capacity = 0    // exactly how many bytes have been allocated
+    private var maxCapacity = 0 // how large we can grow
+    private var position = 0    // current pointer to the point where data is read/written
+    private lateinit var bytes : ByteArray    // the backing buffer
+    private var chars = CharArray(32) // small buffer for reading strings
+
+    /**
+     * Creates an uninitialized object. [.setBuffer] must be called before the object is used.
+     */
+    constructor()
+
+    /**
+     * Creates a new object for writing to a byte array.
+     *
+     * @param bufferSize    The initial size of the buffer.
+     *
+     * @param maxBufferSize The buffer is doubled as needed until it exceeds maxBufferSize and an exception is thrown. Can be -1
+     * for no maximum.
+     */
+    constructor(bufferSize: Int, maxBufferSize: Int = bufferSize) {
+        require(maxBufferSize >= -1) { "maxBufferSize cannot be < -1: $maxBufferSize" }
+        capacity = bufferSize
+        maxCapacity = if (maxBufferSize == -1) Int.MAX_VALUE else maxBufferSize
+        bytes = ByteArray(bufferSize)
     }
 
     /**
-     * Sets the buffer that will be written to. {@link #setBuffer(byte[], int)} is called with the specified buffer's
-     * length as the maxBufferSize.
+     * Creates a new object for writing to a byte array.
+     *
+     * @see .setBuffer
      */
-    public void setBuffer(byte[] buffer) {
-        setBuffer(buffer, buffer.length);
+    constructor(buffer: ByteArray, maxBufferSize: Int = buffer.size) {
+        setBuffer(buffer, maxBufferSize)
     }
 
     /**
      * Sets the buffer that will be written to. The position and total are reset, discarding any buffered bytes.
      *
      * @param maxBufferSize
-     *            The buffer is doubled as needed until it exceeds maxBufferSize and an exception is thrown.
+     * The buffer is doubled as needed until it exceeds maxBufferSize and an exception is thrown.
      */
-    public void setBuffer(byte[] buffer, int maxBufferSize) {
-        if (buffer == null) {
-            throw new IllegalArgumentException("buffer cannot be null.");
-        }
+    fun setBuffer(buffer: ByteArray, maxBufferSize: Int) {
+        require(maxBufferSize >= -1) { "maxBufferSize cannot be < -1: $maxBufferSize" }
 
-        if (maxBufferSize < -1) {
-            throw new IllegalArgumentException("maxBufferSize cannot be < -1: " + maxBufferSize);
-        }
+        bytes = buffer
+        maxCapacity = if (maxBufferSize == -1) Int.MAX_VALUE else maxBufferSize
+        capacity = buffer.size
+        position = 0
+    }
 
-        this.bytes = buffer;
-        this.maxCapacity = maxBufferSize == -1 ? Integer.MAX_VALUE : maxBufferSize;
-        this.capacity = buffer.length;
-        this.position = 0;
+
+    /**
+     * Returns the buffer. The bytes between zero and [.position] are the data that has been written.
+     */
+    fun getBuffer(): ByteArray {
+        return bytes
     }
 
     /**
-     * Returns the buffer. The bytes between zero and {@link #position()} are the data that has been written.
+     * Sets the buffer that will be written to. [.setBuffer] is called with the specified buffer's
+     * length as the maxBufferSize.
      */
-    public byte[] getBuffer() {
-        return this.bytes;
+    fun setBuffer(buffer: ByteArray) {
+        setBuffer(buffer, buffer.size)
     }
 
     /**
-     * Returns a new byte array containing the bytes currently in the buffer between zero and {@link #position()}.
+     * Returns a new byte array containing the bytes currently in the buffer between zero and [.position].
      */
-    public byte[] toBytes() {
-        int position2 = this.position;
-        byte[] newBuffer = new byte[position2];
+    fun toBytes(): ByteArray {
+        val newBuffer = ByteArray(position)
 
-        if (position2 > 0) {
-            System.arraycopy(this.bytes, 0, newBuffer, 0, position2);
+        if (position > 0) {
+            System.arraycopy(bytes, 0, newBuffer, 0, position)
         }
-        return newBuffer;
+        return newBuffer
     }
 
     /**
      * Returns the remaining read/write bytes available before the end of the buffer
      */
-    public int remaining() {
-        return this.capacity - this.position;
+    fun remaining(): Int {
+        return capacity - position
     }
 
     /**
      * Returns the size of the backing byte buffer
      */
-    public int capacity() {
-        return this.capacity;
+    fun capacity(): Int {
+        return capacity
     }
 
     /**
      * Returns the current position in the buffer. This is the number of bytes that have not been flushed.
      */
-    public int position() {
-        return this.position;
+    fun position(): Int {
+        return position
     }
 
     /**
      * Sets the current position in the buffer.
      */
-    public void setPosition(int position) {
-        this.position = position;
+    fun setPosition(position: Int) {
+        this.position = position
     }
 
     /**
      * Sets the position to zero.
      */
-    public void clear() {
-        this.position = 0;
+    fun clear() {
+        position = 0
     }
 
     /**
      * Sets the position to zero.
      */
-    public void rewind() {
-        this.position = 0;
+    fun rewind() {
+        position = 0
     }
 
     /**
      * Sets the position to zero, and write 0 to all bytes in the buffer
      */
-    public void clearSecure() {
-        this.position = 0;
-        byte[] buffer = this.bytes;
-
-        for (int i=0;i<this.capacity;i++) {
-            buffer[i] = 0;
+    fun clearSecure() {
+        position = 0
+        val buffer = bytes
+        for (i in 0 until capacity) {
+            buffer[i] = 0
         }
     }
 
     /**
      * Discards the specified number of bytes.
      */
-    public void skip(int count) {
-        int skipCount = Math.min(this.capacity - this.position, count);
-
+    fun skip(count: Int) {
+        @Suppress("NAME_SHADOWING")
+        var count = count
+        var skipCount = Math.min(capacity - position, count)
         while (true) {
-            this.position += skipCount;
-            count -= skipCount;
+            position += skipCount
+            count -= skipCount
             if (count == 0) {
-                break;
+                break
             }
-
-            skipCount = Math.min(count, this.capacity);
-            require(skipCount);
+            skipCount = Math.min(count, capacity)
+            require(skipCount)
         }
     }
 
     /**
      * @return true if the buffer has been resized.
      */
-    private boolean require(int required) {
-        if (this.capacity - this.position >= required) {
-            return false;
+    private fun require(required: Int): Boolean {
+        if (capacity - position >= required) {
+            return false
         }
-        if (required > this.maxCapacity) {
-            throw new RuntimeException("Buffer overflow. Max capacity: " + this.maxCapacity + ", required: " + required);
+        if (required > maxCapacity) {
+            throw IOException("Buffer overflow. Max capacity: $maxCapacity, required: $required")
         }
 
-        while (this.capacity - this.position < required) {
-            if (this.capacity == this.maxCapacity) {
-                throw new RuntimeException("Buffer overflow. Available: " + (this.capacity - this.position)
-                        + ", required: " + required);
+        while (capacity - position < required) {
+            if (capacity == maxCapacity) {
+                throw IOException("Buffer overflow. Available: " + (capacity - position) + ", required: " + required)
             }
 
             // Grow buffer.
-            if (this.capacity == 0) {
-                this.capacity = 1;
+            if (capacity == 0) {
+                capacity = 1
             }
-            this.capacity = Math.min((int)(this.capacity * 1.6D), this.maxCapacity);
-            if (this.capacity < 0) {
-                this.capacity = this.maxCapacity;
+
+            capacity = (capacity * 1.6).toInt().coerceAtMost(maxCapacity)
+            if (capacity < 0) {
+                capacity = maxCapacity
             }
-            byte[] newBuffer = new byte[this.capacity];
-            System.arraycopy(this.bytes, 0, newBuffer, 0, this.position);
-            this.bytes = newBuffer;
+
+            val newBuffer = ByteArray(capacity)
+            System.arraycopy(bytes, 0, newBuffer, 0, position)
+            bytes = newBuffer
         }
 
-        return true;
+        return true
     }
+
 
     // byte
-
     /**
      * Writes a byte.
      */
-    public void writeByte(byte value) {
-        if (this.position == this.capacity) {
-            require(1);
+    fun writeByte(value: Byte) {
+        if (position == capacity) {
+            require(1)
         }
-        this.bytes[this.position++] = value;
+        bytes[position++] = value
     }
 
     /**
      * Writes a byte.
      */
-    public void writeByte(int value) {
-        if (this.position == this.capacity) {
-            require(1);
+    fun writeByte(value: Int) {
+        if (position == capacity) {
+            require(1)
         }
-        this.bytes[this.position++] = (byte) value;
+        bytes[position++] = value.toByte()
     }
 
     /**
      * Writes the bytes. Note the byte[] length is not written.
      */
-    public void writeBytes(byte[] bytes) {
-        if (bytes == null) {
-            throw new IllegalArgumentException("bytes cannot be null.");
-        }
-        writeBytes(bytes, 0, bytes.length);
+    fun writeBytes(bytes: ByteArray) {
+        writeBytes(bytes, 0, bytes.size)
     }
 
     /**
      * Writes the bytes. Note the byte[] length is not written.
      */
-    public void writeBytes(byte[] bytes, int offset, int count) {
-        if (bytes == null) {
-            throw new IllegalArgumentException("bytes cannot be null.");
-        }
+    fun writeBytes(bytes: ByteArray, offset: Int, count: Int) {
+        @Suppress("NAME_SHADOWING")
+        var offset = offset
+        @Suppress("NAME_SHADOWING")
+        var count = count
+        var copyCount = (capacity - position).coerceAtMost(count)
 
-        int copyCount = Math.min(this.capacity - this.position, count);
         while (true) {
-            System.arraycopy(bytes, offset, this.bytes, this.position, copyCount);
-            this.position += copyCount;
-            count -= copyCount;
+            System.arraycopy(bytes, offset, this.bytes, position, copyCount)
+            position += copyCount
+            count -= copyCount
             if (count == 0) {
-                return;
+                return
             }
-            offset += copyCount;
-            copyCount = Math.min(this.capacity, count);
-            require(copyCount);
+            offset += copyCount
+            copyCount = Math.min(capacity, count)
+            require(copyCount)
         }
     }
 
     /**
      * Reads a single byte.
      */
-    public byte readByte() {
-        return this.bytes[this.position++];
+    fun readByte(): Byte {
+        return bytes[position++]
     }
 
     /**
      * Reads a byte as an int from 0 to 255.
      */
-    public int readByteUnsigned() {
-        return this.bytes[this.position++] & 0xFF;
+    fun readByteUnsigned(): Int {
+        return bytes[position++].toInt() and 0xFF
     }
 
     /**
      * Reads a single byte, does not advance the position
      */
-    public byte readByte(int position) {
-        return this.bytes[position];
+    fun readByte(position: Int): Byte {
+        return bytes[position]
     }
 
     /**
      * Reads a byte as an int from 0 to 255, does not advance the position
      */
-    public int readByteUnsigned(int position) {
-        return this.bytes[position] & 0xFF;
+    fun readByteUnsigned(position: Int): Int {
+        return bytes[position].toInt() and 0xFF
     }
 
     /**
      * Reads the specified number of bytes into a new byte[].
      */
-    public byte[] readBytes(int length) {
-        byte[] bytes = new byte[length];
-        readBytes(bytes, 0, length);
-        return bytes;
+    fun readBytes(length: Int): ByteArray {
+        val bytes = ByteArray(length)
+        readBytes(bytes, 0, length)
+        return bytes
     }
 
     /**
-     * Reads bytes.length bytes and writes them to the specified byte[], starting at index 0.
+     * Reads count bytes and writes them to the specified byte[], starting at offset (or 0) in target byte array.
      */
-    public void readBytes(byte[] bytes) {
-        readBytes(bytes, 0, bytes.length);
+    fun readBytes(bytes: ByteArray, offset: Int = 0, count: Int = bytes.size) {
+        System.arraycopy(this.bytes, position, bytes, offset, count)
+        position += count
     }
 
-    /**
-     * Reads count bytes and writes them to the specified byte[], starting at offset in target byte array.
-     */
-    public void readBytes(byte[] bytes, int offset, int count) {
-        if (bytes == null) {
-            throw new IllegalArgumentException("bytes cannot be null.");
-        }
-
-        System.arraycopy(this.bytes, this.position, bytes, offset, count);
-        this.position += count;
-    }
 
     // int
-
     /**
      * Writes a 4 byte int. Uses BIG_ENDIAN byte order.
      */
-    public void writeInt(int value) {
-        require(4);
-
-        byte[] buffer = this.bytes;
-        buffer[this.position++] = (byte) (value >> 24);
-        buffer[this.position++] = (byte) (value >> 16);
-        buffer[this.position++] = (byte) (value >> 8);
-        buffer[this.position++] = (byte) value;
+    fun writeInt(value: Int) {
+        require(4)
+        val buffer = bytes
+        buffer[position++] = (value shr 24).toByte()
+        buffer[position++] = (value shr 16).toByte()
+        buffer[position++] = (value shr 8).toByte()
+        buffer[position++] = value.toByte()
     }
 
     /**
@@ -399,93 +412,86 @@ public class ByteBuffer2 {
      * representation for efficiency reasons.
      *
      * @param optimizePositive
-     *            If true, small positive numbers will be more efficient (1 byte) and small negative numbers will be
-     *            inefficient (5 bytes).
+     * If true, small positive numbers will be more efficient (1 byte) and small negative numbers will be
+     * inefficient (5 bytes).
      */
-    public int writeInt(int value, boolean optimizePositive) {
-        return writeVarInt(value, optimizePositive);
+    fun writeInt(value: Int, optimizePositive: Boolean): Int {
+        return writeVarInt(value, optimizePositive)
     }
 
     /**
      * Writes a 1-5 byte int. It is guaranteed that a varible length encoding will be used.
      *
      * @param optimizePositive
-     *            If true, small positive numbers will be more efficient (1 byte) and small negative numbers will be
-     *            inefficient (5 bytes).
+     * If true, small positive numbers will be more efficient (1 byte) and small negative numbers will be
+     * inefficient (5 bytes).
      */
-    public int writeVarInt(int value, boolean optimizePositive) {
-        if (!optimizePositive) {
-            value = value << 1 ^ value >> 31;
+    fun writeVarInt(value: Int, optimizePositive: Boolean): Int {
+        @Suppress("NAME_SHADOWING")
+        var value = value
+        if (!optimizePositive) value = value shl 1 xor (value shr 31)
+        if (value ushr 7 == 0) {
+            require(1)
+            bytes[position++] = value.toByte()
+            return 1
         }
-
-        if (value >>> 7 == 0) {
-            require(1);
-            this.bytes[this.position++] = (byte) value;
-            return 1;
+        if (value ushr 14 == 0) {
+            require(2)
+            val buffer = bytes
+            buffer[position++] = (value and 0x7F or 0x80).toByte()
+            buffer[position++] = (value ushr 7).toByte()
+            return 2
         }
-        if (value >>> 14 == 0) {
-            require(2);
-            byte[] buffer = this.bytes;
-            buffer[this.position++] = (byte) (value & 0x7F | 0x80);
-            buffer[this.position++] = (byte) (value >>> 7);
-            return 2;
+        if (value ushr 21 == 0) {
+            require(3)
+            val buffer = bytes
+            buffer[position++] = (value and 0x7F or 0x80).toByte()
+            buffer[position++] = (value ushr 7 or 0x80).toByte()
+            buffer[position++] = (value ushr 14).toByte()
+            return 3
         }
-        if (value >>> 21 == 0) {
-            require(3);
-            byte[] buffer = this.bytes;
-            buffer[this.position++] = (byte) (value & 0x7F | 0x80);
-            buffer[this.position++] = (byte) (value >>> 7 | 0x80);
-            buffer[this.position++] = (byte) (value >>> 14);
-            return 3;
+        if (value ushr 28 == 0) {
+            require(4)
+            val buffer = bytes
+            buffer[position++] = (value and 0x7F or 0x80).toByte()
+            buffer[position++] = (value ushr 7 or 0x80).toByte()
+            buffer[position++] = (value ushr 14 or 0x80).toByte()
+            buffer[position++] = (value ushr 21).toByte()
+            return 4
         }
-        if (value >>> 28 == 0) {
-            require(4);
-            byte[] buffer = this.bytes;
-            buffer[this.position++] = (byte) (value & 0x7F | 0x80);
-            buffer[this.position++] = (byte) (value >>> 7 | 0x80);
-            buffer[this.position++] = (byte) (value >>> 14 | 0x80);
-            buffer[this.position++] = (byte) (value >>> 21);
-            return 4;
-        }
-
-        require(5);
-        byte[] buffer = this.bytes;
-        buffer[this.position++] = (byte) (value & 0x7F | 0x80);
-        buffer[this.position++] = (byte) (value >>> 7 | 0x80);
-        buffer[this.position++] = (byte) (value >>> 14 | 0x80);
-        buffer[this.position++] = (byte) (value >>> 21 | 0x80);
-        buffer[this.position++] = (byte) (value >>> 28);
-        return 5;
+        require(5)
+        val buffer = bytes
+        buffer[position++] = (value and 0x7F or 0x80).toByte()
+        buffer[position++] = (value ushr 7 or 0x80).toByte()
+        buffer[position++] = (value ushr 14 or 0x80).toByte()
+        buffer[position++] = (value ushr 21 or 0x80).toByte()
+        buffer[position++] = (value ushr 28).toByte()
+        return 5
     }
 
     /**
      * Reads a 4 byte int.
      */
-    public int readInt() {
-        byte[] buffer = this.bytes;
-        int position = this.position;
-
-        int value = (buffer[position] & 0xFF) << 24
-                | (buffer[position + 1] & 0xFF) << 16
-                | (buffer[position + 2] & 0xFF) << 8
-                | buffer[position + 3] & 0xFF;
-
-        this.position = position + 4;
-        return value;
+    fun readInt(): Int {
+        val buffer = bytes
+        val position = position
+        val value: Int = buffer[position].toInt() and 0xFF shl 24 or (buffer[position + 1].toInt() and 0xFF shl 16
+                ) or (buffer[position + 2].toInt() and 0xFF shl 8
+                ) or (buffer[position + 3].toInt() and 0xFF)
+        this.position = position + 4
+        return value
     }
 
     /**
      * Reads a 4 byte int, does not advance the position
      */
-    public int readInt(int position) {
-        byte[] buffer = this.bytes;
-        int value = (buffer[position] & 0xFF) << 24
-                | (buffer[position + 1] & 0xFF) << 16
-                | (buffer[position + 2] & 0xFF) << 8
-                | buffer[position + 3] & 0xFF;
-
-        this.position = position + 4;
-        return value;
+    fun readInt(position: Int): Int {
+        val buffer = bytes
+        val value: Int = buffer[position].toInt() and 0xFF shl 24 or (buffer[position + 1].toInt() and 0xFF shl 16
+                ) or (buffer[position + 2].toInt() and 0xFF shl 8
+                ) or (buffer[position + 3].toInt() and 0xFF)
+        this.position = position + 4
+        return value
     }
 
     /**
@@ -493,730 +499,712 @@ public class ByteBuffer2 {
      * guaranteed that a variable length encoding will be really used. The stream may decide to use native-sized integer
      * representation for efficiency reasons.
      */
-    public int readInt(boolean optimizePositive) {
-        return readVarInt(optimizePositive);
+    fun readInt(optimizePositive: Boolean): Int {
+        return readVarInt(optimizePositive)
     }
 
     /**
      * Reads a 1-5 byte int. This stream may consider such a variable length encoding request as a hint. It is not
      * guaranteed that a variable length encoding will be really used. The stream may decide to use native-sized integer
      * representation for efficiency reasons.
-     * <p>
+     *
+     *
      * does not advance the position
      */
-    public int readInt(int position, boolean optimizePositive) {
-        int pos = this.position;
-        this.position = position;
-        int value = readVarInt(optimizePositive);
-        this.position = pos;
-        return value;
+    fun readInt(position: Int, optimizePositive: Boolean): Int {
+        val pos = this.position
+        this.position = position
+        val value = readVarInt(optimizePositive)
+        this.position = pos
+        return value
     }
 
     /**
      * Reads a 1-5 byte int. It is guaranteed that a variable length encoding will be used.
      */
-    private int readVarInt(boolean optimizePositive) {
-        byte[] buffer = this.bytes;
-
-        if (this.capacity - this.position < 5) {
-            return readInt_slow(optimizePositive);
+    private fun readVarInt(optimizePositive: Boolean): Int {
+        val buffer = bytes
+        if (capacity - position < 5) {
+            return readInt_slow(optimizePositive)
         }
-
-        int b = buffer[this.position++];
-        int result = b & 0x7F;
-        if ((b & 0x80) != 0) {
-            b = buffer[this.position++];
-            result |= (b & 0x7F) << 7;
-            if ((b & 0x80) != 0) {
-                b = buffer[this.position++];
-                result |= (b & 0x7F) << 14;
-                if ((b & 0x80) != 0) {
-                    b = buffer[this.position++];
-                    result |= (b & 0x7F) << 21;
-                    if ((b & 0x80) != 0) {
-                        b = buffer[this.position++];
-                        result |= (b & 0x7F) << 28;
+        var b = buffer[position++].toInt()
+        var result = b and 0x7F
+        if (b and 0x80 != 0) {
+            b = buffer[position++].toInt()
+            result = result or (b and 0x7F shl 7)
+            if (b and 0x80 != 0) {
+                b = buffer[position++].toInt()
+                result = result or (b and 0x7F shl 14)
+                if (b and 0x80 != 0) {
+                    b = buffer[position++].toInt()
+                    result = result or (b and 0x7F shl 21)
+                    if (b and 0x80 != 0) {
+                        b = buffer[position++].toInt()
+                        result = result or (b and 0x7F shl 28)
                     }
                 }
             }
         }
-        return optimizePositive ? result : result >>> 1 ^ -(result & 1);
+        return if (optimizePositive) result else result ushr 1 xor -(result and 1)
     }
 
-    private int readInt_slow(boolean optimizePositive) {
-        byte[] buffer = this.bytes;
+    private fun readInt_slow(optimizePositive: Boolean): Int {
+        val buffer = bytes
 
         // The buffer is guaranteed to have at least 1 byte.
-        int b = buffer[this.position++];
-        int result = b & 0x7F;
-        if ((b & 0x80) != 0) {
-            b = buffer[this.position++];
-            result |= (b & 0x7F) << 7;
-            if ((b & 0x80) != 0) {
-                b = buffer[this.position++];
-                result |= (b & 0x7F) << 14;
-                if ((b & 0x80) != 0) {
-                    b = buffer[this.position++];
-                    result |= (b & 0x7F) << 21;
-                    if ((b & 0x80) != 0) {
-                        b = buffer[this.position++];
-                        result |= (b & 0x7F) << 28;
+        var b = buffer[position++].toInt()
+        var result = b and 0x7F
+        if (b and 0x80 != 0) {
+            b = buffer[position++].toInt()
+            result = result or (b and 0x7F shl 7)
+            if (b and 0x80 != 0) {
+                b = buffer[position++].toInt()
+                result = result or (b and 0x7F shl 14)
+                if (b and 0x80 != 0) {
+                    b = buffer[position++].toInt()
+                    result = result or (b and 0x7F shl 21)
+                    if (b and 0x80 != 0) {
+                        b = buffer[position++].toInt()
+                        result = result or (b and 0x7F shl 28)
                     }
                 }
             }
         }
-        return optimizePositive ? result : result >>> 1 ^ -(result & 1);
+        return if (optimizePositive) result else result ushr 1 xor -(result and 1)
     }
 
     /**
-     * Returns true if enough bytes are available to read an int with {@link #readInt(boolean)}.
+     * Returns true if enough bytes are available to read an int with [.readInt].
      */
-    public boolean canReadInt() {
-        if (this.capacity - this.position >= 5) {
-            return true;
+    fun canReadInt(): Boolean {
+        if (capacity - position >= 5) {
+            return true
         }
-
-        if (this.position + 1 > this.capacity) {
-            return false;
+        if (position + 1 > capacity) {
+            return false
         }
-
-        byte[] buffer = this.bytes;
-
-        int p = this.position;
-        if ((buffer[p++] & 0x80) == 0) {
-            return true;
+        val buffer = bytes
+        var p = position
+        if (buffer[p++].toInt() and 0x80 == 0) {
+            return true
         }
-        if (p == this.capacity) {
-            return false;
+        if (p == capacity) {
+            return false
         }
-        if ((buffer[p++] & 0x80) == 0) {
-            return true;
+        if (buffer[p++].toInt() and 0x80 == 0) {
+            return true
         }
-        if (p == this.capacity) {
-            return false;
+        if (p == capacity) {
+            return false
         }
-        if ((buffer[p++] & 0x80) == 0) {
-            return true;
+        if (buffer[p++].toInt() and 0x80 == 0) {
+            return true
         }
-        if (p == this.capacity) {
-            return false;
+        if (p == capacity) {
+            return false
         }
-        if ((buffer[p++] & 0x80) == 0) {
-            return true;
-        }
-
-        return p != this.capacity;
+        return if (buffer[p++].toInt() and 0x80 == 0) {
+            true
+        } else p != capacity
     }
 
     /**
-     * Returns true if enough bytes are available to read an int with {@link #readInt(boolean)}.
+     * Returns true if enough bytes are available to read an int with [.readInt].
      */
-    public boolean canReadInt(int position) {
-        if (this.capacity - position >= 5) {
-            return true;
+    fun canReadInt(position: Int): Boolean {
+        if (capacity - position >= 5) {
+            return true
         }
-
-        if (position + 1 > this.capacity) {
-            return false;
+        if (position + 1 > capacity) {
+            return false
         }
-
-        byte[] buffer = this.bytes;
-
-        int p = position;
-        if ((buffer[p++] & 0x80) == 0) {
-            return true;
+        val buffer = bytes
+        var p = position
+        if (buffer[p++].toInt() and 0x80 == 0) {
+            return true
         }
-        if (p == this.capacity) {
-            return false;
+        if (p == capacity) {
+            return false
         }
-        if ((buffer[p++] & 0x80) == 0) {
-            return true;
+        if (buffer[p++].toInt() and 0x80 == 0) {
+            return true
         }
-        if (p == this.capacity) {
-            return false;
+        if (p == capacity) {
+            return false
         }
-        if ((buffer[p++] & 0x80) == 0) {
-            return true;
+        if (buffer[p++].toInt() and 0x80 == 0) {
+            return true
         }
-        if (p == this.capacity) {
-            return false;
+        if (p == capacity) {
+            return false
         }
-        if ((buffer[p++] & 0x80) == 0) {
-            return true;
-        }
-
-        return p != this.capacity;
+        return if (buffer[p++].toInt() and 0x80 == 0) {
+            true
+        } else p != capacity
     }
 
-   // string
 
+    // string
     /**
      * Writes the length and string, or null. Short strings are checked and if ASCII they are written more efficiently,
-     * else they are written as UTF8. If a string is known to be ASCII, {@link ByteBuffer2#writeAscii(String)} may be used. The
-     * string can be read using {@link ByteBuffer2#readString()} or {@link ByteBuffer2#readStringBuilder()}.
+     * else they are written as UTF8. If a string is known to be ASCII, [ByteBuffer2.writeAscii] may be used. The
+     * string can be read using [ByteBuffer2.readString] or [ByteBuffer2.readStringBuilder].
      *
      * @param value
-     *            May be null.
+     * May be null.
      */
-    @SuppressWarnings("deprecation")
-    public void writeString(String value)   {
+    fun writeString(value: String?) {
         if (value == null) {
-            writeByte(0x80); // 0 means null, bit 8 means UTF8.
-            return;
+            writeByte(0x80) // 0 means null, bit 8 means UTF8.
+            return
         }
 
-        int charCount = value.length();
+        val charCount = value.length
         if (charCount == 0) {
-            writeByte(1 | 0x80); // 1 means empty string, bit 8 means UTF8.
-            return;
+            writeByte(1 or 0x80) // 1 means empty string, bit 8 means UTF8.
+            return
         }
 
-        // Detect ASCII.
-        boolean ascii = false;
-        if (charCount > 1 && charCount < 64) {
-            ascii = true;
-            for (int i = 0; i < charCount; i++) {
-                int c = value.charAt(i);
+        // Detect ASCII, we only do this for small strings
+        // since 1 char is used for bit-masking if we use for 1 char string, reading the string will not work!
+        var permitAscii = charCount in 2..32
+        if (permitAscii) {
+            for (i in 0 until charCount) {
+                if (value[i].code > 127) {
+                    permitAscii = false
+                    break // not ascii
+                }
+            }
+
+            if (permitAscii) {
+                // this is ascii
+                if (capacity - position < charCount) {
+                    writeAscii_slow(value, charCount)
+                } else {
+                    val stringBytes = value.encodeToByteArray(0, charCount)
+                    stringBytes.copyInto(bytes, position)
+//                    value.toByteArray(0, charCount, bytes, position)
+                    position += charCount
+
+//                    var i = 0
+//                    val n = value.length
+//                    while (i < n) {
+//                        bytes[position++] = value[i].code.toByte()
+//                        ++i
+//                    }
+                }
+
+                // mod the last written byte with 0x80 so we can use that when reading ascii bytes to see what the end of the string is
+                val value1: Byte = (bytes[position - 1].toInt() or 0x80).toByte()
+                bytes[position - 1] = value1
+                return
+            }
+        }
+
+        writeUtf8Length(charCount + 1)
+        var charIndex = 0
+        if (capacity - position >= charCount) {
+            // Try to write 8 bit chars.
+            val buffer = bytes
+            var position = position
+            while (charIndex < charCount) {
+                val c = value[charIndex].code
                 if (c > 127) {
-                    ascii = false;
-                    break;
+                    break
                 }
+                buffer[position++] = c.toByte()
+                charIndex++
             }
+            this.position = position
         }
-
-        if (ascii) {
-            if (this.capacity - this.position < charCount) {
-                writeAscii_slow(value, charCount);
-            } else {
-                value.getBytes(0, charCount, this.bytes, this.position);
-                this.position += charCount;
-            }
-            this.bytes[this.position - 1] |= 0x80;
-        } else {
-            writeUtf8Length(charCount + 1);
-            int charIndex = 0;
-            if (this.capacity - this.position >= charCount) {
-                // Try to write 8 bit chars.
-                byte[] buffer = this.bytes;
-                int position = this.position;
-                for (; charIndex < charCount; charIndex++) {
-                    int c = value.charAt(charIndex);
-                    if (c > 127) {
-                        break;
-                    }
-                    buffer[position++] = (byte) c;
-                }
-                this.position = position;
-            }
-
-            if (charIndex < charCount) {
-                writeString_slow(value, charCount, charIndex);
-            }
+        if (charIndex < charCount) {
+            writeUtf8_slow(value, charCount, charIndex)
         }
     }
 
     /**
-     * Writes the length and CharSequence as UTF8, or null. The string can be read using {@link ByteBuffer2#readString()} or
-     * {@link ByteBuffer2#readStringBuilder()}.
+     * Writes the length and CharSequence as UTF8, or null. The string can be read using [ByteBuffer2.readString] or
+     * [ByteBuffer2.readStringBuilder].
      *
      * @param value
-     *            May be null.
+     * May be null.
      */
-    public void writeString(CharSequence value) {
+    fun writeString(value: CharSequence?) {
         if (value == null) {
-            writeByte(0x80); // 0 means null, bit 8 means UTF8.
-            return;
+            writeByte(0x80) // 0 means null, bit 8 means UTF8.
+            return
         }
 
-        int charCount = value.length();
+
+        val charCount = value.length
         if (charCount == 0) {
-            writeByte(1 | 0x80); // 1 means empty string, bit 8 means UTF8.
-            return;
+            writeByte(1 or 0x80) // 1 means empty string, bit 8 means UTF8.
+            return
         }
 
-        writeUtf8Length(charCount + 1);
-        int charIndex = 0;
-        if (this.capacity - this.position >= charCount) {
+
+        writeUtf8Length(charCount + 1)
+        var charIndex = 0
+        if (capacity - position >= charCount) {
             // Try to write 8 bit chars.
-            byte[] buffer = this.bytes;
-            int position = this.position;
-
-            for (; charIndex < charCount; charIndex++) {
-                int c = value.charAt(charIndex);
+            val buffer = bytes
+            var position = position
+            while (charIndex < charCount) {
+                val c = value[charIndex].code
                 if (c > 127) {
-                    break;
+                    break
                 }
-                buffer[position++] = (byte) c;
+                buffer[position++] = c.toByte()
+                charIndex++
             }
-            this.position = position;
+            this.position = position
         }
-
         if (charIndex < charCount) {
-            writeString_slow(value, charCount, charIndex);
+            writeUtf8_slow(value, charCount, charIndex)
         }
     }
 
     /**
      * Writes a string that is known to contain only ASCII characters. Non-ASCII strings passed to this method will be
      * corrupted. Each byte is a 7 bit character with the remaining byte denoting if another character is available.
-     * This is slightly more efficient than {@link ByteBuffer2#writeString(String)}. The string can be read using
-     * {@link ByteBuffer2#readString()} or {@link ByteBuffer2#readStringBuilder()}.
+     * This is slightly more efficient than [ByteBuffer2.writeString]. The string can be read using
+     * [ByteBuffer2.readString] or [ByteBuffer2.readStringBuilder].
      *
      * @param value
-     *            May be null.
+     * May be null.
      */
-    @SuppressWarnings("deprecation")
-    public void writeAscii(String value) {
+    fun writeAscii(value: String?) {
         if (value == null) {
-            writeByte(0x80); // 0 means null, bit 8 means UTF8.
-            return;
+            writeByte(0x80) // 0 means null, bit 8 means UTF8.
+            return
         }
-
-        int charCount = value.length();
-        switch (charCount) {
-            case 0 :
-                writeByte(1 | 0x80); // 1 is string length + 1, bit 8 means UTF8.
-                return;
-            case 1 :
-                writeByte(2 | 0x80); // 2 is string length + 1, bit 8 means UTF8.
-                writeByte(value.charAt(0));
-                return;
+        val charCount = value.length
+        when (charCount) {
+            0 -> {
+                writeByte(1 or 0x80) // 1 is string length + 1, bit 8 means UTF8.
+                return
+            }
+            1 -> {
+                writeByte(2 or 0x80) // 2 is string length + 1, bit 8 means UTF8.
+                writeByte(value[0].code)
+                return
+            }
         }
-
-        if (this.capacity - this.position < charCount) {
-            writeAscii_slow(value, charCount);
+        if (capacity - position < charCount) {
+            writeAscii_slow(value, charCount)
         } else {
-            value.getBytes(0, charCount, this.bytes, this.position);
-            this.position += charCount;
+            val stringBytes = value.encodeToByteArray(0, charCount)
+            stringBytes.copyInto(bytes, position)
+//            value.toByteArray(0, charCount, bytes, position)
+            position += charCount
         }
-
-        this.bytes[this.position - 1] |= 0x80; // Bit 8 means end of ASCII.
+        bytes[position - 1] = (bytes[position - 1].toInt() or 0x80).toByte() // Bit 8 means end of ASCII.
     }
 
     /**
      * Writes the length of a string, which is a variable length encoded int except the first byte uses bit 8 to denote
      * UTF8 and bit 7 to denote if another byte is present.
      */
-    private void writeUtf8Length(int value) {
-
-        if (value >>> 6 == 0) {
-            require(1);
-            this.bytes[this.position++] = (byte) (value | 0x80); // Set bit 8.
-        } else if (value >>> 13 == 0) {
-            require(2);
-            byte[] buffer = this.bytes;
-            buffer[this.position++] = (byte) (value | 0x40 | 0x80); // Set bit 7 and 8.
-            buffer[this.position++] = (byte) (value >>> 6);
-        } else if (value >>> 20 == 0) {
-            require(3);
-            byte[] buffer = this.bytes;
-            buffer[this.position++] = (byte) (value | 0x40 | 0x80); // Set bit 7 and 8.
-            buffer[this.position++] = (byte) (value >>> 6 | 0x80); // Set bit 8.
-            buffer[this.position++] = (byte) (value >>> 13);
-        } else if (value >>> 27 == 0) {
-            require(4);
-            byte[] buffer = this.bytes;
-            buffer[this.position++] = (byte) (value | 0x40 | 0x80); // Set bit 7 and 8.
-            buffer[this.position++] = (byte) (value >>> 6 | 0x80); // Set bit 8.
-            buffer[this.position++] = (byte) (value >>> 13 | 0x80); // Set bit 8.
-            buffer[this.position++] = (byte) (value >>> 20);
+    private fun writeUtf8Length(value: Int) {
+        if (value ushr 6 == 0) {
+            require(1)
+            bytes[position++] = (value or 0x80).toByte() // Set bit 8.
+        } else if (value ushr 13 == 0) {
+            require(2)
+            val buffer = bytes
+            buffer[position++] = (value or 0x40 or 0x80).toByte() // Set bit 7 and 8.
+            buffer[position++] = (value ushr 6).toByte()
+        } else if (value ushr 20 == 0) {
+            require(3)
+            val buffer = bytes
+            buffer[position++] = (value or 0x40 or 0x80).toByte() // Set bit 7 and 8.
+            buffer[position++] = (value ushr 6 or 0x80).toByte() // Set bit 8.
+            buffer[position++] = (value ushr 13).toByte()
+        } else if (value ushr 27 == 0) {
+            require(4)
+            val buffer = bytes
+            buffer[position++] = (value or 0x40 or 0x80).toByte() // Set bit 7 and 8.
+            buffer[position++] = (value ushr 6 or 0x80).toByte() // Set bit 8.
+            buffer[position++] = (value ushr 13 or 0x80).toByte() // Set bit 8.
+            buffer[position++] = (value ushr 20).toByte()
         } else {
-            require(5);
-            byte[] buffer = this.bytes;
-            buffer[this.position++] = (byte) (value | 0x40 | 0x80); // Set bit 7 and 8.
-            buffer[this.position++] = (byte) (value >>> 6 | 0x80); // Set bit 8.
-            buffer[this.position++] = (byte) (value >>> 13 | 0x80); // Set bit 8.
-            buffer[this.position++] = (byte) (value >>> 20 | 0x80); // Set bit 8.
-            buffer[this.position++] = (byte) (value >>> 27);
+            require(5)
+            val buffer = bytes
+            buffer[position++] = (value or 0x40 or 0x80).toByte() // Set bit 7 and 8.
+            buffer[position++] = (value ushr 6 or 0x80).toByte() // Set bit 8.
+            buffer[position++] = (value ushr 13 or 0x80).toByte() // Set bit 8.
+            buffer[position++] = (value ushr 20 or 0x80).toByte() // Set bit 8.
+            buffer[position++] = (value ushr 27).toByte()
         }
     }
 
-    private void writeString_slow(CharSequence value, int charCount, int charIndex) {
-        byte[] buffer = this.bytes;
-        for (; charIndex < charCount; charIndex++) {
-            if (this.position == this.capacity) {
-                require(Math.min(this.capacity, charCount - charIndex));
-                buffer = this.bytes;
+    private fun writeUtf8_slow(value: CharSequence, charCount: Int, charIndex: Int) {
+        @Suppress("NAME_SHADOWING")
+        var charIndex = charIndex
+        while (charIndex < charCount) {
+            if (position == capacity) {
+                require(capacity.coerceAtMost(charCount - charIndex))
             }
+            val c = value[charIndex].code
 
-            int c = value.charAt(charIndex);
             if (c <= 0x007F) {
-                this.bytes[this.position++] = (byte) c;
+                bytes[position++] = c.toByte()
             } else if (c > 0x07FF) {
-                buffer[this.position++] = (byte) (0xE0 | c >> 12 & 0x0F);
-                require(2);
-
-                buffer = this.bytes;
-                buffer[this.position++] = (byte) (0x80 | c >> 6 & 0x3F);
-                buffer[this.position++] = (byte) (0x80 | c & 0x3F);
+                bytes[position++] = (0xE0 or (c shr 12 and 0x0F)).toByte()
+                require(2)
+                val buffer = bytes
+                buffer[position++] = (0x80 or (c shr 6 and 0x3F)).toByte()
+                buffer[position++] = (0x80 or (c and 0x3F)).toByte()
             } else {
-                buffer[this.position++] = (byte) (0xC0 | c >> 6 & 0x1F);
-                require(1);
-                buffer = this.bytes;
-                buffer[this.position++] = (byte) (0x80 | c & 0x3F);
+                bytes[position++] = (0xC0 or (c shr 6 and 0x1F)).toByte()
+                require(1)
+                bytes[position++] = (0x80 or (c and 0x3F)).toByte()
             }
+            charIndex++
         }
     }
 
-    @SuppressWarnings("deprecation")
-    private void writeAscii_slow(String value, int charCount) {
-        byte[] buffer = this.bytes;
-        int charIndex = 0;
-        int charsToWrite = Math.min(charCount, this.capacity - this.position);
+    private fun writeAscii_slow(value: String, charCount: Int) {
+        var buffer = bytes
+        var charIndex = 0
+        var charsToWrite = charCount.coerceAtMost(capacity - position)
 
         while (charIndex < charCount) {
-            value.getBytes(charIndex, charIndex + charsToWrite, buffer, this.position);
-            charIndex += charsToWrite;
-            this.position += charsToWrite;
-            charsToWrite = Math.min(charCount - charIndex, this.capacity);
+            val stringBytes = value.encodeToByteArray(charIndex, charIndex + charsToWrite)
+            stringBytes.copyInto(buffer, position)
+//            value.toByteArray(charIndex, charIndex + charsToWrite, buffer, position)
+
+            charIndex += charsToWrite
+            position += charsToWrite
+            charsToWrite = Math.min(charCount - charIndex, capacity)
+
             if (require(charsToWrite)) {
-                buffer = this.bytes;
+                buffer = bytes
             }
         }
     }
 
     /**
      * Reads the length and string of UTF8 characters, or null. This can read strings written by
-     * {@link ByteBuffer2#writeString(String)} , {@link ByteBuffer2#writeString(CharSequence)}, and
-     * {@link ByteBuffer2#writeAscii(String)}.
+     * [ByteBuffer2.writeString] , [ByteBuffer2.writeString], and
+     * [ByteBuffer2.writeAscii].
      *
      * @return May be null.
      */
-    public String readString() {
-        int available = this.capacity - this.position;
-
-        int b = this.bytes[this.position++];
-        if ((b & 0x80) == 0) {
-            return readAscii(); // ASCII.
+    fun readString(): String? {
+        val available = capacity - position
+        val b = bytes[position++].toInt()
+        if (b and 0x80 == 0) {
+            return readAscii() // ASCII.
         }
 
         // Null, empty, or UTF8.
-        int charCount = available >= 5 ? readUtf8Length(b) : readUtf8Length_slow(b);
-        switch (charCount) {
-            case 0 :
-                return null;
-            case 1 :
-                return "";
+        var charCount = if (available >= 5) readUtf8Length(b) else readUtf8Length_slow(b)
+        when (charCount) {
+            0 -> return null
+            1 -> return ""
         }
-        charCount--;
 
-        if (this.chars.length < charCount) {
-            this.chars = new char[charCount];
+        charCount--
+        if (chars.size < charCount) {
+            chars = CharArray(charCount)
         }
 
         if (available < charCount) {
-            throw new BufferUnderflowException();
+            throw BufferUnderflowException()
         }
-
-        readUtf8(charCount);
-        return new String(this.chars, 0, charCount);
+        readUtf8(charCount)
+        return String(chars, 0, charCount)
     }
 
-    private int readUtf8Length(int b) {
-        int result = b & 0x3F; // Mask all but first 6 bits.
-        if ((b & 0x40) != 0) { // Bit 7 means another byte, bit 8 means UTF8.
-            byte[] buffer = this.bytes;
-
-            b = buffer[this.position++];
-            result |= (b & 0x7F) << 6;
-            if ((b & 0x80) != 0) {
-                b = buffer[this.position++];
-                result |= (b & 0x7F) << 13;
-                if ((b & 0x80) != 0) {
-                    b = buffer[this.position++];
-                    result |= (b & 0x7F) << 20;
-                    if ((b & 0x80) != 0) {
-                        b = buffer[this.position++];
-                        result |= (b & 0x7F) << 27;
+    private fun readUtf8Length(b: Int): Int {
+        @Suppress("NAME_SHADOWING")
+        var b = b
+        var result = b and 0x3F // Mask all but first 6 bits.
+        if (b and 0x40 != 0) { // Bit 7 means another byte, bit 8 means UTF8.
+            val buffer = bytes
+            b = buffer[position++].toInt()
+            result = result or (b and 0x7F shl 6)
+            if (b and 0x80 != 0) {
+                b = buffer[position++].toInt()
+                result = result or (b and 0x7F shl 13)
+                if (b and 0x80 != 0) {
+                    b = buffer[position++].toInt()
+                    result = result or (b and 0x7F shl 20)
+                    if (b and 0x80 != 0) {
+                        b = buffer[position++].toInt()
+                        result = result or (b and 0x7F shl 27)
                     }
                 }
             }
         }
-        return result;
+        return result
     }
 
-    private int readUtf8Length_slow(int b) {
-        int result = b & 0x3F; // Mask all but first 6 bits.
-        if ((b & 0x40) != 0) { // Bit 7 means another byte, bit 8 means UTF8.
-            byte[] buffer = this.bytes;
-
-            b = buffer[this.position++];
-            result |= (b & 0x7F) << 6;
-            if ((b & 0x80) != 0) {
-                b = buffer[this.position++];
-                result |= (b & 0x7F) << 13;
-                if ((b & 0x80) != 0) {
-                    b = buffer[this.position++];
-                    result |= (b & 0x7F) << 20;
-                    if ((b & 0x80) != 0) {
-                        b = buffer[this.position++];
-                        result |= (b & 0x7F) << 27;
+    private fun readUtf8Length_slow(b: Int): Int {
+        @Suppress("NAME_SHADOWING")
+        var b = b
+        var result = b and 0x3F // Mask all but first 6 bits.
+        if (b and 0x40 != 0) { // Bit 7 means another byte, bit 8 means UTF8.
+            val buffer = bytes
+            b = buffer[position++].toInt()
+            result = result or (b and 0x7F shl 6)
+            if (b and 0x80 != 0) {
+                b = buffer[position++].toInt()
+                result = result or (b and 0x7F shl 13)
+                if (b and 0x80 != 0) {
+                    b = buffer[position++].toInt()
+                    result = result or (b and 0x7F shl 20)
+                    if (b and 0x80 != 0) {
+                        b = buffer[position++].toInt()
+                        result = result or (b and 0x7F shl 27)
                     }
                 }
             }
         }
-        return result;
+        return result
     }
 
-    private void readUtf8(int charCount) {
-        byte[] buffer = this.bytes;
-        int position = this.position;
-        char[] chars = this.chars;
+    private fun readUtf8(charCount: Int) {
+        val buffer = bytes
+        var position = position
+        val chars = chars
 
         // Try to read 7 bit ASCII chars.
-        int charIndex = 0;
-        int spaceAvailable = this.capacity - this.position;
-        int count = Math.min(spaceAvailable, charCount);
-
-        int b;
+        var charIndex = 0
+        val spaceAvailable = capacity - this.position
+        val count = Math.min(spaceAvailable, charCount)
+        var b: Int
         while (charIndex < count) {
-            b = buffer[position++];
+            b = buffer[position++].toInt()
             if (b < 0) {
-                position--;
-                break;
+                position--
+                break
             }
-            chars[charIndex++] = (char) b;
+            chars[charIndex++] = b.toChar()
         }
-        this.position = position;
+        this.position = position
 
         // If buffer didn't hold all chars or any were not ASCII, use slow path for remainder.
         if (charIndex < charCount) {
-            readUtf8_slow(charCount, charIndex);
+            readUtf8_slow(charCount, charIndex)
         }
     }
 
-    private void readUtf8_slow(int charCount, int charIndex) {
-        char[] chars = this.chars;
-        byte[] buffer = this.bytes;
+    private fun readUtf8_slow(charCount: Int, charIndex: Int) {
+        @Suppress("NAME_SHADOWING")
+        var charIndex = charIndex
+        val chars = chars
+        val buffer = bytes
 
         while (charIndex < charCount) {
-            int b = buffer[this.position++] & 0xFF;
-            switch (b >> 4) {
-                case 0 :
-                case 1 :
-                case 2 :
-                case 3 :
-                case 4 :
-                case 5 :
-                case 6 :
-                case 7 :
-                    chars[charIndex] = (char) b;
-                    break;
-                case 12 :
-                case 13 :
-                    chars[charIndex] = (char) ((b & 0x1F) << 6 | buffer[this.position++] & 0x3F);
-                    break;
-                case 14 :
-                    chars[charIndex] = (char) ((b & 0x0F) << 12 | (buffer[this.position++] & 0x3F) << 6 | buffer[this.position++] & 0x3F);
-                    break;
+            val b: Int = buffer[position++].toInt() and 0xFF
+            when (b shr 4) {
+                0, 1, 2, 3, 4, 5, 6, 7 -> chars[charIndex] = b.toChar()
+                12, 13 -> chars[charIndex] = (b and 0x1F shl 6 or (buffer[position++].toInt() and 0x3F)).toChar()
+                14 -> chars[charIndex] =
+                    (b and 0x0F shl 12 or (buffer[position++].toInt() and 0x3F shl 6) or (buffer[position++].toInt() and 0x3F)).toChar()
             }
-            charIndex++;
+            charIndex++
         }
     }
 
-    private String readAscii() {
-        byte[] buffer = this.bytes;
-        int end = this.position;
-        int start = end - 1;
-        int limit = this.capacity;
-        int b;
+    private fun readAscii(): String {
+        val buffer = bytes
+        var end = position
+        val start = end - 1
+        val limit = capacity
+        var b: Int
 
         do {
             if (end == limit) {
-                return readAscii_slow();
+                return readAscii_slow()
             }
-            b = buffer[end++];
-        } while ((b & 0x80) == 0);
+            b = buffer[end++].toInt()
+        } while (b and 0x80 == 0)
 
-        buffer[end - 1] &= 0x7F; // Mask end of ascii bit.
-
-        @SuppressWarnings("deprecation")
-        String value = new String(buffer, 0, start, end - start);
-        buffer[end - 1] |= 0x80;
-
-        this.position = end;
-        return value;
+        buffer[end - 1] = buffer[end - 1] and 0x7F // Mask end of ascii bit.
+        val value = String(buffer, start, end - start)
+        buffer[end - 1] = (buffer[end - 1].toInt() or 0x80).toByte()
+        position = end
+        return value
     }
 
-    private String readAscii_slow() {
-        this.position--; // Re-read the first byte.
+    private fun readAscii_slow(): String {
+        position-- // Re-read the first byte.
 
         // Copy chars currently in buffer.
-        int charCount = this.capacity - this.position;
-        if (charCount > this.chars.length) {
-            this.chars = new char[charCount * 2];
+        var charCount = capacity - position
+        if (charCount > chars.size) {
+            chars = CharArray(charCount * 2)
         }
+        var chars = chars
+        val buffer = bytes
+        var i = position
+        var ii = 0
+        val n = capacity
 
-        char[] chars = this.chars;
-        byte[] buffer = this.bytes;
-        for (int i = this.position, ii = 0, n = this.capacity; i < n; i++, ii++) {
-            chars[ii] = (char) buffer[i];
+        while (i < n) {
+            chars[ii] = buffer[i].toChar()
+            i++
+            ii++
         }
-        this.position = this.capacity;
+        position = capacity
 
         // Copy additional chars one by one.
         while (true) {
-            int b = buffer[this.position++];
-            if (charCount == chars.length) {
-                char[] newChars = new char[charCount * 2];
-                System.arraycopy(chars, 0, newChars, 0, charCount);
-                chars = newChars;
-                this.chars = newChars;
+            val b = buffer[position++].toInt()
+            if (charCount == chars.size) {
+                val newChars = CharArray(charCount * 2)
+                System.arraycopy(chars, 0, newChars, 0, charCount)
+                chars = newChars
+                this.chars = newChars
             }
-            if ((b & 0x80) == 0x80) {
-                chars[charCount++] = (char) (b & 0x7F);
-                break;
+            if (b and 0x80 == 0x80) {
+                chars[charCount++] = (b and 0x7F).toChar()
+                break
             }
-            chars[charCount++] = (char) b;
+            chars[charCount++] = b.toChar()
         }
-
-        return new String(chars, 0, charCount);
+        return String(chars, 0, charCount)
     }
 
     /**
      * Reads the length and string of UTF8 characters, or null. This can read strings written by
-     * {@link ByteBuffer2#writeString(String)} , {@link ByteBuffer2#writeString(CharSequence)}, and
-     * {@link ByteBuffer2#writeAscii(String)}.
+     * [ByteBuffer2.writeString] , [ByteBuffer2.writeString], and
+     * [ByteBuffer2.writeAscii].
      *
      * @return May be null.
      */
-    public StringBuilder readStringBuilder() {
-        int available = this.capacity - this.position;
-        int b = this.bytes[this.position++];
-        if ((b & 0x80) == 0) {
-            return new StringBuilder(readAscii()); // ASCII.
+    fun readStringBuilder(): StringBuilder? {
+        val available = capacity - position
+        val b = bytes[position++].toInt()
+        if (b and 0x80 == 0) {
+            return StringBuilder(readAscii()) // ASCII.
         }
 
         // Null, empty, or UTF8.
-        int charCount = available >= 5 ? readUtf8Length(b) : readUtf8Length_slow(b);
-        switch (charCount) {
-            case 0 :
-                return null;
-            case 1 :
-                return new StringBuilder();
+        var charCount = if (available >= 5) readUtf8Length(b) else readUtf8Length_slow(b)
+        when (charCount) {
+            0 -> return null
+            1 -> return StringBuilder()
         }
-        charCount--;
-        if (this.chars.length < charCount) {
-            this.chars = new char[charCount];
+        charCount--
+        if (chars.size < charCount) {
+            chars = CharArray(charCount)
         }
-
-        readUtf8(charCount);
-        StringBuilder builder = new StringBuilder(charCount);
-        builder.append(this.chars, 0, charCount);
-
-        return builder;
+        readUtf8(charCount)
+        val builder = StringBuilder(charCount)
+        builder.append(chars, 0, charCount)
+        return builder
     }
-
-
-   // float
-
+    // float
     /**
      * Writes a 4 byte float.
      */
-    public void writeFloat(float value) {
-        writeInt(Float.floatToIntBits(value));
+    fun writeFloat(value: Float) {
+        writeInt(java.lang.Float.floatToIntBits(value))
     }
 
     /**
      * Writes a 1-5 byte float with reduced precision.
      *
      * @param optimizePositive
-     *            If true, small positive numbers will be more efficient (1 byte) and small negative numbers will be
-     *            inefficient (5 bytes).
+     * If true, small positive numbers will be more efficient (1 byte) and small negative numbers will be
+     * inefficient (5 bytes).
      */
-    public int writeFloat(float value, float precision, boolean optimizePositive) {
-        return writeInt((int) (value * precision), optimizePositive);
+    fun writeFloat(value: Float, precision: Float, optimizePositive: Boolean): Int {
+        return writeInt((value * precision).toInt(), optimizePositive)
     }
 
     /**
      * Reads a 4 byte float.
      */
-    public float readFloat() {
-        return Float.intBitsToFloat(readInt());
+    fun readFloat(): Float {
+        return java.lang.Float.intBitsToFloat(readInt())
     }
 
     /**
      * Reads a 1-5 byte float with reduced precision.
      */
-    public float readFloat(float precision, boolean optimizePositive) {
-        return readInt(optimizePositive) / precision;
+    fun readFloat(precision: Float, optimizePositive: Boolean): Float {
+        return readInt(optimizePositive) / precision
     }
 
     /**
      * Reads a 4 byte float, does not advance the position
      */
-    public float readFloat(int position) {
-        return Float.intBitsToFloat(readInt(position));
+    fun readFloat(position: Int): Float {
+        return java.lang.Float.intBitsToFloat(readInt(position))
     }
 
     /**
      * Reads a 1-5 byte float with reduced precision, does not advance the position
      */
-    public float readFloat(int position, float precision, boolean optimizePositive) {
-        return readInt(position, optimizePositive) / precision;
+    fun readFloat(position: Int, precision: Float, optimizePositive: Boolean): Float {
+        return readInt(position, optimizePositive) / precision
     }
-
     // short
-
     /**
      * Writes a 2 byte short. Uses BIG_ENDIAN byte order.
      */
-    public void writeShort(int value) {
-        require(2);
-        byte[] buffer = this.bytes;
-        buffer[this.position++] = (byte) (value >>> 8);
-        buffer[this.position++] = (byte) value;
+    fun writeShort(value: Int) {
+        require(2)
+        val buffer = bytes
+        buffer[position++] = (value ushr 8).toByte()
+        buffer[position++] = value.toByte()
     }
 
     /**
      * Reads a 2 byte short.
      */
-    public short readShort() {
-        byte[] buffer = this.bytes;
-        return (short) ((buffer[this.position++] & 0xFF) << 8 | buffer[this.position++] & 0xFF);
+    fun readShort(): Short {
+        val buffer = bytes
+        return ((buffer[position++].toInt() and 0xFF) shl 8 or (buffer[position++].toInt() and 0xFF)).toShort()
     }
 
     /**
      * Reads a 2 byte short as an int from 0 to 65535.
      */
-    public int readShortUnsigned() {
-        byte[] buffer = this.bytes;
-        return (buffer[this.position++] & 0xFF) << 8 | buffer[this.position++] & 0xFF;
+    fun readShortUnsigned(): Int {
+        val buffer = bytes
+        return buffer[position++].toInt() and 0xFF shl 8 or buffer[position++].toInt() and 0xFF
     }
 
     /**
      * Reads a 2 byte short, does not advance the position
      */
-    public short readShort(int position) {
-        byte[] buffer = this.bytes;
-        return (short) ((buffer[position++] & 0xFF) << 8 | buffer[position] & 0xFF);
+    fun readShort(position: Int): Short {
+        @Suppress("NAME_SHADOWING")
+        var position = position
+        val buffer = bytes
+        return (buffer[position++].toInt() and 0xFF shl 8 or buffer[position].toInt() and 0xFF).toShort()
     }
 
     /**
      * Reads a 2 byte short as an int from 0 to 65535, does not advance the position
      */
-    public int readShortUnsigned(int position) {
-        byte[] buffer = this.bytes;
-        return (buffer[position++] & 0xFF) << 8 | buffer[position] & 0xFF;
+    fun readShortUnsigned(position: Int): Int {
+        @Suppress("NAME_SHADOWING")
+        var position = position
+        val buffer = bytes
+        return buffer[position++].toInt() and 0xFF shl 8 or buffer[position].toInt() and 0xFF
     }
-
-   // long
-
+    // long
     /**
      * Writes an 8 byte long. Uses BIG_ENDIAN byte order.
      */
-    public void writeLong(long value) {
-        require(8);
-
-        byte[] buffer = this.bytes;
-        buffer[this.position++] = (byte) (value >>> 56);
-        buffer[this.position++] = (byte) (value >>> 48);
-        buffer[this.position++] = (byte) (value >>> 40);
-        buffer[this.position++] = (byte) (value >>> 32);
-        buffer[this.position++] = (byte) (value >>> 24);
-        buffer[this.position++] = (byte) (value >>> 16);
-        buffer[this.position++] = (byte) (value >>> 8);
-        buffer[this.position++] = (byte) value;
+    fun writeLong(value: Long) {
+        require(8)
+        val buffer = bytes
+        buffer[position++] = (value ushr 56).toByte()
+        buffer[position++] = (value ushr 48).toByte()
+        buffer[position++] = (value ushr 40).toByte()
+        buffer[position++] = (value ushr 32).toByte()
+        buffer[position++] = (value ushr 24).toByte()
+        buffer[position++] = (value ushr 16).toByte()
+        buffer[position++] = (value ushr 8).toByte()
+        buffer[position++] = value.toByte()
     }
 
     /**
@@ -1225,255 +1213,243 @@ public class ByteBuffer2 {
      * representation for efficiency reasons.
      *
      * @param optimizePositive
-     *            If true, small positive numbers will be more efficient (1 byte) and small negative numbers will be
-     *            inefficient (9 bytes).
+     * If true, small positive numbers will be more efficient (1 byte) and small negative numbers will be
+     * inefficient (9 bytes).
      */
-    public int writeLong(long value, boolean optimizePositive) {
-        return writeVarLong(value, optimizePositive);
+    fun writeLong(value: Long, optimizePositive: Boolean): Int {
+        return writeVarLong(value, optimizePositive)
     }
 
     /**
      * Writes a 1-9 byte long. It is guaranteed that a varible length encoding will be used.
      *
      * @param optimizePositive
-     *            If true, small positive numbers will be more efficient (1 byte) and small negative numbers will be
-     *            inefficient (9 bytes).
+     * If true, small positive numbers will be more efficient (1 byte) and small negative numbers will be
+     * inefficient (9 bytes).
      */
-    public int writeVarLong(long value, boolean optimizePositive) {
-        if (!optimizePositive) {
-            value = value << 1 ^ value >> 63;
+    fun writeVarLong(value: Long, optimizePositive: Boolean): Int {
+        @Suppress("NAME_SHADOWING")
+        var value = value
+        if (!optimizePositive) value = value shl 1 xor (value shr 63)
+        if (value ushr 7 == 0L) {
+            require(1)
+            bytes[position++] = value.toByte()
+            return 1
         }
-        if (value >>> 7 == 0) {
-            require(1);
-            this.bytes[this.position++] = (byte) value;
-            return 1;
+        if (value ushr 14 == 0L) {
+            require(2)
+            val buffer = bytes
+            buffer[position++] = (value and 0x7F or 0x80).toByte()
+            buffer[position++] = (value ushr 7).toByte()
+            return 2
         }
-        if (value >>> 14 == 0) {
-            require(2);
-            byte[] buffer = this.bytes;
-            buffer[this.position++] = (byte) (value & 0x7F | 0x80);
-            buffer[this.position++] = (byte) (value >>> 7);
-            return 2;
+        if (value ushr 21 == 0L) {
+            require(3)
+            val buffer = bytes
+            buffer[position++] = (value and 0x7F or 0x80).toByte()
+            buffer[position++] = (value ushr 7 or 0x80).toByte()
+            buffer[position++] = (value ushr 14).toByte()
+            return 3
         }
-        if (value >>> 21 == 0) {
-            require(3);
-            byte[] buffer = this.bytes;
-            buffer[this.position++] = (byte) (value & 0x7F | 0x80);
-            buffer[this.position++] = (byte) (value >>> 7 | 0x80);
-            buffer[this.position++] = (byte) (value >>> 14);
-            return 3;
+        if (value ushr 28 == 0L) {
+            require(4)
+            val buffer = bytes
+            buffer[position++] = (value and 0x7F or 0x80).toByte()
+            buffer[position++] = (value ushr 7 or 0x80).toByte()
+            buffer[position++] = (value ushr 14 or 0x80).toByte()
+            buffer[position++] = (value ushr 21).toByte()
+            return 4
         }
-        if (value >>> 28 == 0) {
-            require(4);
-            byte[] buffer = this.bytes;
-            buffer[this.position++] = (byte) (value & 0x7F | 0x80);
-            buffer[this.position++] = (byte) (value >>> 7 | 0x80);
-            buffer[this.position++] = (byte) (value >>> 14 | 0x80);
-            buffer[this.position++] = (byte) (value >>> 21);
-            return 4;
+        if (value ushr 35 == 0L) {
+            require(5)
+            val buffer = bytes
+            buffer[position++] = (value and 0x7F or 0x80).toByte()
+            buffer[position++] = (value ushr 7 or 0x80).toByte()
+            buffer[position++] = (value ushr 14 or 0x80).toByte()
+            buffer[position++] = (value ushr 21 or 0x80).toByte()
+            buffer[position++] = (value ushr 28).toByte()
+            return 5
         }
-        if (value >>> 35 == 0) {
-            require(5);
-            byte[] buffer = this.bytes;
-            buffer[this.position++] = (byte) (value & 0x7F | 0x80);
-            buffer[this.position++] = (byte) (value >>> 7 | 0x80);
-            buffer[this.position++] = (byte) (value >>> 14 | 0x80);
-            buffer[this.position++] = (byte) (value >>> 21 | 0x80);
-            buffer[this.position++] = (byte) (value >>> 28);
-            return 5;
+        if (value ushr 42 == 0L) {
+            require(6)
+            val buffer = bytes
+            buffer[position++] = (value and 0x7F or 0x80).toByte()
+            buffer[position++] = (value ushr 7 or 0x80).toByte()
+            buffer[position++] = (value ushr 14 or 0x80).toByte()
+            buffer[position++] = (value ushr 21 or 0x80).toByte()
+            buffer[position++] = (value ushr 28 or 0x80).toByte()
+            buffer[position++] = (value ushr 35).toByte()
+            return 6
         }
-        if (value >>> 42 == 0) {
-            require(6);
-            byte[] buffer = this.bytes;
-            buffer[this.position++] = (byte) (value & 0x7F | 0x80);
-            buffer[this.position++] = (byte) (value >>> 7 | 0x80);
-            buffer[this.position++] = (byte) (value >>> 14 | 0x80);
-            buffer[this.position++] = (byte) (value >>> 21 | 0x80);
-            buffer[this.position++] = (byte) (value >>> 28 | 0x80);
-            buffer[this.position++] = (byte) (value >>> 35);
-            return 6;
+        if (value ushr 49 == 0L) {
+            require(7)
+            val buffer = bytes
+            buffer[position++] = (value and 0x7F or 0x80).toByte()
+            buffer[position++] = (value ushr 7 or 0x80).toByte()
+            buffer[position++] = (value ushr 14 or 0x80).toByte()
+            buffer[position++] = (value ushr 21 or 0x80).toByte()
+            buffer[position++] = (value ushr 28 or 0x80).toByte()
+            buffer[position++] = (value ushr 35 or 0x80).toByte()
+            buffer[position++] = (value ushr 42).toByte()
+            return 7
         }
-        if (value >>> 49 == 0) {
-            require(7);
-            byte[] buffer = this.bytes;
-            buffer[this.position++] = (byte) (value & 0x7F | 0x80);
-            buffer[this.position++] = (byte) (value >>> 7 | 0x80);
-            buffer[this.position++] = (byte) (value >>> 14 | 0x80);
-            buffer[this.position++] = (byte) (value >>> 21 | 0x80);
-            buffer[this.position++] = (byte) (value >>> 28 | 0x80);
-            buffer[this.position++] = (byte) (value >>> 35 | 0x80);
-            buffer[this.position++] = (byte) (value >>> 42);
-            return 7;
+        if (value ushr 56 == 0L) {
+            require(8)
+            val buffer = bytes
+            buffer[position++] = (value and 0x7F or 0x80).toByte()
+            buffer[position++] = (value ushr 7 or 0x80).toByte()
+            buffer[position++] = (value ushr 14 or 0x80).toByte()
+            buffer[position++] = (value ushr 21 or 0x80).toByte()
+            buffer[position++] = (value ushr 28 or 0x80).toByte()
+            buffer[position++] = (value ushr 35 or 0x80).toByte()
+            buffer[position++] = (value ushr 42 or 0x80).toByte()
+            buffer[position++] = (value ushr 49).toByte()
+            return 8
         }
-        if (value >>> 56 == 0) {
-            require(8);
-            byte[] buffer = this.bytes;
-            buffer[this.position++] = (byte) (value & 0x7F | 0x80);
-            buffer[this.position++] = (byte) (value >>> 7 | 0x80);
-            buffer[this.position++] = (byte) (value >>> 14 | 0x80);
-            buffer[this.position++] = (byte) (value >>> 21 | 0x80);
-            buffer[this.position++] = (byte) (value >>> 28 | 0x80);
-            buffer[this.position++] = (byte) (value >>> 35 | 0x80);
-            buffer[this.position++] = (byte) (value >>> 42 | 0x80);
-            buffer[this.position++] = (byte) (value >>> 49);
-            return 8;
-        }
-
-        require(9);
-        byte[] buffer = this.bytes;
-        buffer[this.position++] = (byte) (value & 0x7F | 0x80);
-        buffer[this.position++] = (byte) (value >>> 7 | 0x80);
-        buffer[this.position++] = (byte) (value >>> 14 | 0x80);
-        buffer[this.position++] = (byte) (value >>> 21 | 0x80);
-        buffer[this.position++] = (byte) (value >>> 28 | 0x80);
-        buffer[this.position++] = (byte) (value >>> 35 | 0x80);
-        buffer[this.position++] = (byte) (value >>> 42 | 0x80);
-        buffer[this.position++] = (byte) (value >>> 49 | 0x80);
-        buffer[this.position++] = (byte) (value >>> 56);
-        return 9;
+        require(9)
+        val buffer = bytes
+        buffer[position++] = (value and 0x7F or 0x80).toByte()
+        buffer[position++] = (value ushr 7 or 0x80).toByte()
+        buffer[position++] = (value ushr 14 or 0x80).toByte()
+        buffer[position++] = (value ushr 21 or 0x80).toByte()
+        buffer[position++] = (value ushr 28 or 0x80).toByte()
+        buffer[position++] = (value ushr 35 or 0x80).toByte()
+        buffer[position++] = (value ushr 42 or 0x80).toByte()
+        buffer[position++] = (value ushr 49 or 0x80).toByte()
+        buffer[position++] = (value ushr 56).toByte()
+        return 9
     }
 
     /**
-     * Returns true if enough bytes are available to read a long with {@link #readLong(boolean)}.
+     * Returns true if enough bytes are available to read a long with [.readLong].
      */
-    public boolean canReadLong() {
-        if (this.capacity - this.position >= 9) {
-            return true;
+    fun canReadLong(): Boolean {
+        if (capacity - position >= 9) {
+            return true
         }
-
-        if (this.position + 1 > this.capacity) {
-            return false;
+        if (position + 1 > capacity) {
+            return false
         }
-
-        byte[] buffer = this.bytes;
-        int p = this.position;
-        if ((buffer[p++] & 0x80) == 0) {
-            return true;
+        val buffer = bytes
+        var p = position
+        if (buffer[p++].toInt() and 0x80 == 0) {
+            return true
         }
-        if (p == this.capacity) {
-            return false;
+        if (p == capacity) {
+            return false
         }
-        if ((buffer[p++] & 0x80) == 0) {
-            return true;
+        if (buffer[p++].toInt() and 0x80 == 0) {
+            return true
         }
-        if (p == this.capacity) {
-            return false;
+        if (p == capacity) {
+            return false
         }
-        if ((buffer[p++] & 0x80) == 0) {
-            return true;
+        if (buffer[p++].toInt() and 0x80 == 0) {
+            return true
         }
-        if (p == this.capacity) {
-            return false;
+        if (p == capacity) {
+            return false
         }
-        if ((buffer[p++] & 0x80) == 0) {
-            return true;
+        if (buffer[p++].toInt() and 0x80 == 0) {
+            return true
         }
-        if (p == this.capacity) {
-            return false;
+        if (p == capacity) {
+            return false
         }
-        if ((buffer[p++] & 0x80) == 0) {
-            return true;
+        if (buffer[p++].toInt() and 0x80 == 0) {
+            return true
         }
-        if (p == this.capacity) {
-            return false;
+        if (p == capacity) {
+            return false
         }
-        if ((buffer[p++] & 0x80) == 0) {
-            return true;
+        if (buffer[p++].toInt() and 0x80 == 0) {
+            return true
         }
-        if (p == this.capacity) {
-            return false;
+        if (p == capacity) {
+            return false
         }
-        if ((buffer[p++] & 0x80) == 0) {
-            return true;
+        if (buffer[p++].toInt() and 0x80 == 0) {
+            return true
         }
-        if (p == this.capacity) {
-            return false;
+        if (p == capacity) {
+            return false
         }
-        if ((buffer[p++] & 0x80) == 0) {
-            return true;
-        }
-
-        return p != this.capacity;
+        return if (buffer[p++].toInt() and 0x80 == 0) {
+            true
+        } else p != capacity
     }
 
     /**
-     * Returns true if enough bytes are available to read a long with {@link #readLong(boolean)}.
+     * Returns true if enough bytes are available to read a long with [.readLong].
      */
-    public boolean canReadLong(int position) {
-        if (this.capacity - position >= 9) {
-            return true;
+    fun canReadLong(position: Int): Boolean {
+        if (capacity - position >= 9) {
+            return true
         }
-
-        if (position + 1 > this.capacity) {
-            return false;
+        if (position + 1 > capacity) {
+            return false
         }
-
-        byte[] buffer = this.bytes;
-        int p = position;
-        if ((buffer[p++] & 0x80) == 0) {
-            return true;
+        val buffer = bytes
+        var p = position
+        if (buffer[p++].toInt() and 0x80 == 0) {
+            return true
         }
-        if (p == this.capacity) {
-            return false;
+        if (p == capacity) {
+            return false
         }
-        if ((buffer[p++] & 0x80) == 0) {
-            return true;
+        if (buffer[p++].toInt() and 0x80 == 0) {
+            return true
         }
-        if (p == this.capacity) {
-            return false;
+        if (p == capacity) {
+            return false
         }
-        if ((buffer[p++] & 0x80) == 0) {
-            return true;
+        if (buffer[p++].toInt() and 0x80 == 0) {
+            return true
         }
-        if (p == this.capacity) {
-            return false;
+        if (p == capacity) {
+            return false
         }
-        if ((buffer[p++] & 0x80) == 0) {
-            return true;
+        if (buffer[p++].toInt() and 0x80 == 0) {
+            return true
         }
-        if (p == this.capacity) {
-            return false;
+        if (p == capacity) {
+            return false
         }
-        if ((buffer[p++] & 0x80) == 0) {
-            return true;
+        if (buffer[p++].toInt() and 0x80 == 0) {
+            return true
         }
-        if (p == this.capacity) {
-            return false;
+        if (p == capacity) {
+            return false
         }
-        if ((buffer[p++] & 0x80) == 0) {
-            return true;
+        if (buffer[p++].toInt() and 0x80 == 0) {
+            return true
         }
-        if (p == this.capacity) {
-            return false;
+        if (p == capacity) {
+            return false
         }
-        if ((buffer[p++] & 0x80) == 0) {
-            return true;
+        if (buffer[p++].toInt() and 0x80 == 0) {
+            return true
         }
-        if (p == this.capacity) {
-            return false;
+        if (p == capacity) {
+            return false
         }
-        if ((buffer[p++] & 0x80) == 0) {
-            return true;
-        }
-
-        return p != this.capacity;
+        return if (buffer[p++].toInt() and 0x80 == 0) {
+            true
+        } else p != capacity
     }
 
     /**
      * Reads an 8 byte long.
      */
-    public long readLong() {
-        byte[] buffer = this.bytes;
-
-        return (long) buffer[this.position++] << 56
-                | (long) (buffer[this.position++] & 0xFF) << 48
-                | (long) (buffer[this.position++] & 0xFF) << 40
-                | (long) (buffer[this.position++] & 0xFF) << 32
-                | (long) (buffer[this.position++] & 0xFF) << 24
-                | (buffer[this.position++] & 0xFF) << 16
-                | (buffer[this.position++] & 0xFF) << 8
-                | buffer[this.position++] & 0xFF;
-
+    fun readLong(): Long {
+        val buffer = bytes
+        return buffer[position++].toLong() shl 56 or ((buffer[position++].toInt() and 0xFF).toLong() shl 48
+                ) or ((buffer[position++].toInt() and 0xFF).toLong() shl 40
+                ) or ((buffer[position++].toInt() and 0xFF).toLong() shl 32
+                ) or ((buffer[position++].toInt() and 0xFF).toLong() shl 24
+                ) or ((buffer[position++].toInt() and 0xFF).toLong() shl 16
+                ) or ((buffer[position++].toInt() and 0xFF).toLong() shl 8
+                ) or (buffer[position++].toInt() and 0xFF).toLong()
     }
 
     /**
@@ -1481,77 +1457,76 @@ public class ByteBuffer2 {
      * guaranteed that a variable length encoding will be really used. The stream may decide to use native-sized integer
      * representation for efficiency reasons.
      */
-    public long readLong(boolean optimizePositive) {
-        return readVarLong(optimizePositive);
+    fun readLong(optimizePositive: Boolean): Long {
+        return readVarLong(optimizePositive)
     }
 
     /**
      * Reads an 8 byte long, does not advance the position
      */
-    public long readLong(int position) {
-        byte[] buffer = this.bytes;
-
-        return (long) buffer[position++] << 56
-                | (long) (buffer[position++] & 0xFF) << 48
-                | (long) (buffer[position++] & 0xFF) << 40
-                | (long) (buffer[position++] & 0xFF) << 32
-                | (long) (buffer[position++] & 0xFF) << 24
-                | (buffer[position++] & 0xFF) << 16
-                | (buffer[position++] & 0xFF) << 8
-                | buffer[position] & 0xFF;
-
+    fun readLong(position: Int): Long {
+        @Suppress("NAME_SHADOWING")
+        var position = position
+        val buffer = bytes
+        return buffer[position++].toLong() shl 56 or ((buffer[position++].toInt() and 0xFF).toLong() shl 48
+                ) or ((buffer[position++].toInt() and 0xFF).toLong() shl 40
+                ) or ((buffer[position++].toInt() and 0xFF).toLong() shl 32
+                ) or ((buffer[position++].toInt() and 0xFF).toLong() shl 24
+                ) or ((buffer[position++].toInt() and 0xFF).toLong() shl 16
+                ) or ((buffer[position++].toInt() and 0xFF).toLong() shl 8
+                ) or (buffer[position].toInt() and 0xFF).toLong()
     }
 
     /**
      * Reads a 1-9 byte long. This stream may consider such a variable length encoding request as a hint. It is not
      * guaranteed that a variable length encoding will be really used. The stream may decide to use native-sized integer
      * representation for efficiency reasons.
-     * <p>
+     *
+     *
      * does not advance the position
      */
-    public long readLong(int position, boolean optimizePositive) {
-        int pos = this.position;
-        this.position = position;
-        long value = readVarLong(optimizePositive);
-        this.position = pos;
-        return value;
+    fun readLong(position: Int, optimizePositive: Boolean): Long {
+        val pos = this.position
+        this.position = position
+        val value = readVarLong(optimizePositive)
+        this.position = pos
+        return value
     }
 
     /**
      * Reads a 1-9 byte long. It is guaranteed that a varible length encoding will be used.
      */
-    private long readVarLong(boolean optimizePositive) {
-        if (this.capacity - this.position < 9) {
-            return readLong_slow(optimizePositive);
+    private fun readVarLong(optimizePositive: Boolean): Long {
+        if (capacity - position < 9) {
+            return readLong_slow(optimizePositive)
         }
-
-        int b = this.bytes[this.position++];
-        long result = b & 0x7F;
-        if ((b & 0x80) != 0) {
-            byte[] buffer = this.bytes;
-            b = buffer[this.position++];
-            result |= (b & 0x7F) << 7;
-            if ((b & 0x80) != 0) {
-                b = buffer[this.position++];
-                result |= (b & 0x7F) << 14;
-                if ((b & 0x80) != 0) {
-                    b = buffer[this.position++];
-                    result |= (b & 0x7F) << 21;
-                    if ((b & 0x80) != 0) {
-                        b = buffer[this.position++];
-                        result |= (long) (b & 0x7F) << 28;
-                        if ((b & 0x80) != 0) {
-                            b = buffer[this.position++];
-                            result |= (long) (b & 0x7F) << 35;
-                            if ((b & 0x80) != 0) {
-                                b = buffer[this.position++];
-                                result |= (long) (b & 0x7F) << 42;
-                                if ((b & 0x80) != 0) {
-                                    b = buffer[this.position++];
-                                    result |= (long) (b & 0x7F) << 49;
-                                    if ((b & 0x80) != 0) {
-                                        b = buffer[this.position++];
-                                        result |= (long) b << 56;
+        var b = bytes[position++].toInt()
+        var result = (b and 0x7F).toLong()
+        if (b and 0x80 != 0) {
+            val buffer = bytes
+            b = buffer[position++].toInt()
+            result = result or (b and 0x7F shl 7).toLong()
+            if (b and 0x80 != 0) {
+                b = buffer[position++].toInt()
+                result = result or (b and 0x7F shl 14).toLong()
+                if (b and 0x80 != 0) {
+                    b = buffer[position++].toInt()
+                    result = result or (b and 0x7F shl 21).toLong()
+                    if (b and 0x80 != 0) {
+                        b = buffer[position++].toInt()
+                        result = result or ((b and 0x7F).toLong() shl 28)
+                        if (b and 0x80 != 0) {
+                            b = buffer[position++].toInt()
+                            result = result or ((b and 0x7F).toLong() shl 35)
+                            if (b and 0x80 != 0) {
+                                b = buffer[position++].toInt()
+                                result = result or ((b and 0x7F).toLong() shl 42)
+                                if (b and 0x80 != 0) {
+                                    b = buffer[position++].toInt()
+                                    result = result or ((b and 0x7F).toLong() shl 49)
+                                    if (b and 0x80 != 0) {
+                                        b = buffer[position++].toInt()
+                                        result = result or (b.toLong() shl 56)
                                     }
                                 }
                             }
@@ -1560,44 +1535,41 @@ public class ByteBuffer2 {
                 }
             }
         }
-
         if (!optimizePositive) {
-            result = result >>> 1 ^ -(result & 1);
+            result = result ushr 1 xor -(result and 1)
         }
-
-        return result;
+        return result
     }
 
-    private long readLong_slow(boolean optimizePositive) {
+    private fun readLong_slow(optimizePositive: Boolean): Long {
         // The buffer is guaranteed to have at least 1 byte.
-        byte[] buffer = this.bytes;
-        int b = buffer[this.position++];
-
-        long result = b & 0x7F;
-        if ((b & 0x80) != 0) {
-            b = buffer[this.position++];
-            result |= (b & 0x7F) << 7;
-            if ((b & 0x80) != 0) {
-                b = buffer[this.position++];
-                result |= (b & 0x7F) << 14;
-                if ((b & 0x80) != 0) {
-                    b = buffer[this.position++];
-                    result |= (b & 0x7F) << 21;
-                    if ((b & 0x80) != 0) {
-                        b = buffer[this.position++];
-                        result |= (long) (b & 0x7F) << 28;
-                        if ((b & 0x80) != 0) {
-                            b = buffer[this.position++];
-                            result |= (long) (b & 0x7F) << 35;
-                            if ((b & 0x80) != 0) {
-                                b = buffer[this.position++];
-                                result |= (long) (b & 0x7F) << 42;
-                                if ((b & 0x80) != 0) {
-                                    b = buffer[this.position++];
-                                    result |= (long) (b & 0x7F) << 49;
-                                    if ((b & 0x80) != 0) {
-                                        b = buffer[this.position++];
-                                        result |= (long) b << 56;
+        val buffer = bytes
+        var b = buffer[position++].toInt()
+        var result = (b and 0x7F).toLong()
+        if (b and 0x80 != 0) {
+            b = buffer[position++].toInt()
+            result = result or (b and 0x7F shl 7).toLong()
+            if (b and 0x80 != 0) {
+                b = buffer[position++].toInt()
+                result = result or (b and 0x7F shl 14).toLong()
+                if (b and 0x80 != 0) {
+                    b = buffer[position++].toInt()
+                    result = result or (b and 0x7F shl 21).toLong()
+                    if (b and 0x80 != 0) {
+                        b = buffer[position++].toInt()
+                        result = result or ((b and 0x7F).toLong() shl 28)
+                        if (b and 0x80 != 0) {
+                            b = buffer[position++].toInt()
+                            result = result or ((b and 0x7F).toLong() shl 35)
+                            if (b and 0x80 != 0) {
+                                b = buffer[position++].toInt()
+                                result = result or ((b and 0x7F).toLong() shl 42)
+                                if (b and 0x80 != 0) {
+                                    b = buffer[position++].toInt()
+                                    result = result or ((b and 0x7F).toLong() shl 49)
+                                    if (b and 0x80 != 0) {
+                                        b = buffer[position++].toInt()
+                                        result = result or (b.toLong() shl 56)
                                     }
                                 }
                             }
@@ -1606,355 +1578,308 @@ public class ByteBuffer2 {
                 }
             }
         }
-
         if (!optimizePositive) {
-            result = result >>> 1 ^ -(result & 1);
+            result = result ushr 1 xor -(result and 1)
         }
-        return result;
+        return result
     }
-
-   // boolean
-
+    // boolean
     /**
      * Writes a 1 byte boolean.
      */
-    public void writeBoolean(boolean value) {
-        require(1);
-        this.bytes[this.position++] = (byte) (value ? 1 : 0);
+    fun writeBoolean(value: Boolean) {
+        require(1)
+        bytes[position++] = (if (value) 1 else 0).toByte()
     }
 
     /**
      * Reads a 1 byte boolean.
      */
-    public boolean readBoolean ()   {
-       return this.bytes[this.position++] == 1;
+    fun readBoolean(): Boolean {
+        return bytes[position++].toInt() == 1
     }
 
     /**
      * Reads a 1 byte boolean, does not advance the position
      */
-    public boolean readBoolean (int position)   {
-       return this.bytes[position] == 1;
+    fun readBoolean(position: Int): Boolean {
+        return bytes[position] .toInt()== 1
     }
-
     // char
-
     /**
      * Writes a 2 byte char. Uses BIG_ENDIAN byte order.
      */
-    public void writeChar(char value) {
-        require(2);
-        byte[] buffer = this.bytes;
-        buffer[this.position++] = (byte) (value >>> 8);
-        buffer[this.position++] = (byte) value;
+    fun writeChar(value: Char) {
+        require(2)
+        val buffer = bytes
+        buffer[position++] = (value.code ushr 8).toByte()
+        buffer[position++] = value.code.toByte()
     }
 
     /**
      * Reads a 2 byte char.
      */
-    public char readChar() {
-        byte[] buffer = this.bytes;
-        return (char) ((buffer[this.position++] & 0xFF) << 8 | buffer[this.position++] & 0xFF);
+    fun readChar(): Char {
+        val buffer = bytes
+        return ((buffer[position++].toInt() and 0xFF) shl 8 or (buffer[position++].toInt() and 0xFF)).toChar()
     }
 
     /**
      * Reads a 2 byte char, does not advance the position
      */
-    public char readChar(int position) {
-        byte[] buffer = this.bytes;
-        return (char) ((buffer[position++] & 0xFF) << 8 | buffer[position] & 0xFF);
+    fun readChar(position: Int): Char {
+        @Suppress("NAME_SHADOWING")
+        var position = position
+        val buffer = bytes
+        return (buffer[position++].toInt() and 0xFF shl 8 or buffer[position].toInt() and 0xFF).toChar()
     }
 
     // double
-
     /**
      * Writes an 8 byte double.
      */
-    public void writeDouble(double value) {
-        writeLong(Double.doubleToLongBits(value));
+    fun writeDouble(value: Double) {
+        writeLong(java.lang.Double.doubleToLongBits(value))
     }
 
     /**
      * Writes a 1-9 byte double with reduced precision
      *
      * @param optimizePositive
-     *            If true, small positive numbers will be more efficient (1 byte) and small negative numbers will be
-     *            inefficient (9 bytes).
+     * If true, small positive numbers will be more efficient (1 byte) and small negative numbers will be
+     * inefficient (9 bytes).
      */
-    public int writeDouble(double value, double precision, boolean optimizePositive) {
-        return writeLong((long) (value * precision), optimizePositive);
+    fun writeDouble(value: Double, precision: Double, optimizePositive: Boolean): Int {
+        return writeLong((value * precision).toLong(), optimizePositive)
     }
-
 
     /**
      * Reads an 8 bytes double.
      */
-    public double readDouble() {
-        return Double.longBitsToDouble(readLong());
+    fun readDouble(): Double {
+        return java.lang.Double.longBitsToDouble(readLong())
     }
 
     /**
      * Reads a 1-9 byte double with reduced precision.
      */
-    public double readDouble(double precision, boolean optimizePositive) {
-        return readLong(optimizePositive) / precision;
+    fun readDouble(precision: Double, optimizePositive: Boolean): Double {
+        return readLong(optimizePositive) / precision
     }
 
     /**
      * Reads an 8 bytes double, does not advance the position
      */
-    public double readDouble(int position) {
-        return Double.longBitsToDouble(readLong(position));
+    fun readDouble(position: Int): Double {
+        return java.lang.Double.longBitsToDouble(readLong(position))
     }
 
     /**
      * Reads a 1-9 byte double with reduced precision, does not advance the position
      */
-    public double readDouble(int position, double precision, boolean optimizePositive) {
-        return readLong(position, optimizePositive) / precision;
+    fun readDouble(position: Int, precision: Double, optimizePositive: Boolean): Double {
+        return readLong(position, optimizePositive) / precision
     }
 
-
-
-
-
-    /**
-     * Returns the number of bytes that would be written with {@link #writeInt(int, boolean)}.
-     */
-    public static int intLength(int value, boolean optimizePositive) {
-        if (!optimizePositive) {
-            value = value << 1 ^ value >> 31;
-        }
-        if (value >>> 7 == 0) {
-            return 1;
-        }
-        if (value >>> 14 == 0) {
-            return 2;
-        }
-        if (value >>> 21 == 0) {
-            return 3;
-        }
-        if (value >>> 28 == 0) {
-            return 4;
-        }
-        return 5;
-    }
-
-    /**
-     * Returns the number of bytes that would be written with {@link #writeLong(long, boolean)}.
-     */
-   public static int longLength(long value, boolean optimizePositive) {
-        if (!optimizePositive) {
-            value = value << 1 ^ value >> 63;
-        }
-        if (value >>> 7 == 0) {
-            return 1;
-        }
-        if (value >>> 14 == 0) {
-            return 2;
-        }
-        if (value >>> 21 == 0) {
-            return 3;
-        }
-        if (value >>> 28 == 0) {
-            return 4;
-        }
-        if (value >>> 35 == 0) {
-            return 5;
-        }
-        if (value >>> 42 == 0) {
-            return 6;
-        }
-        if (value >>> 49 == 0) {
-            return 7;
-        }
-        if (value >>> 56 == 0) {
-            return 8;
-        }
-        return 9;
-    }
-
-   // Methods implementing bulk operations on arrays of primitive types
-
+    // Methods implementing bulk operations on arrays of primitive types
     /**
      * Bulk output of an int array.
      */
-    public void writeInts(int[] object, boolean optimizePositive) {
-        for (int i = 0, n = object.length; i < n; i++) {
-            writeInt(object[i], optimizePositive);
+    fun writeInts(`object`: IntArray, optimizePositive: Boolean) {
+        var i = 0
+        val n = `object`.size
+        while (i < n) {
+            writeInt(`object`[i], optimizePositive)
+            i++
         }
     }
 
     /**
      * Bulk input of an int array.
      */
-    public int[] readInts(int length, boolean optimizePositive) {
-        int[] array = new int[length];
-        for (int i = 0; i < length; i++) {
-            array[i] = readInt(optimizePositive);
+    fun readInts(length: Int, optimizePositive: Boolean): IntArray {
+        val array = IntArray(length)
+        for (i in 0 until length) {
+            array[i] = readInt(optimizePositive)
         }
-        return array;
+        return array
     }
 
     /**
      * Bulk output of an long array.
      */
-    public void writeLongs(long[] object, boolean optimizePositive) {
-        for (int i = 0, n = object.length; i < n; i++) {
-            writeLong(object[i], optimizePositive);
+    fun writeLongs(`object`: LongArray, optimizePositive: Boolean) {
+        var i = 0
+        val n = `object`.size
+        while (i < n) {
+            writeLong(`object`[i], optimizePositive)
+            i++
         }
     }
 
     /**
      * Bulk input of a long array.
      */
-    public long[] readLongs(int length, boolean optimizePositive) {
-        long[] array = new long[length];
-        for (int i = 0; i < length; i++) {
-            array[i] = readLong(optimizePositive);
+    fun readLongs(length: Int, optimizePositive: Boolean): LongArray {
+        val array = LongArray(length)
+        for (i in 0 until length) {
+            array[i] = readLong(optimizePositive)
         }
-        return array;
+        return array
     }
 
     /**
      * Bulk output of an int array.
      */
-    public void writeInts(int[] object) {
-        for (int i = 0, n = object.length; i < n; i++) {
-            writeInt(object[i]);
+    fun writeInts(`object`: IntArray) {
+        var i = 0
+        val n = `object`.size
+        while (i < n) {
+            writeInt(`object`[i])
+            i++
         }
     }
 
     /**
      * Bulk input of an int array.
      */
-    public int[] readInts(int length) {
-        int[] array = new int[length];
-        for (int i = 0; i < length; i++) {
-            array[i] = readInt();
+    fun readInts(length: Int): IntArray {
+        val array = IntArray(length)
+        for (i in 0 until length) {
+            array[i] = readInt()
         }
-        return array;
+        return array
     }
 
     /**
      * Bulk output of an long array.
      */
-    public void writeLongs(long[] object) {
-        for (int i = 0, n = object.length; i < n; i++) {
-            writeLong(object[i]);
+    fun writeLongs(`object`: LongArray) {
+        var i = 0
+        val n = `object`.size
+        while (i < n) {
+            writeLong(`object`[i])
+            i++
         }
     }
 
     /**
      * Bulk input of a long array.
      */
-    public long[] readLongs(int length) {
-        long[] array = new long[length];
-        for (int i = 0; i < length; i++) {
-            array[i] = readLong();
+    fun readLongs(length: Int): LongArray {
+        val array = LongArray(length)
+        for (i in 0 until length) {
+            array[i] = readLong()
         }
-        return array;
+        return array
     }
 
     /**
      * Bulk output of a float array.
      */
-    public void writeFloats(float[] object) {
-        for (int i = 0, n = object.length; i < n; i++) {
-            writeFloat(object[i]);
+    fun writeFloats(`object`: FloatArray) {
+        var i = 0
+        val n = `object`.size
+        while (i < n) {
+            writeFloat(`object`[i])
+            i++
         }
     }
 
     /**
      * Bulk input of a float array.
      */
-    public float[] readFloats(int length) {
-        float[] array = new float[length];
-        for (int i = 0; i < length; i++) {
-            array[i] = readFloat();
+    fun readFloats(length: Int): FloatArray {
+        val array = FloatArray(length)
+        for (i in 0 until length) {
+            array[i] = readFloat()
         }
-        return array;
+        return array
     }
 
     /**
      * Bulk output of a short array.
      */
-    public void writeShorts(short[] object) {
-        for (int i = 0, n = object.length; i < n; i++) {
-            writeShort(object[i]);
+    fun writeShorts(`object`: ShortArray) {
+        var i = 0
+        val n = `object`.size
+        while (i < n) {
+            writeShort(`object`[i].toInt())
+            i++
         }
     }
 
     /**
      * Bulk input of a short array.
      */
-    public short[] readShorts(int length) {
-        short[] array = new short[length];
-        for (int i = 0; i < length; i++) {
-            array[i] = readShort();
+    fun readShorts(length: Int): ShortArray {
+        val array = ShortArray(length)
+        for (i in 0 until length) {
+            array[i] = readShort()
         }
-        return array;
+        return array
     }
 
     /**
      * Bulk output of a char array.
      */
-    public void writeChars(char[] object) {
-        for (int i = 0, n = object.length; i < n; i++) {
-            writeChar(object[i]);
+    fun writeChars(`object`: CharArray) {
+        var i = 0
+        val n = `object`.size
+        while (i < n) {
+            writeChar(`object`[i])
+            i++
         }
     }
 
     /**
      * Bulk input of a char array.
      */
-    public char[] readChars(int length) {
-        char[] array = new char[length];
-        for (int i = 0; i < length; i++) {
-            array[i] = readChar();
+    fun readChars(length: Int): CharArray {
+        val array = CharArray(length)
+        for (i in 0 until length) {
+            array[i] = readChar()
         }
-        return array;
+        return array
     }
 
     /**
      * Bulk output of a double array.
      */
-    public void writeDoubles(double[] object) {
-        for (int i = 0, n = object.length; i < n; i++) {
-            writeDouble(object[i]);
+    fun writeDoubles(`object`: DoubleArray) {
+        var i = 0
+        val n = `object`.size
+        while (i < n) {
+            writeDouble(`object`[i])
+            i++
         }
     }
 
     /**
      * Bulk input of a double array
      */
-    public double[] readDoubles(int length) {
-        double[] array = new double[length];
-        for (int i = 0; i < length; i++) {
-            array[i] = readDouble();
+    fun readDoubles(length: Int): DoubleArray {
+        val array = DoubleArray(length)
+        for (i in 0 until length) {
+            array[i] = readDouble()
         }
-        return array;
+        return array
     }
 
-
-    @Override
-    public boolean equals(Object other) {
-        if (!(other instanceof ByteBuffer2)) {
-            return false;
-        }
+    override fun equals(other: Any?): Boolean {
+        return if (other !is ByteBuffer2) {
+            false
+        } else Arrays.equals(bytes, other.bytes)
 
         // CANNOT be null, so we don't have to null check!
-        return Arrays.equals(this.bytes, ((ByteBuffer2) other).bytes);
     }
 
-    @Override
-    public int hashCode() {
+    override fun hashCode(): Int {
         // might be null for a thread because it's stale. who cares, get the value again
-        return Arrays.hashCode(this.bytes);
+        return Arrays.hashCode(bytes)
     }
 
-    @Override
-    public String toString() {
-        return "ByteBuffer2 " + java.util.Arrays.toString(this.bytes);
+    override fun toString(): String {
+        return "ByteBuffer2 " + Arrays.toString(bytes)
     }
 }
