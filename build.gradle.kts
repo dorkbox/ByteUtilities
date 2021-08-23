@@ -36,7 +36,7 @@ object Extras {
     // set for the project
     const val description = "Byte manipulation and Unsigned Number Utilities"
     const val group = "com.dorkbox"
-    const val version = "1.1"
+    const val version = "1.2"
 
     // set as project.ext
     const val name = "ByteUtilities"
@@ -76,6 +76,21 @@ licensing {
             copyright(2020)
             author("Nathan Sweet")
             url("https://github.com/EsotericSoftware/kryo")
+        }
+
+        extra("Kotlin Hex", License.MIT) {
+            copyright(2017)
+            author("ligi")
+            url("https://github.com/komputing/KHex")
+        }
+
+        extra("Base58", License.APACHE_2) {
+            copyright(2018)
+            author("Google Inc")
+            author("Andreas Schildbach")
+            author("ligi")
+            url("https://bitcoinj.github.io")
+            url("https://github.com/komputing/KBase58")
         }
     }
 }

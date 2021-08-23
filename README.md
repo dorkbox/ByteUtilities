@@ -11,7 +11,7 @@ Maven Info
     <dependency>
       <groupId>com.dorkbox</groupId>
       <artifactId>ByteUtilities</artifactId>
-      <version>1.1</version>
+      <version>1.2</version>
     </dependency>
 </dependencies>
 ```
@@ -21,7 +21,7 @@ Gradle Info
 ````
 dependencies {
     ...
-    compile "com.dorkbox:ByteUtilities:1.0"
+    compile "com.dorkbox:ByteUtilities:1.2"
 }
 ````
 
