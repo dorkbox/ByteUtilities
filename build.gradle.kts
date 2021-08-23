@@ -113,6 +113,8 @@ tasks.jar.get().apply {
 }
 
 dependencies {
+    implementation("com.dorkbox:Updates:1.1")
+
     // listed as compileOnly, since we will be using netty bytebuf utils if we ALREADY are using netty byte buffs. **We don't want a hard dependency.**
     compileOnly("io.netty:netty-buffer:4.1.66.Final")
     compileOnly("com.esotericsoftware:kryo:5.2.0")

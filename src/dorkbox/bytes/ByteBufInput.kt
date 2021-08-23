@@ -62,14 +62,24 @@ import java.io.InputStream
  * Modified from KRYO ByteBufferInput to use ByteBuf instead of ByteBuffer.
  */
 class ByteBufInput : Input {
+    companion object {
+        /**
+         * Gets the version number.
+         */
+        const val version = BytesInfo.version
+
+        init {
+            // Add this project to the updates system, which verifies this class + UUID + version information
+            dorkbox.updates.Updates.add(ByteBufInput::class.java, "f176cecea06e48e1a96d59c08a6e98c3", BytesInfo.version)
+        }
+    }
+
     var byteBuf: ByteBuf? = null
         private set
+
     private var initialReaderIndex = 0
     private var initialWriterIndex = 0
     private var tempBuffer: ByteArray? = null
-
-    /** Creates an uninitialized Input, [.setBuffer] must be called before the Input is used.  */
-    constructor() {}
 
     /** Creates a new Input for reading from a direct [ByteBuf].
      * @param bufferSize The size of the buffer. An exception is thrown if more bytes than this are read and
@@ -83,7 +93,6 @@ class ByteBufInput : Input {
      * @see .setBuffer
      */
     /** Creates a new Input for reading from a [ByteBuf] which is filled with the specified bytes.  */
-    @JvmOverloads
     constructor(bytes: ByteArray?, offset: Int = 0, count: Int = bytes!!.size) {
         requireNotNull(bytes) { "bytes cannot be null." }
         setBuffer(Unpooled.wrappedBuffer(bytes, offset, count))
@@ -111,7 +120,9 @@ class ByteBufInput : Input {
     /** Throws [UnsupportedOperationException] because this input uses a ByteBuffer, not a byte[].
      * @see .getByteBuf
      */
-    @Deprecated(" ")
+    @Deprecated("Use getByteBuf() instead",
+        ReplaceWith("getByteBuf()")
+    )
     override fun getBuffer(): ByteArray {
         throw UnsupportedOperationException("This input does not used a byte[], see #getByteBuf().")
     }
@@ -119,7 +130,9 @@ class ByteBufInput : Input {
     /** Throws [UnsupportedOperationException] because this input uses a ByteBuffer, not a byte[].
      * @see .setBuffer
      */
-    @Deprecated(" ")
+    @Deprecated("Use setByteBuf() instead",
+        ReplaceWith("setByteBuf(ByteBuf)")
+    )
     override fun setBuffer(bytes: ByteArray) {
         throw UnsupportedOperationException("This input does not used a byte[], see #setByteBuf(ByteBuf).")
     }

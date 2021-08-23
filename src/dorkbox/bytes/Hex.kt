@@ -28,6 +28,16 @@ public value class HexString(val string: String)
 
 object Hex {
     /**
+     * Gets the version number.
+     */
+    const val version = BytesInfo.version
+
+    init {
+        // Add this project to the updates system, which verifies this class + UUID + version information
+        dorkbox.updates.Updates.add(Hex::class.java, "f176cecea06e48e1a96d59c08a6e98c3", BytesInfo.version)
+    }
+
+    /**
      * Represents all the chars used for nibble
      */
     private const val CHARS = "0123456789abcdef"
