@@ -19,25 +19,40 @@ import java.security.MessageDigest
 import java.security.NoSuchAlgorithmException
 
 
-private val digest1 = ThreadLocal.withInitial {
-    try {
-        return@withInitial MessageDigest.getInstance("SHA1")
-    } catch (e: NoSuchAlgorithmException) {
-        throw RuntimeException("Unable to initialize hash algorithm. SHA1 digest doesn't exist?!? (This should not happen")
-    }
-}
+object Hash {
+    /**
+     * Gets the version number.
+     */
+    const val version = BytesInfo.version
 
-private val digest256 = ThreadLocal.withInitial {
-    try {
-        return@withInitial MessageDigest.getInstance("SHA-256")
-    } catch (e: NoSuchAlgorithmException) {
-        throw RuntimeException("Unable to initialize hash algorithm. SHA256 digest doesn't exist?!? (This should not happen")
+    init {
+        // Add this project to the updates system, which verifies this class + UUID + version information
+        dorkbox.updates.Updates.add(Hash::class.java, "f176cecea06e48e1a96d59c08a6e98c3", BytesInfo.version)
     }
+
+    internal val digest1 = ThreadLocal.withInitial {
+        try {
+            return@withInitial MessageDigest.getInstance("SHA1")
+        } catch (e: NoSuchAlgorithmException) {
+            throw RuntimeException("Unable to initialize hash algorithm. SHA1 digest doesn't exist?!? (This should not happen")
+        }
+    }
+
+    internal val digest256 = ThreadLocal.withInitial {
+        try {
+            return@withInitial MessageDigest.getInstance("SHA-256")
+        } catch (e: NoSuchAlgorithmException) {
+            throw RuntimeException("Unable to initialize hash algorithm. SHA256 digest doesn't exist?!? (This should not happen")
+        }
+    }
+
+    val sha1 get() = digest1.get()
+    val sha256 get() = digest256.get()
 }
 
 
 fun ByteArray.sha1(): ByteArray {
-    val digest: MessageDigest = digest256.get()
+    val digest: MessageDigest = Hash.digest1.get()
 
     digest.reset()
     digest.update(this)
@@ -45,7 +60,7 @@ fun ByteArray.sha1(): ByteArray {
 }
 
 fun ByteArray.sha256(): ByteArray {
-    val digest: MessageDigest = digest256.get()
+    val digest: MessageDigest = Hash.digest256.get()
 
     digest.reset()
     digest.update(this)
