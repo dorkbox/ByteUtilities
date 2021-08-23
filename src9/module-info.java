@@ -5,5 +5,7 @@ module dorkbox.bytes {
     requires static io.netty.common;
     requires static io.netty.buffer;
 
+    requires kotlin.stdlib;
+
     requires java.base;
 }
