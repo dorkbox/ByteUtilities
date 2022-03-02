@@ -1,7 +1,7 @@
  - ByteUtilties - Byte manipulation and Unsigned Number Utilities
    [The Apache Software License, Version 2.0]
    https://git.dorkbox.com/dorkbox/ByteUtilities
-   Copyright 2021
+   Copyright 2022
      Dorkbox LLC
 
    Extra license information
@@ -47,14 +47,14 @@
      - Netty - An event-driven asynchronous network application framework
        [The Apache Software License, Version 2.0]
        https://netty.io
-       Copyright 2021
+       Copyright 2022
          The Netty Project
          Contributors. See source NOTICE
 
      - Kryo - Fast and efficient binary object graph serialization framework for Java
        [BSD 3-Clause License]
        https://github.com/EsotericSoftware/kryo
-       Copyright 2021
+       Copyright 2022
          Nathan Sweet
 
        Extra license information

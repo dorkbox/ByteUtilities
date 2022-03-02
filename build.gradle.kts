@@ -25,18 +25,18 @@ gradle.startParameter.showStacktrace = ShowStacktrace.ALWAYS   // always show th
 
 plugins {
     id("com.dorkbox.GradleUtils") version "2.16"
-    id("com.dorkbox.Licensing") version "2.9.2"
+    id("com.dorkbox.Licensing") version "2.12"
     id("com.dorkbox.VersionUpdate") version "2.4"
-    id("com.dorkbox.GradlePublish") version "1.11"
+    id("com.dorkbox.GradlePublish") version "1.12"
 
-    kotlin("jvm") version "1.5.21"
+    kotlin("jvm") version "1.6.10"
 }
 
 object Extras {
     // set for the project
     const val description = "Byte manipulation and Unsigned Number Utilities"
     const val group = "com.dorkbox"
-    const val version = "1.4"
+    const val version = "1.5"
 
     // set as project.ext
     const val name = "ByteUtilities"
@@ -113,16 +113,16 @@ tasks.jar.get().apply {
 }
 
 dependencies {
-    implementation("com.dorkbox:Updates:1.1")
+    api("com.dorkbox:Updates:1.1")
 
     // listed as compileOnly, since we will be using netty bytebuf utils if we ALREADY are using netty byte buffs. **We don't want a hard dependency.**
-    compileOnly("io.netty:netty-buffer:4.1.66.Final")
-    compileOnly("com.esotericsoftware:kryo:5.2.0")
+    compileOnly("io.netty:netty-buffer:4.1.72.Final")
+    compileOnly("com.esotericsoftware:kryo:5.3.0")
 
 
     testImplementation("io.netty:netty-buffer:4.1.66.Final")
     testImplementation("com.esotericsoftware:kryo:5.2.0")
-    testImplementation("junit:junit:4.13")
+    testImplementation("junit:junit:4.13.2")
 }
 
 publishToSonatype {
