@@ -29,14 +29,14 @@ plugins {
     id("com.dorkbox.VersionUpdate") version "2.5"
     id("com.dorkbox.GradlePublish") version "1.13"
 
-    kotlin("jvm") version "1.6.0"
+    kotlin("jvm") version "1.6.10"
 }
 
 object Extras {
     // set for the project
     const val description = "Byte manipulation and Unsigned Number Utilities"
     const val group = "com.dorkbox"
-    const val version = "1.4"
+    const val version = "1.5"
 
     // set as project.ext
     const val name = "ByteUtilities"
@@ -113,7 +113,7 @@ tasks.jar.get().apply {
 }
 
 dependencies {
-    implementation("com.dorkbox:Updates:1.1")
+    api("com.dorkbox:Updates:1.1")
 
     // listed as compileOnly, since we will be using netty bytebuf utils if we ALREADY are using netty byte buffs. **We don't want a hard dependency.**
     compileOnly("io.netty:netty-buffer:4.1.86.Final")
