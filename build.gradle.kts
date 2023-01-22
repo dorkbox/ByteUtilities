@@ -116,7 +116,7 @@ dependencies {
     api("com.dorkbox:Updates:1.1")
 
     // listed as compileOnly, since we will be using netty bytebuf utils if we ALREADY are using netty byte buffs. **We don't want a hard dependency.**
-    compileOnly("io.netty:netty-buffer:4.1.86.Final")
+    compileOnly("io.netty:netty-buffer:4.1.87.Final")
     compileOnly("com.esotericsoftware:kryo:5.4.0")
 
 
