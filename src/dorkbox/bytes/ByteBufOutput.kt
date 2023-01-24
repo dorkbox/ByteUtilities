@@ -663,7 +663,7 @@ class ByteBufOutput : Output {
     }
 
     @Throws(KryoException::class)
-    override fun writeAscii(value: String) {
+    override fun writeAscii(value: String?) {
         if (value == null) {
             writeByte(0x80) // 0 means null, bit 8 means UTF8.
             return
