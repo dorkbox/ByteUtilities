@@ -63,6 +63,7 @@ import java.io.OutputStream
  *
  * Modified from KRYO to use ByteBuf.
  */
+@Suppress("MemberVisibilityCanBePrivate")
 class ByteBufOutput : Output {
     companion object {
         /**
@@ -76,7 +77,9 @@ class ByteBufOutput : Output {
         }
     }
 
-    /** Returns the buffer. The bytes between zero and [.position] are the data that has been written.  */
+    /**
+     * Returns the buffer. The bytes between zero and [.position] are the data that has been written.
+     */
     // NOTE: capacity IS NOT USED!
     lateinit var byteBuf: ByteBuf
         private set
@@ -84,14 +87,19 @@ class ByteBufOutput : Output {
     private var initialReaderIndex = 0
     private var initialWriterIndex = 0
 
-    /** Creates an uninitialized Output, [.setBuffer] must be called before the Output is used.  */
+    /**
+     * Creates an uninitialized Output, [.setBuffer] must be called before the Output is used.
+     */
     constructor() {}
 
-    /** Creates a new Output for writing to a direct ByteBuffer.
-     * @param bufferSize The size of the buffer. An exception is thrown if more bytes than this are written and [.flush]
-     *      * does not empty the buffer.
-     * @param maxBufferSize If [.flush] does not empty the buffer, the buffer is doubled as needed until it exceeds
-     * maxBufferSize and an exception is thrown. Can be -1 for no maximum.
+    /**
+     * Creates a new Output for writing to a direct ByteBuffer.
+     *
+     * @param bufferSize The size of the buffer. An exception is thrown if more bytes than this are written and [.flush] does not empty
+     *      the buffer.
+     *
+     * @param maxBufferSize If [.flush] does not empty the buffer, the buffer is doubled as needed until it exceeds maxBufferSize and
+     *      an exception is thrown. Can be -1 for no maximum.
      */
     constructor(bufferSize: Int, maxBufferSize: Int = bufferSize) {
         require(maxBufferSize >= -1) { "maxBufferSize cannot be < -1: $maxBufferSize" }
@@ -99,26 +107,32 @@ class ByteBufOutput : Output {
         byteBuf = Unpooled.buffer(bufferSize)
     }
 
-    /** Creates a new Output for writing to a ByteBuffer.  */
+    /**
+     * Creates a new Output for writing to a ByteBuffer.
+     */
     constructor(buffer: ByteBuf) {
         setBuffer(buffer)
     }
 
-    /** Creates a new Output for writing to a ByteBuffer.
-     * @param maxBufferSize If [.flush] does not empty the buffer, the buffer is doubled as needed until it exceeds
-     * maxBufferSize and an exception is thrown. Can be -1 for no maximum.
+    /**
+     * Creates a new Output for writing to a ByteBuffer.
+     *
+     * @param maxBufferSize If [.flush] does not empty the buffer, the buffer is doubled as needed until it exceeds maxBufferSize and
+     *      an exception is thrown. Can be -1 for no maximum.
      */
     constructor(buffer: ByteBuf, maxBufferSize: Int) {
         setBuffer(buffer, maxBufferSize)
     }
 
-    /** @see Output.Output
+    /**
+     * @see Output.Output
      */
     constructor(outputStream: OutputStream) : this(4096, 4096) {
         this.outputStream = outputStream
     }
 
-    /** @see Output.Output
+    /**
+     * @see Output.Output
      */
     constructor(outputStream: OutputStream, bufferSize: Int) : this(bufferSize, bufferSize) {
         this.outputStream = outputStream
@@ -128,49 +142,62 @@ class ByteBufOutput : Output {
         return outputStream
     }
 
-    /** Throws [UnsupportedOperationException] because this output uses a ByteBuffer, not a byte[].
+    /**
+     * Throws [UnsupportedOperationException] because this output uses a ByteBuffer, not a byte[].
+     *
      * @see .getByteBuf
      */
-    @Deprecated(" ")
+    @Deprecated("This buffer does not used a byte[], see #byteBuf.",
+                ReplaceWith("byteBuf")
+    )
     override fun getBuffer(): ByteArray {
-        throw UnsupportedOperationException("This buffer does not used a byte[], see #getByteBuffer().")
+        throw UnsupportedOperationException("This buffer does not used a byte[], see #byteBuf.")
     }
 
-    /** Throws [UnsupportedOperationException] because this output uses a ByteBuffer, not a byte[].
+    /**
+     * Throws [UnsupportedOperationException] because this output uses a ByteBuffer, not a byte[].
+     *
      * @see .getByteBuf
      */
-    @Deprecated(" ")
     override fun setBuffer(buffer: ByteArray) {
         setBuffer(Unpooled.wrappedBuffer(buffer))
     }
 
-    /** Allocates a new direct ByteBuffer with the specified bytes and sets it as the new buffer.
+    /**
+     * Allocates a new direct ByteBuffer with the specified bytes and sets it as the new buffer.
+     *
      * @see .setBuffer
      */
-    @Deprecated("")
     override fun setBuffer(buffer: ByteArray, maxBufferSize: Int) {
         setBuffer(Unpooled.wrappedBuffer(buffer))
     }
 
-    /** Allocates a new direct ByteBuffer with the specified bytes and sets it as the new buffer.
+    /**
+     * Allocates a new direct ByteBuffer with the specified bytes and sets it as the new buffer.
+     *
      * @see .setBuffer
      */
     fun setBuffer(bytes: ByteArray, offset: Int, count: Int) {
         setBuffer(Unpooled.wrappedBuffer(bytes, offset, count))
     }
 
-    /** Sets a new buffer to write to. The max size is the buffer's length.
+    /**
+     * Sets a new buffer to write to. The max size is the buffer's length.
+     *
      * @see .setBuffer
      */
     fun setBuffer(buffer: ByteBuf) {
         setBuffer(buffer, buffer.capacity())
     }
 
-    /** Sets a new buffer to write to. The bytes are not copied, the old buffer is discarded and the new buffer used in its place.
+    /**
+     * Sets a new buffer to write to. The bytes are not copied, the old buffer is discarded and the new buffer used in its place.
+     *
      * The position and capacity are set to match the specified buffer. The total is reset. The
      * [OutputStream][.setOutputStream] is set to null.
+     *
      * @param maxBufferSize If [.flush] does not empty the buffer, the buffer is doubled as needed until it exceeds
-     * maxBufferSize and an exception is thrown. Can be -1 for no maximum.
+     *      maxBufferSize and an exception is thrown. Can be -1 for no maximum.
      */
     fun setBuffer(buffer: ByteBuf, maxBufferSize: Int) {
         require(maxBufferSize >= -1) { "maxBufferSize cannot be < -1: $maxBufferSize" }

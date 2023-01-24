@@ -1,5 +1,5 @@
 /*
- * Copyright 2021 dorkbox, llc
+ * Copyright 2023 dorkbox, llc
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,8 +15,6 @@
  */
 package dorkbox.bytes
 
-import java.util.*
-
 /**
  * Necessary to provide equals and hashcode methods on a byte arrays, if they are to be used as keys in a map/set/etc
  */
@@ -25,6 +23,7 @@ class ByteArrayWrapper(
 
     /**
      * if TRUE, then the byteArray is copied. if FALSE, the byte array is used as-is.
+     *
      * Using FALSE IS DANGEROUS!!!! If the underlying byte array is modified, this changes as well.
      */
     copyBytes: Boolean = true
@@ -62,6 +61,7 @@ class ByteArrayWrapper(
 
     init {
         val length = data.size
+
         if (copyBytes) {
             bytes = ByteArray(length)
             // copy so it's immutable as a key.
@@ -75,7 +75,7 @@ class ByteArrayWrapper(
         // might be null for a thread because it's stale. who cares, get the value again
         var hashCode = hashCode
         if (hashCode == null) {
-            hashCode = Arrays.hashCode(bytes)
+            hashCode = bytes.contentHashCode()
             this.hashCode = hashCode
         }
         return hashCode
@@ -84,12 +84,12 @@ class ByteArrayWrapper(
     override fun equals(other: Any?): Boolean {
         return if (other !is ByteArrayWrapper) {
             false
-        } else Arrays.equals(bytes, other.bytes)
+        } else bytes.contentEquals(other.bytes)
 
         // CANNOT be null, so we don't have to null check!
     }
 
     override fun toString(): String {
-        return "ByteArrayWrapper " + Arrays.toString(bytes)
+        return "ByteArrayWrapper " + bytes.contentToString()
     }
 }

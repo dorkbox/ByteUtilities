@@ -40,7 +40,7 @@ import java.nio.BufferUnderflowException
 import java.util.*
 import kotlin.experimental.and
 
-    /**
+ /**
  * A self-growing byte array wrapper.
  *
  * Utility methods are provided for efficiently writing primitive types and strings.
@@ -51,7 +51,7 @@ import kotlin.experimental.and
  * @author Nathan Sweet <misc></misc>@n4te.com>
  */
 @Suppress("unused", "DuplicatedCode", "DuplicatedCode", "MemberVisibilityCanBePrivate")
-class ByteBuffer2 {
+class ByteArrayBuffer {
     companion object {
         /**
          * Gets the version number.
@@ -60,7 +60,7 @@ class ByteBuffer2 {
 
         init {
             // Add this project to the updates system, which verifies this class + UUID + version information
-            dorkbox.updates.Updates.add(ByteBuffer2::class.java, "f176cecea06e48e1a96d59c08a6e98c3", BytesInfo.version)
+            dorkbox.updates.Updates.add(ByteArrayBuffer::class.java, "f176cecea06e48e1a96d59c08a6e98c3", BytesInfo.version)
         }
 
         /**
@@ -658,8 +658,8 @@ class ByteBuffer2 {
     // string
     /**
      * Writes the length and string, or null. Short strings are checked and if ASCII they are written more efficiently,
-     * else they are written as UTF8. If a string is known to be ASCII, [ByteBuffer2.writeAscii] may be used. The
-     * string can be read using [ByteBuffer2.readString] or [ByteBuffer2.readStringBuilder].
+     * else they are written as UTF8. If a string is known to be ASCII, [ByteArrayBuffer.writeAscii] may be used. The
+     * string can be read using [ByteArrayBuffer.readString] or [ByteArrayBuffer.readStringBuilder].
      *
      * @param value
      * May be null.
@@ -734,8 +734,8 @@ class ByteBuffer2 {
     }
 
     /**
-     * Writes the length and CharSequence as UTF8, or null. The string can be read using [ByteBuffer2.readString] or
-     * [ByteBuffer2.readStringBuilder].
+     * Writes the length and CharSequence as UTF8, or null. The string can be read using [ByteArrayBuffer.readString] or
+     * [ByteArrayBuffer.readStringBuilder].
      *
      * @param value
      * May be null.
@@ -778,8 +778,8 @@ class ByteBuffer2 {
     /**
      * Writes a string that is known to contain only ASCII characters. Non-ASCII strings passed to this method will be
      * corrupted. Each byte is a 7 bit character with the remaining byte denoting if another character is available.
-     * This is slightly more efficient than [ByteBuffer2.writeString]. The string can be read using
-     * [ByteBuffer2.readString] or [ByteBuffer2.readStringBuilder].
+     * This is slightly more efficient than [ByteArrayBuffer.writeString]. The string can be read using
+     * [ByteArrayBuffer.readString] or [ByteArrayBuffer.readStringBuilder].
      *
      * @param value
      * May be null.
@@ -897,8 +897,8 @@ class ByteBuffer2 {
 
     /**
      * Reads the length and string of UTF8 characters, or null. This can read strings written by
-     * [ByteBuffer2.writeString] , [ByteBuffer2.writeString], and
-     * [ByteBuffer2.writeAscii].
+     * [ByteArrayBuffer.writeString] , [ByteArrayBuffer.writeString], and
+     * [ByteArrayBuffer.writeAscii].
      *
      * @return May be null.
      */
@@ -1082,8 +1082,8 @@ class ByteBuffer2 {
 
     /**
      * Reads the length and string of UTF8 characters, or null. This can read strings written by
-     * [ByteBuffer2.writeString] , [ByteBuffer2.writeString], and
-     * [ByteBuffer2.writeAscii].
+     * [ByteArrayBuffer.writeString] , [ByteArrayBuffer.writeString], and
+     * [ByteArrayBuffer.writeAscii].
      *
      * @return May be null.
      */
@@ -1878,7 +1878,7 @@ class ByteBuffer2 {
     }
 
     override fun equals(other: Any?): Boolean {
-        return if (other !is ByteBuffer2) {
+        return if (other !is ByteArrayBuffer) {
             false
         } else Arrays.equals(bytes, other.bytes)
 

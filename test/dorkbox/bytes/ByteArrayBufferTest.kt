@@ -1,5 +1,5 @@
 /*
- * Copyright 2021 dorkbox, llc
+ * Copyright 2023 dorkbox, llc
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,10 +21,10 @@ import java.lang.reflect.Array
 import java.nio.ByteBuffer
 import java.util.*
 
-class ByteBuffer2Test {
+class ByteArrayBufferTest {
     @Test
     fun testWriteBytes() {
-        val buffer = ByteBuffer2(512)
+        val buffer = ByteArrayBuffer(512)
         buffer.writeBytes(byteArrayOf(11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26))
         buffer.writeBytes(byteArrayOf(31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46))
         buffer.writeByte(51)
@@ -44,12 +44,12 @@ class ByteBuffer2Test {
 
     @Test
     fun testStrings() {
-        runStringTest(ByteBuffer2(4096))
-        runStringTest(ByteBuffer2(897))
-        val write = ByteBuffer2(21)
+        runStringTest(ByteArrayBuffer(4096))
+        runStringTest(ByteArrayBuffer(897))
+        val write = ByteArrayBuffer(21)
         val value = "abcdef\u00E1\u00E9\u00ED\u00F3\u00FA\u1234"
         write.writeString(value)
-        val read = ByteBuffer2(write.toBytes())
+        val read = ByteArrayBuffer(write.toBytes())
         assertArrayEquals(value, read.readString())
         runStringTest(127)
         runStringTest(256)
@@ -60,7 +60,7 @@ class ByteBuffer2Test {
         runStringTest(1024 * 1024 * 2)
     }
 
-    fun runStringTest(write: ByteBuffer2) {
+    fun runStringTest(write: ByteArrayBuffer) {
         val value1 = "ABCDEFGHIJKLMNOPQRSTUVWXYZ\rabcdefghijklmnopqrstuvwxyz\n1234567890\t\"!`?'.,;:()[]{}<>|/@\\^$-%+=#_&~*"
         val value2 = "abcdef\u00E1\u00E9\u00ED\u00F3\u00FA\u1234"
         write.writeString("")
@@ -78,7 +78,7 @@ class ByteBuffer2Test {
         for (i in 0..126) {
             write.writeString(i.toChar().toString() + "abc")
         }
-        val read = ByteBuffer2(write.toBytes())
+        val read = ByteArrayBuffer(write.toBytes())
         Assert.assertEquals("", read.readString())
         Assert.assertEquals("1", read.readString())
         Assert.assertEquals("22", read.readString())
@@ -113,7 +113,7 @@ class ByteBuffer2Test {
     }
 
     fun runStringTest(length: Int) {
-        val write = ByteBuffer2(1024, -1)
+        val write = ByteArrayBuffer(1024, -1)
         val buffer = StringBuilder()
         for (i in 0 until length) {
             buffer.append(i.toChar())
@@ -121,20 +121,20 @@ class ByteBuffer2Test {
         val value = buffer.toString()
         write.writeString(value)
         write.writeString(value)
-        var read = ByteBuffer2(write.toBytes())
+        var read = ByteArrayBuffer(write.toBytes())
         Assert.assertEquals(value, read.readString())
         Assert.assertEquals(value, read.readStringBuilder().toString())
         write.clear()
         write.writeString(buffer)
         write.writeString(buffer)
-        read = ByteBuffer2(write.toBytes())
+        read = ByteArrayBuffer(write.toBytes())
         Assert.assertEquals(value, read.readStringBuilder().toString())
         Assert.assertEquals(value, read.readString())
         if (length <= 127) {
             write.clear()
             write.writeAscii(value)
             write.writeAscii(value)
-            read = ByteBuffer2(write.toBytes())
+            read = ByteArrayBuffer(write.toBytes())
             Assert.assertEquals(value, read.readStringBuilder().toString())
             Assert.assertEquals(value, read.readString())
         }
@@ -142,12 +142,12 @@ class ByteBuffer2Test {
 
     @Test
     fun testCanReadInt() {
-        var write = ByteBuffer2()
-        var read = ByteBuffer2(write.toBytes())
+        var write = ByteArrayBuffer()
+        var read = ByteArrayBuffer(write.toBytes())
         Assert.assertEquals(false, read.canReadInt())
-        write = ByteBuffer2(4)
+        write = ByteArrayBuffer(4)
         write.writeInt(400, true)
-        read = ByteBuffer2(write.toBytes())
+        read = ByteArrayBuffer(write.toBytes())
         Assert.assertEquals(true, read.canReadInt())
         read.setPosition(read.capacity())
         Assert.assertEquals(false, read.canReadInt())
@@ -155,10 +155,10 @@ class ByteBuffer2Test {
 
     @Test
     fun testInts() {
-        runIntTest(ByteBuffer2(4096))
+        runIntTest(ByteArrayBuffer(4096))
     }
 
-    private fun runIntTest(write: ByteBuffer2) {
+    private fun runIntTest(write: ByteArrayBuffer) {
         write.writeInt(0)
         write.writeInt(63)
         write.writeInt(64)
@@ -220,7 +220,7 @@ class ByteBuffer2Test {
         Assert.assertEquals(5, write.writeInt(-134217728, true).toLong())
         Assert.assertEquals(5, write.writeInt(-134217729, false).toLong())
         Assert.assertEquals(5, write.writeInt(-134217729, true).toLong())
-        val read = ByteBuffer2(write.toBytes())
+        val read = ByteArrayBuffer(write.toBytes())
         Assert.assertEquals(0, read.readInt().toLong())
         Assert.assertEquals(63, read.readInt().toLong())
         Assert.assertEquals(64, read.readInt().toLong())
@@ -302,10 +302,10 @@ class ByteBuffer2Test {
 
     @Test
     fun testLongs() {
-        runLongTest(ByteBuffer2(4096))
+        runLongTest(ByteArrayBuffer(4096))
     }
 
-    private fun runLongTest(write: ByteBuffer2) {
+    private fun runLongTest(write: ByteArrayBuffer) {
         write.writeLong(0)
         write.writeLong(63)
         write.writeLong(64)
@@ -367,7 +367,7 @@ class ByteBuffer2Test {
         Assert.assertEquals(9, write.writeLong(-134217728, true).toLong())
         Assert.assertEquals(5, write.writeLong(-134217729, false).toLong())
         Assert.assertEquals(9, write.writeLong(-134217729, true).toLong())
-        val read = ByteBuffer2(write.toBytes())
+        val read = ByteArrayBuffer(write.toBytes())
         Assert.assertEquals(0, read.readLong())
         Assert.assertEquals(63, read.readLong())
         Assert.assertEquals(64, read.readLong())
@@ -445,10 +445,10 @@ class ByteBuffer2Test {
 
     @Test
     fun testShorts() {
-        runShortTest(ByteBuffer2(4096))
+        runShortTest(ByteArrayBuffer(4096))
     }
 
-    private fun runShortTest(write: ByteBuffer2) {
+    private fun runShortTest(write: ByteArrayBuffer) {
         write.writeShort(0)
         write.writeShort(63)
         write.writeShort(64)
@@ -464,7 +464,7 @@ class ByteBuffer2Test {
         write.writeShort(-8192)
         write.writeShort(-16384)
         write.writeShort(-32768)
-        val read = ByteBuffer2(write.toBytes())
+        val read = ByteArrayBuffer(write.toBytes())
         Assert.assertEquals(0, read.readShort().toLong())
         Assert.assertEquals(63, read.readShort().toLong())
         Assert.assertEquals(64, read.readShort().toLong())
@@ -484,10 +484,10 @@ class ByteBuffer2Test {
 
     @Test
     fun testFloats() {
-        runFloatTest(ByteBuffer2(4096))
+        runFloatTest(ByteArrayBuffer(4096))
     }
 
-    private fun runFloatTest(write: ByteBuffer2) {
+    private fun runFloatTest(write: ByteArrayBuffer) {
         write.writeFloat(0f)
         write.writeFloat(63f)
         write.writeFloat(64f)
@@ -530,7 +530,7 @@ class ByteBuffer2Test {
         Assert.assertEquals(4, write.writeFloat(-8192f, 1000f, false).toLong())
         Assert.assertEquals(5, write.writeFloat(-8192f, 1000f, true).toLong())
         val delta = 0.00000001f
-        val read = ByteBuffer2(write.toBytes())
+        val read = ByteArrayBuffer(write.toBytes())
         Assert.assertEquals(read.readFloat(), 0f, delta)
         Assert.assertEquals(read.readFloat(), 63f, delta)
         Assert.assertEquals(read.readFloat(), 64f, delta)
@@ -576,10 +576,10 @@ class ByteBuffer2Test {
 
     @Test
     fun testDoubles() {
-        runDoubleTest(ByteBuffer2(4096))
+        runDoubleTest(ByteArrayBuffer(4096))
     }
 
-    private fun runDoubleTest(write: ByteBuffer2) {
+    private fun runDoubleTest(write: ByteArrayBuffer) {
         write.writeDouble(0.0)
         write.writeDouble(63.0)
         write.writeDouble(64.0)
@@ -623,7 +623,7 @@ class ByteBuffer2Test {
         Assert.assertEquals(9, write.writeDouble(-8192.0, 1000.0, true).toLong())
         write.writeDouble(1.23456)
         val delta = 0.00000001
-        val read = ByteBuffer2(write.toBytes())
+        val read = ByteArrayBuffer(write.toBytes())
         Assert.assertEquals(read.readDouble(), 0.0, delta)
         Assert.assertEquals(read.readDouble(), 63.0, delta)
         Assert.assertEquals(read.readDouble(), 64.0, delta)
@@ -670,15 +670,15 @@ class ByteBuffer2Test {
 
     @Test
     fun testBooleans() {
-        runBooleanTest(ByteBuffer2(4096))
+        runBooleanTest(ByteArrayBuffer(4096))
     }
 
-    private fun runBooleanTest(write: ByteBuffer2) {
+    private fun runBooleanTest(write: ByteArrayBuffer) {
         for (i in 0..99) {
             write.writeBoolean(true)
             write.writeBoolean(false)
         }
-        val read = ByteBuffer2(write.toBytes())
+        val read = ByteArrayBuffer(write.toBytes())
         for (i in 0..99) {
             Assert.assertEquals(true, read.readBoolean())
             Assert.assertEquals(false, read.readBoolean())
@@ -687,10 +687,10 @@ class ByteBuffer2Test {
 
     @Test
     fun testChars() {
-        runCharTest(ByteBuffer2(4096))
+        runCharTest(ByteArrayBuffer(4096))
     }
 
-    private fun runCharTest(write: ByteBuffer2) {
+    private fun runCharTest(write: ByteArrayBuffer) {
         write.writeChar(0.toChar())
         write.writeChar(63.toChar())
         write.writeChar(64.toChar())
@@ -700,7 +700,7 @@ class ByteBuffer2Test {
         write.writeChar(16384.toChar())
         write.writeChar(32767.toChar())
         write.writeChar(65535.toChar())
-        val read = ByteBuffer2(write.toBytes())
+        val read = ByteArrayBuffer(write.toBytes())
         Assert.assertEquals(0, read.readChar().code.toLong())
         Assert.assertEquals(63, read.readChar().code.toLong())
         Assert.assertEquals(64, read.readChar().code.toLong())
@@ -716,7 +716,7 @@ class ByteBuffer2Test {
     @Throws(Exception::class)
     fun testInputWithOffset() {
         val buf = ByteArray(30)
-        val `in` = ByteBuffer2(buf)
+        val `in` = ByteArrayBuffer(buf)
         `in`.skip(20)
         Assert.assertEquals(10, `in`.remaining().toLong())
     }
@@ -725,10 +725,10 @@ class ByteBuffer2Test {
     @Throws(Exception::class)
     fun testSmallBuffers() {
         val buf = ByteBuffer.allocate(1024)
-        val testOutput = ByteBuffer2(buf.array())
+        val testOutput = ByteArrayBuffer(buf.array())
         testOutput.writeBytes(ByteArray(512))
         testOutput.writeBytes(ByteArray(512))
-        val testInputs = ByteBuffer2()
+        val testInputs = ByteArrayBuffer()
         buf.flip()
         testInputs.setBuffer(buf.array())
         val toRead = ByteArray(512)
