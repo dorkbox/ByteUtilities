@@ -86,16 +86,13 @@ class ByteBufOutput : Output {
 
     /** Creates an uninitialized Output, [.setBuffer] must be called before the Output is used.  */
     constructor() {}
+
     /** Creates a new Output for writing to a direct ByteBuffer.
-     * @param bufferSize The initial size of the buffer.
+     * @param bufferSize The size of the buffer. An exception is thrown if more bytes than this are written and [.flush]
+     *      * does not empty the buffer.
      * @param maxBufferSize If [.flush] does not empty the buffer, the buffer is doubled as needed until it exceeds
      * maxBufferSize and an exception is thrown. Can be -1 for no maximum.
      */
-    /** Creates a new Output for writing to a direct [ByteBuf].
-     * @param bufferSize The size of the buffer. An exception is thrown if more bytes than this are written and [.flush]
-     * does not empty the buffer.
-     */
-    @JvmOverloads
     constructor(bufferSize: Int, maxBufferSize: Int = bufferSize) {
         require(maxBufferSize >= -1) { "maxBufferSize cannot be < -1: $maxBufferSize" }
         maxCapacity = if (maxBufferSize == -1) Util.maxArraySize else maxBufferSize
@@ -111,21 +108,19 @@ class ByteBufOutput : Output {
      * @param maxBufferSize If [.flush] does not empty the buffer, the buffer is doubled as needed until it exceeds
      * maxBufferSize and an exception is thrown. Can be -1 for no maximum.
      */
-    constructor(buffer: ByteBuf?, maxBufferSize: Int) {
+    constructor(buffer: ByteBuf, maxBufferSize: Int) {
         setBuffer(buffer, maxBufferSize)
     }
 
     /** @see Output.Output
      */
-    constructor(outputStream: OutputStream?) : this(4096, 4096) {
-        requireNotNull(outputStream) { "outputStream cannot be null." }
+    constructor(outputStream: OutputStream) : this(4096, 4096) {
         this.outputStream = outputStream
     }
 
     /** @see Output.Output
      */
-    constructor(outputStream: OutputStream?, bufferSize: Int) : this(bufferSize, bufferSize) {
-        requireNotNull(outputStream) { "outputStream cannot be null." }
+    constructor(outputStream: OutputStream, bufferSize: Int) : this(bufferSize, bufferSize) {
         this.outputStream = outputStream
     }
 
@@ -160,7 +155,7 @@ class ByteBufOutput : Output {
     /** Allocates a new direct ByteBuffer with the specified bytes and sets it as the new buffer.
      * @see .setBuffer
      */
-    fun setBuffer(bytes: ByteArray?, offset: Int, count: Int) {
+    fun setBuffer(bytes: ByteArray, offset: Int, count: Int) {
         setBuffer(Unpooled.wrappedBuffer(bytes, offset, count))
     }
 
@@ -177,8 +172,7 @@ class ByteBufOutput : Output {
      * @param maxBufferSize If [.flush] does not empty the buffer, the buffer is doubled as needed until it exceeds
      * maxBufferSize and an exception is thrown. Can be -1 for no maximum.
      */
-    fun setBuffer(buffer: ByteBuf?, maxBufferSize: Int) {
-        requireNotNull(buffer) { "buffer cannot be null." }
+    fun setBuffer(buffer: ByteBuf, maxBufferSize: Int) {
         require(maxBufferSize >= -1) { "maxBufferSize cannot be < -1: $maxBufferSize" }
         initialReaderIndex = buffer.readerIndex()
         initialWriterIndex = buffer.writerIndex()
