@@ -19,5 +19,5 @@ object BytesInfo {
     /**
      * Gets the version number.
      */
-    const val version = "1.6"
+    const val version = "1.7"
 }
