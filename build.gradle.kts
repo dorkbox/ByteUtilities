@@ -62,16 +62,6 @@ licensing {
         author(Extras.vendor)
         url(Extras.url)
 
-        extra("Byte Utils (UByte, UInteger, ULong, Unsigned, UNumber, UShort)", License.APACHE_2) {
-            url("https://github.com/jOOQ/jOOQ/tree/master/jOOQ/src/main/java/org/jooq/types")
-            copyright(2017)
-            author("Data Geekery GmbH (http://www.datageekery.com)")
-            author("Lukas Eder")
-            author("Ed Schaller")
-            author("Jens Nerche")
-            author("Ivan Sokolov")
-        }
-
         extra("Kryo Serialization", License.BSD_3) {
             copyright(2020)
             author("Nathan Sweet")
