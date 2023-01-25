@@ -11,7 +11,7 @@ Maven Info
     <dependency>
       <groupId>com.dorkbox</groupId>
       <artifactId>ByteUtilities</artifactId>
-      <version>1.7</version>
+      <version>1.8</version>
     </dependency>
 </dependencies>
 ```
@@ -21,13 +21,12 @@ Gradle Info
 ````
 dependencies {
     ...
-    compile "com.dorkbox:ByteUtilities:1.2"
+    compile "com.dorkbox:ByteUtilities:1.8"
 }
 ````
 
 
 License
 ---------
-This project is © 2021 dorkbox llc, and is distributed under the terms of the Apache v2.0 License. See file "LICENSE" for further 
+This project is © 2023 dorkbox llc, and is distributed under the terms of the Apache v2.0 License. See file "LICENSE" for further 
 references.
-

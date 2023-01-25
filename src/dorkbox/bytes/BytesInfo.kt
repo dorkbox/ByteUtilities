@@ -1,5 +1,5 @@
 /*
- * Copyright 2021 dorkbox, llc
+ * Copyright 2023 dorkbox, llc
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,5 +19,5 @@ object BytesInfo {
     /**
      * Gets the version number.
      */
-    const val version = "1.7"
+    const val version = "1.8"
 }
