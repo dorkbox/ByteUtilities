@@ -144,12 +144,16 @@ class ByteArrayBufferTest {
     fun testCanReadInt() {
         var write = ByteArrayBuffer()
         var read = ByteArrayBuffer(write.toBytes())
+        Assert.assertEquals(false, OptimizeUtilsByteArray.canReadInt(read.getBuffer()))
         Assert.assertEquals(false, read.canReadInt())
+
         write = ByteArrayBuffer(4)
         write.writeInt(400, true)
         read = ByteArrayBuffer(write.toBytes())
+        Assert.assertEquals(true, OptimizeUtilsByteArray.canReadInt(write.getBuffer()))
         Assert.assertEquals(true, read.canReadInt())
         read.setPosition(read.capacity())
+        Assert.assertEquals(false, OptimizeUtilsByteArray.canReadInt(read.getBuffer(), read.capacity()))
         Assert.assertEquals(false, read.canReadInt())
     }
 
@@ -220,6 +224,53 @@ class ByteArrayBufferTest {
         Assert.assertEquals(5, write.writeInt(-134217728, true).toLong())
         Assert.assertEquals(5, write.writeInt(-134217729, false).toLong())
         Assert.assertEquals(5, write.writeInt(-134217729, true).toLong())
+
+        var p = write.position()
+        Assert.assertEquals(1, OptimizeUtilsByteArray.writeInt(write.getBuffer(),0, true, p).toLong()).also { p+=1 }.also { write.setPosition(p) }
+        Assert.assertEquals(1, OptimizeUtilsByteArray.writeInt(write.getBuffer(),0, false, p).toLong()).also { p+=1 }.also { write.setPosition(p) }
+        Assert.assertEquals(1, OptimizeUtilsByteArray.writeInt(write.getBuffer(),63, true, p).toLong()).also { p+=1 }.also { write.setPosition(p) }
+        Assert.assertEquals(1, OptimizeUtilsByteArray.writeInt(write.getBuffer(),63, false, p).toLong()).also { p+=1 }.also { write.setPosition(p) }
+        Assert.assertEquals(1, OptimizeUtilsByteArray.writeInt(write.getBuffer(),64, true, p).toLong()).also { p+=1 }.also { write.setPosition(p) }
+        Assert.assertEquals(2, OptimizeUtilsByteArray.writeInt(write.getBuffer(),64, false, p).toLong()).also { p+=2 }.also { write.setPosition(p) }
+        Assert.assertEquals(1, OptimizeUtilsByteArray.writeInt(write.getBuffer(),127, true, p).toLong()).also { p+=1 }.also { write.setPosition(p) }
+        Assert.assertEquals(2, OptimizeUtilsByteArray.writeInt(write.getBuffer(),127, false, p).toLong()).also { p+=2 }.also { write.setPosition(p) }
+        Assert.assertEquals(2, OptimizeUtilsByteArray.writeInt(write.getBuffer(),128, true, p).toLong()).also { p+=2 }.also { write.setPosition(p) }
+        Assert.assertEquals(2, OptimizeUtilsByteArray.writeInt(write.getBuffer(),128, false, p).toLong()).also { p+=2 }.also { write.setPosition(p) }
+        Assert.assertEquals(2, OptimizeUtilsByteArray.writeInt(write.getBuffer(),8191, true, p).toLong()).also { p+=2 }.also { write.setPosition(p) }
+        Assert.assertEquals(2, OptimizeUtilsByteArray.writeInt(write.getBuffer(),8191, false, p).toLong()).also { p+=2 }.also { write.setPosition(p) }
+        Assert.assertEquals(2, OptimizeUtilsByteArray.writeInt(write.getBuffer(),8192, true, p).toLong()).also { p+=2 }.also { write.setPosition(p) }
+        Assert.assertEquals(3, OptimizeUtilsByteArray.writeInt(write.getBuffer(),8192, false, p).toLong()).also { p+=3 }.also { write.setPosition(p) }
+        Assert.assertEquals(2, OptimizeUtilsByteArray.writeInt(write.getBuffer(),16383, true, p).toLong()).also { p+=2 }.also { write.setPosition(p) }
+        Assert.assertEquals(3, OptimizeUtilsByteArray.writeInt(write.getBuffer(),16383, false, p).toLong()).also { p+=3 }.also { write.setPosition(p) }
+        Assert.assertEquals(3, OptimizeUtilsByteArray.writeInt(write.getBuffer(),16384, true, p).toLong()).also { p+=3 }.also { write.setPosition(p) }
+        Assert.assertEquals(3, OptimizeUtilsByteArray.writeInt(write.getBuffer(),16384, false, p).toLong()).also { p+=3 }.also { write.setPosition(p) }
+        Assert.assertEquals(3, OptimizeUtilsByteArray.writeInt(write.getBuffer(),2097151, true, p).toLong()).also { p+=3 }.also { write.setPosition(p) }
+        Assert.assertEquals(4, OptimizeUtilsByteArray.writeInt(write.getBuffer(),2097151, false, p).toLong()).also { p+=4 }.also { write.setPosition(p) }
+        Assert.assertEquals(3, OptimizeUtilsByteArray.writeInt(write.getBuffer(),1048575, true, p).toLong()).also { p+=3 }.also { write.setPosition(p) }
+        Assert.assertEquals(3, OptimizeUtilsByteArray.writeInt(write.getBuffer(),1048575, false, p).toLong()).also { p+=3 }.also { write.setPosition(p) }
+        Assert.assertEquals(4, OptimizeUtilsByteArray.writeInt(write.getBuffer(),134217727, true, p).toLong()).also { p+=4 }.also { write.setPosition(p) }
+        Assert.assertEquals(4, OptimizeUtilsByteArray.writeInt(write.getBuffer(),134217727, false, p).toLong()).also { p+=4 }.also { write.setPosition(p) }
+        Assert.assertEquals(4, OptimizeUtilsByteArray.writeInt(write.getBuffer(),268435455, true, p).toLong()).also { p+=4 }.also { write.setPosition(p) }
+        Assert.assertEquals(5, OptimizeUtilsByteArray.writeInt(write.getBuffer(),268435455, false, p).toLong()).also { p+=5 }.also { write.setPosition(p) }
+        Assert.assertEquals(4, OptimizeUtilsByteArray.writeInt(write.getBuffer(),134217728, true, p).toLong()).also { p+=4 }.also { write.setPosition(p) }
+        Assert.assertEquals(5, OptimizeUtilsByteArray.writeInt(write.getBuffer(),134217728, false, p).toLong()).also { p+=5 }.also { write.setPosition(p) }
+        Assert.assertEquals(5, OptimizeUtilsByteArray.writeInt(write.getBuffer(),268435456, true, p).toLong()).also { p+=5 }.also { write.setPosition(p) }
+        Assert.assertEquals(5, OptimizeUtilsByteArray.writeInt(write.getBuffer(),268435456, false, p).toLong()).also { p+=5 }.also { write.setPosition(p) }
+        Assert.assertEquals(1, OptimizeUtilsByteArray.writeInt(write.getBuffer(),-64, false, p).toLong()).also { p+=1 }.also { write.setPosition(p) }
+        Assert.assertEquals(5, OptimizeUtilsByteArray.writeInt(write.getBuffer(),-64, true, p).toLong()).also { p+=5 }.also { write.setPosition(p) }
+        Assert.assertEquals(2, OptimizeUtilsByteArray.writeInt(write.getBuffer(),-65, false, p).toLong()).also { p+=2 }.also { write.setPosition(p) }
+        Assert.assertEquals(5, OptimizeUtilsByteArray.writeInt(write.getBuffer(),-65, true, p).toLong()).also { p+=5 }.also { write.setPosition(p) }
+        Assert.assertEquals(2, OptimizeUtilsByteArray.writeInt(write.getBuffer(),-8192, false, p).toLong()).also { p+=2 }.also { write.setPosition(p) }
+        Assert.assertEquals(5, OptimizeUtilsByteArray.writeInt(write.getBuffer(),-8192, true, p).toLong()).also { p+=5 }.also { write.setPosition(p) }
+        Assert.assertEquals(3, OptimizeUtilsByteArray.writeInt(write.getBuffer(),-1048576, false, p).toLong()).also { p+=3 }.also { write.setPosition(p) }
+        Assert.assertEquals(5, OptimizeUtilsByteArray.writeInt(write.getBuffer(),-1048576, true, p).toLong()).also { p+=5 }.also { write.setPosition(p) }
+        Assert.assertEquals(4, OptimizeUtilsByteArray.writeInt(write.getBuffer(),-134217728, false, p).toLong()).also { p+=4 }.also { write.setPosition(p) }
+        Assert.assertEquals(5, OptimizeUtilsByteArray.writeInt(write.getBuffer(),-134217728, true, p).toLong()).also { p+=5 }.also { write.setPosition(p) }
+        Assert.assertEquals(5, OptimizeUtilsByteArray.writeInt(write.getBuffer(),-134217729, false, p).toLong()).also { p+=5 }.also { write.setPosition(p) }
+        Assert.assertEquals(5, OptimizeUtilsByteArray.writeInt(write.getBuffer(),-134217729, true, p).toLong()).also { p+=5 }.also { write.setPosition(p) }
+
+
+
         val read = ByteArrayBuffer(write.toBytes())
         Assert.assertEquals(0, read.readInt().toLong())
         Assert.assertEquals(63, read.readInt().toLong())
@@ -285,6 +336,52 @@ class ByteArrayBufferTest {
         Assert.assertEquals(-134217728, read.readInt(true).toLong())
         Assert.assertEquals(-134217729, read.readInt(false).toLong())
         Assert.assertEquals(-134217729, read.readInt(true).toLong())
+
+        p = read.position()
+        Assert.assertEquals(0, OptimizeUtilsByteArray.readInt(read.getBuffer(), true, p).toLong()).also { p+=1 }.also { read.setPosition(p) }
+        Assert.assertEquals(0, OptimizeUtilsByteArray.readInt(read.getBuffer(), false, p).toLong()).also { p+=1 }.also { read.setPosition(p) }
+        Assert.assertEquals(63, OptimizeUtilsByteArray.readInt(read.getBuffer(), true, p).toLong()).also { p+=1 }.also { read.setPosition(p) }
+        Assert.assertEquals(63, OptimizeUtilsByteArray.readInt(read.getBuffer(), false, p).toLong()).also { p+=1 }.also { read.setPosition(p) }
+        Assert.assertEquals(64, OptimizeUtilsByteArray.readInt(read.getBuffer(), true, p).toLong()).also { p+=1 }.also { read.setPosition(p) }
+        Assert.assertEquals(64, OptimizeUtilsByteArray.readInt(read.getBuffer(), false, p).toLong()).also { p+=2 }.also { read.setPosition(p) }
+        Assert.assertEquals(127, OptimizeUtilsByteArray.readInt(read.getBuffer(), true, p).toLong()).also { p+=1 }.also { read.setPosition(p) }
+        Assert.assertEquals(127, OptimizeUtilsByteArray.readInt(read.getBuffer(), false, p).toLong()).also { p+=2 }.also { read.setPosition(p) }
+        Assert.assertEquals(128, OptimizeUtilsByteArray.readInt(read.getBuffer(), true, p).toLong()).also { p+=2 }.also { read.setPosition(p) }
+        Assert.assertEquals(128, OptimizeUtilsByteArray.readInt(read.getBuffer(), false, p).toLong()).also { p+=2 }.also { read.setPosition(p) }
+        Assert.assertEquals(8191, OptimizeUtilsByteArray.readInt(read.getBuffer(), true, p).toLong()).also { p+=2 }.also { read.setPosition(p) }
+        Assert.assertEquals(8191, OptimizeUtilsByteArray.readInt(read.getBuffer(), false, p).toLong()).also { p+=2 }.also { read.setPosition(p) }
+        Assert.assertEquals(8192, OptimizeUtilsByteArray.readInt(read.getBuffer(), true, p).toLong()).also { p+=2 }.also { read.setPosition(p) }
+        Assert.assertEquals(8192, OptimizeUtilsByteArray.readInt(read.getBuffer(), false, p).toLong()).also { p+=3 }.also { read.setPosition(p) }
+        Assert.assertEquals(16383, OptimizeUtilsByteArray.readInt(read.getBuffer(), true, p).toLong()).also { p+=2 }.also { read.setPosition(p) }
+        Assert.assertEquals(16383, OptimizeUtilsByteArray.readInt(read.getBuffer(), false, p).toLong()).also { p+=3 }.also { read.setPosition(p) }
+        Assert.assertEquals(16384, OptimizeUtilsByteArray.readInt(read.getBuffer(), true, p).toLong()).also { p+=3 }.also { read.setPosition(p) }
+        Assert.assertEquals(16384, OptimizeUtilsByteArray.readInt(read.getBuffer(), false, p).toLong()).also { p+=3 }.also { read.setPosition(p) }
+        Assert.assertEquals(2097151, OptimizeUtilsByteArray.readInt(read.getBuffer(), true, p).toLong()).also { p+=3 }.also { read.setPosition(p) }
+        Assert.assertEquals(2097151, OptimizeUtilsByteArray.readInt(read.getBuffer(), false, p).toLong()).also { p+=4 }.also { read.setPosition(p) }
+        Assert.assertEquals(1048575, OptimizeUtilsByteArray.readInt(read.getBuffer(), true, p).toLong()).also { p+=3 }.also { read.setPosition(p) }
+        Assert.assertEquals(1048575, OptimizeUtilsByteArray.readInt(read.getBuffer(), false, p).toLong()).also { p+=3 }.also { read.setPosition(p) }
+        Assert.assertEquals(134217727, OptimizeUtilsByteArray.readInt(read.getBuffer(), true, p).toLong()).also { p+=4 }.also { read.setPosition(p) }
+        Assert.assertEquals(134217727, OptimizeUtilsByteArray.readInt(read.getBuffer(), false, p).toLong()).also { p+=4 }.also { read.setPosition(p) }
+        Assert.assertEquals(268435455, OptimizeUtilsByteArray.readInt(read.getBuffer(), true, p).toLong()).also { p+=4 }.also { read.setPosition(p) }
+        Assert.assertEquals(268435455, OptimizeUtilsByteArray.readInt(read.getBuffer(), false, p).toLong()).also { p+=5 }.also { read.setPosition(p) }
+        Assert.assertEquals(134217728, OptimizeUtilsByteArray.readInt(read.getBuffer(), true, p).toLong()).also { p+=4 }.also { read.setPosition(p) }
+        Assert.assertEquals(134217728, OptimizeUtilsByteArray.readInt(read.getBuffer(), false, p).toLong()).also { p+=5 }.also { read.setPosition(p) }
+        Assert.assertEquals(268435456, OptimizeUtilsByteArray.readInt(read.getBuffer(), true, p).toLong()).also { p+=5 }.also { read.setPosition(p) }
+        Assert.assertEquals(268435456, OptimizeUtilsByteArray.readInt(read.getBuffer(), false, p).toLong()).also { p+=5 }.also { read.setPosition(p) }
+        Assert.assertEquals(-64, OptimizeUtilsByteArray.readInt(read.getBuffer(), false, p).toLong()).also { p+=1 }.also { read.setPosition(p) }
+        Assert.assertEquals(-64, OptimizeUtilsByteArray.readInt(read.getBuffer(), true, p).toLong()).also { p+=5 }.also { read.setPosition(p) }
+        Assert.assertEquals(-65, OptimizeUtilsByteArray.readInt(read.getBuffer(), false, p).toLong()).also { p+=2 }.also { read.setPosition(p) }
+        Assert.assertEquals(-65, OptimizeUtilsByteArray.readInt(read.getBuffer(), true, p).toLong()).also { p+=5 }.also { read.setPosition(p) }
+        Assert.assertEquals(-8192, OptimizeUtilsByteArray.readInt(read.getBuffer(), false, p).toLong()).also { p+=2 }.also { read.setPosition(p) }
+        Assert.assertEquals(-8192, OptimizeUtilsByteArray.readInt(read.getBuffer(), true, p).toLong()).also { p+=5 }.also { read.setPosition(p) }
+        Assert.assertEquals(-1048576, OptimizeUtilsByteArray.readInt(read.getBuffer(), false, p).toLong()).also { p+=3 }.also { read.setPosition(p) }
+        Assert.assertEquals(-1048576, OptimizeUtilsByteArray.readInt(read.getBuffer(), true, p).toLong()).also { p+=5 }.also { read.setPosition(p) }
+        Assert.assertEquals(-134217728, OptimizeUtilsByteArray.readInt(read.getBuffer(), false, p).toLong()).also { p+=4 }.also { read.setPosition(p) }
+        Assert.assertEquals(-134217728, OptimizeUtilsByteArray.readInt(read.getBuffer(), true, p).toLong()).also { p+=5 }.also { read.setPosition(p) }
+        Assert.assertEquals(-134217729, OptimizeUtilsByteArray.readInt(read.getBuffer(), false, p).toLong()).also { p+=5 }.also { read.setPosition(p) }
+        Assert.assertEquals(-134217729, OptimizeUtilsByteArray.readInt(read.getBuffer(), true, p).toLong()).also { p+=5 }.also { read.setPosition(p) }
+
+
         Assert.assertEquals(false, read.canReadInt())
         val random = Random()
         for (i in 0..9999) {
@@ -367,6 +464,54 @@ class ByteArrayBufferTest {
         Assert.assertEquals(9, write.writeLong(-134217728, true).toLong())
         Assert.assertEquals(5, write.writeLong(-134217729, false).toLong())
         Assert.assertEquals(9, write.writeLong(-134217729, true).toLong())
+
+
+        var p = write.position()
+        Assert.assertEquals(1, OptimizeUtilsByteArray.writeLong(write.getBuffer(),0, true, p).toLong()).also { p+=1 }.also { write.setPosition(p) }
+        Assert.assertEquals(1, OptimizeUtilsByteArray.writeLong(write.getBuffer(),0, false, p).toLong()).also { p+=1 }.also { write.setPosition(p) }
+        Assert.assertEquals(1, OptimizeUtilsByteArray.writeLong(write.getBuffer(),63, true, p).toLong()).also { p+=1 }.also { write.setPosition(p) }
+        Assert.assertEquals(1, OptimizeUtilsByteArray.writeLong(write.getBuffer(),63, false, p).toLong()).also { p+=1 }.also { write.setPosition(p) }
+        Assert.assertEquals(1, OptimizeUtilsByteArray.writeLong(write.getBuffer(),64, true, p).toLong()).also { p+=1 }.also { write.setPosition(p) }
+        Assert.assertEquals(2, OptimizeUtilsByteArray.writeLong(write.getBuffer(),64, false, p).toLong()).also { p+=2 }.also { write.setPosition(p) }
+        Assert.assertEquals(1, OptimizeUtilsByteArray.writeLong(write.getBuffer(),127, true, p).toLong()).also { p+=1 }.also { write.setPosition(p) }
+        Assert.assertEquals(2, OptimizeUtilsByteArray.writeLong(write.getBuffer(),127, false, p).toLong()).also { p+=2 }.also { write.setPosition(p) }
+        Assert.assertEquals(2, OptimizeUtilsByteArray.writeLong(write.getBuffer(),128, true, p).toLong()).also { p+=2 }.also { write.setPosition(p) }
+        Assert.assertEquals(2, OptimizeUtilsByteArray.writeLong(write.getBuffer(),128, false, p).toLong()).also { p+=2 }.also { write.setPosition(p) }
+        Assert.assertEquals(2, OptimizeUtilsByteArray.writeLong(write.getBuffer(),8191, true, p).toLong()).also { p+=2 }.also { write.setPosition(p) }
+        Assert.assertEquals(2, OptimizeUtilsByteArray.writeLong(write.getBuffer(),8191, false, p).toLong()).also { p+=2 }.also { write.setPosition(p) }
+        Assert.assertEquals(2, OptimizeUtilsByteArray.writeLong(write.getBuffer(),8192, true, p).toLong()).also { p+=2 }.also { write.setPosition(p) }
+        Assert.assertEquals(3, OptimizeUtilsByteArray.writeLong(write.getBuffer(),8192, false, p).toLong()).also { p+=3 }.also { write.setPosition(p) }
+        Assert.assertEquals(2, OptimizeUtilsByteArray.writeLong(write.getBuffer(),16383, true, p).toLong()).also { p+=2 }.also { write.setPosition(p) }
+        Assert.assertEquals(3, OptimizeUtilsByteArray.writeLong(write.getBuffer(),16383, false, p).toLong()).also { p+=3 }.also { write.setPosition(p) }
+        Assert.assertEquals(3, OptimizeUtilsByteArray.writeLong(write.getBuffer(),16384, true, p).toLong()).also { p+=3 }.also { write.setPosition(p) }
+        Assert.assertEquals(3, OptimizeUtilsByteArray.writeLong(write.getBuffer(),16384, false, p).toLong()).also { p+=3 }.also { write.setPosition(p) }
+        Assert.assertEquals(3, OptimizeUtilsByteArray.writeLong(write.getBuffer(),2097151, true, p).toLong()).also { p+=3 }.also { write.setPosition(p) }
+        Assert.assertEquals(4, OptimizeUtilsByteArray.writeLong(write.getBuffer(),2097151, false, p).toLong()).also { p+=4 }.also { write.setPosition(p) }
+        Assert.assertEquals(3, OptimizeUtilsByteArray.writeLong(write.getBuffer(),1048575, true, p).toLong()).also { p+=3 }.also { write.setPosition(p) }
+        Assert.assertEquals(3, OptimizeUtilsByteArray.writeLong(write.getBuffer(),1048575, false, p).toLong()).also { p+=3 }.also { write.setPosition(p) }
+        Assert.assertEquals(4, OptimizeUtilsByteArray.writeLong(write.getBuffer(),134217727, true, p).toLong()).also { p+=4 }.also { write.setPosition(p) }
+        Assert.assertEquals(4, OptimizeUtilsByteArray.writeLong(write.getBuffer(),134217727, false, p).toLong()).also { p+=4 }.also { write.setPosition(p) }
+        Assert.assertEquals(4, OptimizeUtilsByteArray.writeLong(write.getBuffer(),268435455L, true, p).toLong()).also { p+=4 }.also { write.setPosition(p) }
+        Assert.assertEquals(5, OptimizeUtilsByteArray.writeLong(write.getBuffer(),268435455L, false, p).toLong()).also { p+=5 }.also { write.setPosition(p) }
+        Assert.assertEquals(4, OptimizeUtilsByteArray.writeLong(write.getBuffer(),134217728L, true, p).toLong()).also { p+=4 }.also { write.setPosition(p) }
+        Assert.assertEquals(5, OptimizeUtilsByteArray.writeLong(write.getBuffer(),134217728L, false, p).toLong()).also { p+=5 }.also { write.setPosition(p) }
+        Assert.assertEquals(5, OptimizeUtilsByteArray.writeLong(write.getBuffer(),268435456L, true, p).toLong()).also { p+=5 }.also { write.setPosition(p) }
+        Assert.assertEquals(5, OptimizeUtilsByteArray.writeLong(write.getBuffer(),268435456L, false, p).toLong()).also { p+=5 }.also { write.setPosition(p) }
+        Assert.assertEquals(1, OptimizeUtilsByteArray.writeLong(write.getBuffer(),-64, false, p).toLong()).also { p+=1 }.also { write.setPosition(p) }
+        Assert.assertEquals(9, OptimizeUtilsByteArray.writeLong(write.getBuffer(),-64, true, p).toLong()).also { p+=9 }.also { write.setPosition(p) }
+        Assert.assertEquals(2, OptimizeUtilsByteArray.writeLong(write.getBuffer(),-65, false, p).toLong()).also { p+=2 }.also { write.setPosition(p) }
+        Assert.assertEquals(9, OptimizeUtilsByteArray.writeLong(write.getBuffer(),-65, true, p).toLong()).also { p+=9 }.also { write.setPosition(p) }
+        Assert.assertEquals(2, OptimizeUtilsByteArray.writeLong(write.getBuffer(),-8192, false, p).toLong()).also { p+=2 }.also { write.setPosition(p) }
+        Assert.assertEquals(9, OptimizeUtilsByteArray.writeLong(write.getBuffer(),-8192, true, p).toLong()).also { p+=9 }.also { write.setPosition(p) }
+        Assert.assertEquals(3, OptimizeUtilsByteArray.writeLong(write.getBuffer(),-1048576, false, p).toLong()).also { p+=3 }.also { write.setPosition(p) }
+        Assert.assertEquals(9, OptimizeUtilsByteArray.writeLong(write.getBuffer(),-1048576, true, p).toLong()).also { p+=9 }.also { write.setPosition(p) }
+        Assert.assertEquals(4, OptimizeUtilsByteArray.writeLong(write.getBuffer(),-134217728, false, p).toLong()).also { p+=4 }.also { write.setPosition(p) }
+        Assert.assertEquals(9, OptimizeUtilsByteArray.writeLong(write.getBuffer(),-134217728, true, p).toLong()).also { p+=9 }.also { write.setPosition(p) }
+        Assert.assertEquals(5, OptimizeUtilsByteArray.writeLong(write.getBuffer(),-134217729, false, p).toLong()).also { p+=5 }.also { write.setPosition(p) }
+        Assert.assertEquals(9, OptimizeUtilsByteArray.writeLong(write.getBuffer(),-134217729, true, p).toLong()).also { p+=9 }.also { write.setPosition(p) }
+
+
+
         val read = ByteArrayBuffer(write.toBytes())
         Assert.assertEquals(0, read.readLong())
         Assert.assertEquals(63, read.readLong())
@@ -429,6 +574,54 @@ class ByteArrayBufferTest {
         Assert.assertEquals(-134217728, read.readLong(true))
         Assert.assertEquals(-134217729, read.readLong(false))
         Assert.assertEquals(-134217729, read.readLong(true))
+
+
+        p = read.position()
+        Assert.assertEquals(0, OptimizeUtilsByteArray.readLong(read.getBuffer(), true, p)).also { p+=1 }.also { read.setPosition(p) }
+        Assert.assertEquals(0, OptimizeUtilsByteArray.readLong(read.getBuffer(),false, p)).also { p+=1 }.also { read.setPosition(p) }
+        Assert.assertEquals(63, OptimizeUtilsByteArray.readLong(read.getBuffer(),true, p)).also { p+=1 }.also { read.setPosition(p) }
+        Assert.assertEquals(63, OptimizeUtilsByteArray.readLong(read.getBuffer(),false, p)).also { p+=1 }.also { read.setPosition(p) }
+        Assert.assertEquals(64, OptimizeUtilsByteArray.readLong(read.getBuffer(),true, p)).also { p+=1 }.also { read.setPosition(p) }
+        Assert.assertEquals(64, OptimizeUtilsByteArray.readLong(read.getBuffer(),false, p)).also { p+=2 }.also { read.setPosition(p) }
+        Assert.assertEquals(127, OptimizeUtilsByteArray.readLong(read.getBuffer(),true, p)).also { p+=1 }.also { read.setPosition(p) }
+        Assert.assertEquals(127, OptimizeUtilsByteArray.readLong(read.getBuffer(),false, p)).also { p+=2 }.also { read.setPosition(p) }
+        Assert.assertEquals(128, OptimizeUtilsByteArray.readLong(read.getBuffer(),true, p)).also { p+=2 }.also { read.setPosition(p) }
+        Assert.assertEquals(128, OptimizeUtilsByteArray.readLong(read.getBuffer(),false, p)).also { p+=2 }.also { read.setPosition(p) }
+        Assert.assertEquals(8191, OptimizeUtilsByteArray.readLong(read.getBuffer(),true, p)).also { p+=2 }.also { read.setPosition(p) }
+        Assert.assertEquals(8191, OptimizeUtilsByteArray.readLong(read.getBuffer(),false, p)).also { p+=2 }.also { read.setPosition(p) }
+        Assert.assertEquals(8192, OptimizeUtilsByteArray.readLong(read.getBuffer(),true, p)).also { p+=2 }.also { read.setPosition(p) }
+        Assert.assertEquals(8192, OptimizeUtilsByteArray.readLong(read.getBuffer(),false, p)).also { p+=3 }.also { read.setPosition(p) }
+        Assert.assertEquals(16383, OptimizeUtilsByteArray.readLong(read.getBuffer(),true, p)).also { p+=2 }.also { read.setPosition(p) }
+        Assert.assertEquals(16383, OptimizeUtilsByteArray.readLong(read.getBuffer(),false, p)).also { p+=3 }.also { read.setPosition(p) }
+        Assert.assertEquals(16384, OptimizeUtilsByteArray.readLong(read.getBuffer(),true, p)).also { p+=3 }.also { read.setPosition(p) }
+        Assert.assertEquals(16384, OptimizeUtilsByteArray.readLong(read.getBuffer(),false, p)).also { p+=3 }.also { read.setPosition(p) }
+        Assert.assertEquals(2097151, OptimizeUtilsByteArray.readLong(read.getBuffer(),true, p)).also { p+=3 }.also { read.setPosition(p) }
+        Assert.assertEquals(2097151, OptimizeUtilsByteArray.readLong(read.getBuffer(),false, p)).also { p+=4 }.also { read.setPosition(p) }
+        Assert.assertEquals(1048575, OptimizeUtilsByteArray.readLong(read.getBuffer(),true, p)).also { p+=3 }.also { read.setPosition(p) }
+        Assert.assertEquals(1048575, OptimizeUtilsByteArray.readLong(read.getBuffer(),false, p)).also { p+=3 }.also { read.setPosition(p) }
+        Assert.assertEquals(134217727, OptimizeUtilsByteArray.readLong(read.getBuffer(),true, p)).also { p+=4 }.also { read.setPosition(p) }
+        Assert.assertEquals(134217727, OptimizeUtilsByteArray.readLong(read.getBuffer(),false, p)).also { p+=4 }.also { read.setPosition(p) }
+        Assert.assertEquals(268435455, OptimizeUtilsByteArray.readLong(read.getBuffer(),true, p)).also { p+=4 }.also { read.setPosition(p) }
+        Assert.assertEquals(268435455, OptimizeUtilsByteArray.readLong(read.getBuffer(),false, p)).also { p+=5 }.also { read.setPosition(p) }
+        Assert.assertEquals(134217728, OptimizeUtilsByteArray.readLong(read.getBuffer(),true, p)).also { p+=4 }.also { read.setPosition(p) }
+        Assert.assertEquals(134217728, OptimizeUtilsByteArray.readLong(read.getBuffer(),false, p)).also { p+=5 }.also { read.setPosition(p) }
+        Assert.assertEquals(268435456, OptimizeUtilsByteArray.readLong(read.getBuffer(),true, p)).also { p+=5 }.also { read.setPosition(p) }
+        Assert.assertEquals(268435456, OptimizeUtilsByteArray.readLong(read.getBuffer(),false, p)).also { p+=5 }.also { read.setPosition(p) }
+        Assert.assertEquals(-64, OptimizeUtilsByteArray.readLong(read.getBuffer(),false, p)).also { p+=1 }.also { read.setPosition(p) }
+        Assert.assertEquals(-64, OptimizeUtilsByteArray.readLong(read.getBuffer(),true, p)).also { p+=9 }.also { read.setPosition(p) }
+        Assert.assertEquals(-65, OptimizeUtilsByteArray.readLong(read.getBuffer(),false, p)).also { p+=2 }.also { read.setPosition(p) }
+        Assert.assertEquals(-65, OptimizeUtilsByteArray.readLong(read.getBuffer(),true, p)).also { p+=9 }.also { read.setPosition(p) }
+        Assert.assertEquals(-8192, OptimizeUtilsByteArray.readLong(read.getBuffer(),false, p)).also { p+=2 }.also { read.setPosition(p) }
+        Assert.assertEquals(-8192, OptimizeUtilsByteArray.readLong(read.getBuffer(),true, p)).also { p+=9 }.also { read.setPosition(p) }
+        Assert.assertEquals(-1048576, OptimizeUtilsByteArray.readLong(read.getBuffer(),false, p)).also { p+=3 }.also { read.setPosition(p) }
+        Assert.assertEquals(-1048576, OptimizeUtilsByteArray.readLong(read.getBuffer(),true, p)).also { p+=9 }.also { read.setPosition(p) }
+        Assert.assertEquals(-134217728, OptimizeUtilsByteArray.readLong(read.getBuffer(),false, p)).also { p+=4 }.also { read.setPosition(p) }
+        Assert.assertEquals(-134217728, OptimizeUtilsByteArray.readLong(read.getBuffer(),true, p)).also { p+=9 }.also { read.setPosition(p) }
+        Assert.assertEquals(-134217729, OptimizeUtilsByteArray.readLong(read.getBuffer(),false, p)).also { p+=5 }.also { read.setPosition(p) }
+        Assert.assertEquals(-134217729, OptimizeUtilsByteArray.readLong(read.getBuffer(),true, p)).also { p+=9 }.also { read.setPosition(p) }
+
+
+
         val random = Random()
         for (i in 0..9999) {
             val value = random.nextLong()
