@@ -1,5 +1,5 @@
 /*
- * Copyright 2021 dorkbox, llc
+ * Copyright 2023 dorkbox, llc
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,757 +13,844 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package dorkbox.bytes;
+package dorkbox.bytes
 
-import java.io.IOException;
-import java.io.InputStream;
-import java.math.BigInteger;
-import java.nio.ByteBuffer;
+import java.io.IOException
+import java.io.InputStream
+import java.nio.ByteBuffer
 
 /**
  * This is intel/amd/arm arch!
- * <p/>
+ *
+ *
  * arm is technically bi-endian
- * <p/>
+ *
+ *
  * Network byte order IS big endian, as is Java.
  */
-@SuppressWarnings("ALL")
-public
 class LittleEndian {
     // the following are ALL in Little-Endian (byte[0] is LEAST significant)
 
-    /**
-     * CHAR to and from bytes
-     */
-    public static final
-    class Char_ {
-        @SuppressWarnings("fallthrough")
-        public static
-        char from(final byte[] bytes, final int offset, final int byteNum) {
-            char number = 0;
-
-            switch (byteNum) {
-                case 2:
-                    number |= (bytes[offset + 1] & 0xFF) << 8;
-                case 1:
-                    number |= (bytes[offset + 0] & 0xFF) << 0;
-            }
-
-            return number;
-        }
-
-        @SuppressWarnings("fallthrough")
-        public static
-        char from(final byte[] bytes) {
-            char number = 0;
-
-            switch (bytes.length) {
-                default:
-                case 2:
-                    number |= (bytes[1] & 0xFF) << 8;
-                case 1:
-                    number |= (bytes[0] & 0xFF) << 0;
-            }
-
-            return number;
-        }
-
-        public static
-        char from(final byte b0, final byte b1) {
-            return (char) ((b1 & 0xFF) << 8 | (b0 & 0xFF) << 0);
-        }
-
-        public static
-        char from(final ByteBuffer buff) {
-            return from(buff.get(), buff.get());
-        }
-
-        public static
-        char from(final InputStream inputStream) throws IOException {
-            return from((byte) inputStream.read(), (byte) inputStream.read());
-        }
-
-        public static
-        byte[] toBytes(final char x) {
-            return new byte[] {(byte) (x >> 0), (byte) (x >> 8)};
-        }
-
-        public static
-        void toBytes(final char x, final byte[] bytes, final int offset) {
-            bytes[offset + 1] = (byte) (x >> 8);
-            bytes[offset + 0] = (byte) (x >> 0);
-        }
-
-        public static
-        void toBytes(final char x, final byte[] bytes) {
-            bytes[1] = (byte) (x >> 8);
-            bytes[0] = (byte) (x >> 0);
-        }
-
-
-        private
-        Char_() {
-        }
-    }
-
-
-    /**
-     * UNSIGNED CHAR to and from bytes
-     */
-    public static final
-    class UChar_ {
-        @SuppressWarnings("fallthrough")
-        public static
-        UShort from(final byte[] bytes, final int offset, final int bytenum) {
-            char number = 0;
-
-            switch (bytenum) {
-                case 2:
-                    number |= (bytes[offset + 1] & 0xFF) << 8;
-                case 1:
-                    number |= (bytes[offset + 0] & 0xFF) << 0;
-            }
-
-            return UShort.valueOf(number);
-        }
-
-        @SuppressWarnings("fallthrough")
-        public static
-        UShort from(final byte[] bytes) {
-            short number = 0;
-
-            switch (bytes.length) {
-                default:
-                case 2:
-                    number |= (bytes[1] & 0xFF) << 8;
-                case 1:
-                    number |= (bytes[0] & 0xFF) << 0;
-            }
-
-            return UShort.valueOf(number);
-        }
-
-        public static
-        UShort from(final byte b0, final byte b1) {
-            return UShort.valueOf((short) ((b1 & 0xFF) << 8) | (b0 & 0xFF) << 0);
-        }
-
-        public static
-        UShort from(final ByteBuffer buff) {
-            return from(buff.get(), buff.get());
-        }
-
-        public static
-        UShort from(final InputStream inputStream) throws IOException {
-            return from((byte) inputStream.read(), (byte) inputStream.read());
-        }
-
-        public static
-        byte[] toBytes(UShort x) {
-            int num = x.intValue();
-
-            return new byte[] {(byte) (num & 0x00FF >> 0), (byte) ((num & 0xFF00) >> 8)};
-        }
-
-        public static
-        void toBytes(final UShort x, final byte[] bytes, final int offset) {
-            int num = x.intValue();
-
-            bytes[offset + 1] = (byte) ((num & 0xFF00) >> 8);
-            bytes[offset + 0] = (byte) (num & 0x00FF >> 0);
-        }
-
-        public static
-        void toBytes(final UShort x, final byte[] bytes) {
-            int num = x.intValue();
-
-            bytes[1] = (byte) ((num & 0xFF00) >> 8);
-            bytes[0] = (byte) (num & 0x00FF >> 0);
-        }
-
-        private
-        UChar_() {
-        }
-    }
-
+    // NOTE: CHAR and SHORT are the exact same.
 
     /**
      * SHORT to and from bytes
      */
-    public static final
-    class Short_ {
-        @SuppressWarnings("fallthrough")
-        public static
-        short from(final byte[] bytes, final int offset, final int bytenum) {
-            short number = 0;
+    object Short_ {
+        fun from(bytes: ByteArray, offset: Int, bytenum: Int): Short {
+            var number: Short = 0
+            when (bytenum) {
+                2 -> {
+                    number = (number.toInt() or (bytes[offset + 1].toInt() and 0xFF shl 8)).toShort()
+                    number = (number.toInt() or (bytes[offset + 0].toInt() and 0xFF shl 0)).toShort()
+                }
 
-            switch (bytenum) {
-                case 2:
-                    number |= (bytes[offset + 1] & 0xFF) << 8;
-                case 1:
-                    number |= (bytes[offset + 0] & 0xFF) << 0;
+                1 -> number = (number.toInt() or (bytes[offset + 0].toInt() and 0xFF shl 0)).toShort()
             }
-
-            return number;
+            return number
         }
 
-        @SuppressWarnings("fallthrough")
-        public static
-        short from(final byte[] bytes) {
-            short number = 0;
+        fun from(bytes: ByteArray): Short {
+            var number: Short = 0
+            when (bytes.size) {
+                2 -> {
+                    number = (number.toInt() or (bytes[1].toInt() and 0xFF shl 8)).toShort()
+                    number = (number.toInt() or (bytes[0].toInt() and 0xFF shl 0)).toShort()
+                }
 
-            switch (bytes.length) {
-                default:
-                case 2:
-                    number |= (bytes[1] & 0xFF) << 8;
-                case 1:
-                    number |= (bytes[0] & 0xFF) << 0;
+                1 -> number = (number.toInt() or (bytes[0].toInt() and 0xFF shl 0)).toShort()
+                else -> {
+                    number = (number.toInt() or (bytes[1].toInt() and 0xFF shl 8)).toShort()
+                    number = (number.toInt() or (bytes[0].toInt() and 0xFF shl 0)).toShort()
+                }
             }
-
-            return number;
+            return number
         }
 
-        public static
-        short from(final byte b0, final byte b1) {
-            return (short) ((b1 & 0xFF) << 8 | (b0 & 0xFF) << 0);
+        fun from(b0: Byte, b1: Byte): Short {
+            return (b1.toInt() and 0xFF shl 8 or (b0.toInt() and 0xFF shl 0)).toShort()
         }
 
-        public static
-        short from(final ByteBuffer buff) {
-            return from(buff.get(), buff.get());
+        fun from(buff: ByteBuffer): Short {
+            return from(buff.get(), buff.get())
         }
 
-        public static
-        short from(final InputStream inputStream) throws IOException {
-            return from((byte) inputStream.read(), (byte) inputStream.read());
+        @Throws(IOException::class)
+        fun from(inputStream: InputStream): Short {
+            return from(inputStream.read().toByte(), inputStream.read().toByte())
         }
 
-        public static
-        byte[] toBytes(final short x) {
-            return new byte[] {(byte) (x >> 0), (byte) (x >> 8)};
+        fun toBytes(x: Short): ByteArray {
+            return byteArrayOf((x.toInt() shr 0).toByte(), (x.toInt() shr 8).toByte())
         }
 
-        public static
-        void toBytes(final short x, final byte[] bytes, final int offset) {
-            bytes[offset + 1] = (byte) (x >> 8);
-            bytes[offset + 0] = (byte) (x >> 0);
+        fun toBytes(x: Short, bytes: ByteArray, offset: Int) {
+            bytes[offset + 1] = (x.toInt() shr 8).toByte()
+            bytes[offset + 0] = (x.toInt() shr 0).toByte()
         }
 
-        public static
-        void toBytes(final short x, final byte[] bytes) {
-            bytes[1] = (byte) (x >> 8);
-            bytes[0] = (byte) (x >> 0);
-        }
-
-        private
-        Short_() {
+        fun toBytes(x: Short, bytes: ByteArray) {
+            bytes[1] = (x.toInt() shr 8).toByte()
+            bytes[0] = (x.toInt() shr 0).toByte()
         }
     }
 
+     /**
+      * UNSIGNED SHORT to and from bytes
+      */
+    object UShort_ {
+         fun from(bytes: ByteArray, offset: Int, bytenum: Int): UShort {
+             var number: Short = 0
+             when (bytenum) {
+                 2 -> {
+                     number = (number.toInt() or (bytes[offset + 1].toInt() and 0xFF shl 8)).toShort()
+                     number = (number.toInt() or (bytes[offset + 0].toInt() and 0xFF shl 0)).toShort()
+                 }
 
-    /**
-     * UNSIGNED SHORT to and from bytes
-     */
-    public static final
-    class UShort_ {
-        @SuppressWarnings("fallthrough")
-        public static
-        UShort from(final byte[] bytes, final int offset, final int bytenum) {
-            short number = 0;
+                 1 -> number = (number.toInt() or (bytes[offset + 0].toInt() and 0xFF shl 0)).toShort()
+             }
+             return number.toUShort()
+         }
 
-            switch (bytenum) {
-                case 2:
-                    number |= (bytes[offset + 1] & 0xFF) << 8;
-                case 1:
-                    number |= (bytes[offset + 0] & 0xFF) << 0;
-            }
+         fun from(bytes: ByteArray): UShort {
+             var number: Short = 0
+             when (bytes.size) {
+                 2 -> {
+                     number = (number.toInt() or (bytes[1].toInt() and 0xFF shl 8)).toShort()
+                     number = (number.toInt() or (bytes[0].toInt() and 0xFF shl 0)).toShort()
+                 }
 
-            return UShort.valueOf(number);
-        }
+                 1 -> number = (number.toInt() or (bytes[0].toInt() and 0xFF shl 0)).toShort()
+                 else -> {
+                     number = (number.toInt() or (bytes[1].toInt() and 0xFF shl 8)).toShort()
+                     number = (number.toInt() or (bytes[0].toInt() and 0xFF shl 0)).toShort()
+                 }
+             }
+             return number.toUShort()
+         }
 
-        @SuppressWarnings("fallthrough")
-        public static
-        UShort from(final byte[] bytes) {
-            short number = 0;
+         fun from(b0: Byte, b1: Byte): UShort {
+             return (b1.toInt() and 0xFF shl 8 or (b0.toInt() and 0xFF shl 0)).toUShort()
+         }
 
-            switch (bytes.length) {
-                default:
-                case 2:
-                    number |= (bytes[1] & 0xFF) << 8;
-                case 1:
-                    number |= (bytes[0] & 0xFF) << 0;
-            }
+         fun from(buff: ByteBuffer): UShort {
+             return from(buff.get(), buff.get())
+         }
 
-            return UShort.valueOf(number);
-        }
+         @Throws(IOException::class)
+         fun from(inputStream: InputStream): UShort {
+             return from(inputStream.read().toByte(), inputStream.read().toByte())
+         }
 
-        public static
-        UShort from(final byte b0, final byte b1) {
-            return UShort.valueOf((short) ((b1 & 0xFF) << 8 | (b0 & 0xFF) << 0));
-        }
+         fun toBytes(x: UShort): ByteArray {
+             return byteArrayOf((x.toInt() shr 0).toByte(), (x.toInt() shr 8).toByte())
+         }
 
-        public static
-        UShort from(final ByteBuffer buff) {
-            return from(buff.get(), buff.get());
-        }
+         fun toBytes(x: UShort, bytes: ByteArray, offset: Int) {
+             bytes[offset + 1] = (x.toInt() shr 8).toByte()
+             bytes[offset + 0] = (x.toInt() shr 0).toByte()
+         }
 
-        public static
-        UShort from(final InputStream inputStream) throws IOException {
-            return from((byte) inputStream.read(), (byte) inputStream.read());
-        }
-        public static
-        byte[] toBytes(final UShort x) {
-            int num = x.intValue();
-
-            return new byte[] {(byte) (num & 0x00FF >> 0), (byte) ((num & 0xFF00) >> 8)};
-        }
-
-        public static
-        void toBytes(final UShort x, final byte[] bytes, final int offset) {
-            int num = x.intValue();
-
-            bytes[offset + 1] = (byte) ((num & 0xFF00) >> 8);
-            bytes[offset + 0] = (byte) (num & 0x00FF >> 0);
-        }
-
-        public static
-        void toBytes(final UShort x, final byte[] bytes) {
-            int num = x.intValue();
-
-            bytes[1] = (byte) ((num & 0xFF00) >> 8);
-            bytes[0] = (byte) (num & 0x00FF >> 0);
-        }
-
-        private
-        UShort_() {
-        }
+         fun toBytes(x: UShort, bytes: ByteArray) {
+             bytes[1] = (x.toInt() shr 8).toByte()
+             bytes[0] = (x.toInt() shr 0).toByte()
+         }
     }
-
 
     /**
      * INT to and from bytes
      */
-    public static final
-    class Int_ {
-        @SuppressWarnings("fallthrough")
-        public static
-        int from(final byte[] bytes, final int offset, final int bytenum) {
-            int number = 0;
+    object Int_ {
+        fun from(bytes: ByteArray, offset: Int, bytenum: Int): Int {
+            var number = 0
+            when (bytenum) {
+                4 -> {
+                    number = number or (bytes[offset + 3].toInt() and 0xFF shl 24)
+                    number = number or (bytes[offset + 2].toInt() and 0xFF shl 16)
+                    number = number or (bytes[offset + 1].toInt() and 0xFF shl 8)
+                    number = number or (bytes[offset + 0].toInt() and 0xFF shl 0)
+                }
 
-            switch (bytenum) {
-                case 4:
-                    number |= (bytes[offset + 3] & 0xFF) << 24;
-                case 3:
-                    number |= (bytes[offset + 2] & 0xFF) << 16;
-                case 2:
-                    number |= (bytes[offset + 1] & 0xFF) << 8;
-                case 1:
-                    number |= (bytes[offset + 0] & 0xFF) << 0;
+                3 -> {
+                    number = number or (bytes[offset + 2].toInt() and 0xFF shl 16)
+                    number = number or (bytes[offset + 1].toInt() and 0xFF shl 8)
+                    number = number or (bytes[offset + 0].toInt() and 0xFF shl 0)
+                }
+
+                2 -> {
+                    number = number or (bytes[offset + 1].toInt() and 0xFF shl 8)
+                    number = number or (bytes[offset + 0].toInt() and 0xFF shl 0)
+                }
+
+                1 -> number = number or (bytes[offset + 0].toInt() and 0xFF shl 0)
             }
-
-            return number;
+            return number
         }
 
-        @SuppressWarnings("fallthrough")
-        public static
-        int from(final byte[] bytes) {
-            int number = 0;
+        fun from(bytes: ByteArray): Int {
+            var number = 0
+            when (bytes.size) {
+                4 -> {
+                    number = number or (bytes[3].toInt() and 0xFF shl 24)
+                    number = number or (bytes[2].toInt() and 0xFF shl 16)
+                    number = number or (bytes[1].toInt() and 0xFF shl 8)
+                    number = number or (bytes[0].toInt() and 0xFF shl 0)
+                }
 
-            switch (bytes.length) {
-                default:
-                case 4:
-                    number |= (bytes[3] & 0xFF) << 24;
-                case 3:
-                    number |= (bytes[2] & 0xFF) << 16;
-                case 2:
-                    number |= (bytes[1] & 0xFF) << 8;
-                case 1:
-                    number |= (bytes[0] & 0xFF) << 0;
+                3 -> {
+                    number = number or (bytes[2].toInt() and 0xFF shl 16)
+                    number = number or (bytes[1].toInt() and 0xFF shl 8)
+                    number = number or (bytes[0].toInt() and 0xFF shl 0)
+                }
+
+                2 -> {
+                    number = number or (bytes[1].toInt() and 0xFF shl 8)
+                    number = number or (bytes[0].toInt() and 0xFF shl 0)
+                }
+
+                1 -> number = number or (bytes[0].toInt() and 0xFF shl 0)
+                else -> {
+                    number = number or (bytes[3].toInt() and 0xFF shl 24)
+                    number = number or (bytes[2].toInt() and 0xFF shl 16)
+                    number = number or (bytes[1].toInt() and 0xFF shl 8)
+                    number = number or (bytes[0].toInt() and 0xFF shl 0)
+                }
             }
-
-            return number;
+            return number
         }
 
-        public static
-        int from(final byte b0, final byte b1, final byte b2, final byte b3) {
-            return (b3 & 0xFF) << 24 |
-                   (b2 & 0xFF) << 16 |
-                   (b1 & 0xFF) << 8 |
-                   (b0 & 0xFF) << 0;
+        fun from(b0: Byte, b1: Byte, b2: Byte, b3: Byte): Int {
+            return b3.toInt() and 0xFF shl 24 or (b2.toInt() and 0xFF shl 16) or (b1.toInt() and 0xFF shl 8) or (b0.toInt() and 0xFF shl 0)
         }
 
-        public static
-        int from(final ByteBuffer buff) {
-            return from(buff.get(), buff.get(), buff.get(), buff.get());
+        fun from(buff: ByteBuffer): Int {
+            return from(buff.get(), buff.get(), buff.get(), buff.get())
         }
 
-        public static
-        int from(final InputStream inputStream) throws IOException {
-            return from((byte) inputStream.read(), (byte) inputStream.read(), (byte) inputStream.read(), (byte) inputStream.read());
+        @Throws(IOException::class)
+        fun from(inputStream: InputStream): Int {
+            return from(inputStream.read().toByte(), inputStream.read().toByte(), inputStream.read().toByte(), inputStream.read().toByte())
         }
 
-        public static
-        byte[] toBytes(final int x) {
-            return new byte[] {(byte) (x >> 0), (byte) (x >> 8), (byte) (x >> 16), (byte) (x >> 24)};
+        fun toBytes(x: Int): ByteArray {
+            return byteArrayOf((x shr 0).toByte(), (x shr 8).toByte(), (x shr 16).toByte(), (x shr 24).toByte())
         }
 
-        public static
-        void toBytes(final int x, final byte[] bytes, final int offset) {
-            bytes[offset + 3] = (byte) (x >> 24);
-            bytes[offset + 2] = (byte) (x >> 16);
-            bytes[offset + 1] = (byte) (x >> 8);
-            bytes[offset + 0] = (byte) (x >> 0);
+        fun toBytes(x: Int, bytes: ByteArray, offset: Int) {
+            bytes[offset + 3] = (x shr 24).toByte()
+            bytes[offset + 2] = (x shr 16).toByte()
+            bytes[offset + 1] = (x shr 8).toByte()
+            bytes[offset + 0] = (x shr 0).toByte()
         }
 
-        public static
-        void toBytes(final int x, final byte[] bytes) {
-            bytes[3] = (byte) (x >> 24);
-            bytes[2] = (byte) (x >> 16);
-            bytes[1] = (byte) (x >> 8);
-            bytes[0] = (byte) (x >> 0);
-        }
-
-        private
-        Int_() {
+        fun toBytes(x: Int, bytes: ByteArray) {
+            bytes[3] = (x shr 24).toByte()
+            bytes[2] = (x shr 16).toByte()
+            bytes[1] = (x shr 8).toByte()
+            bytes[0] = (x shr 0).toByte()
         }
     }
 
+     /**
+      * UNSIGNED INT to and from bytes
+      */
+    object UInt_ {
+         fun from(bytes: ByteArray, offset: Int, bytenum: Int): UInt {
+             var number = 0
+             when (bytenum) {
+                 4 -> {
+                     number = number or (bytes[offset + 3].toInt() and 0xFF shl 24)
+                     number = number or (bytes[offset + 2].toInt() and 0xFF shl 16)
+                     number = number or (bytes[offset + 1].toInt() and 0xFF shl 8)
+                     number = number or (bytes[offset + 0].toInt() and 0xFF shl 0)
+                 }
 
-    /**
-     * UNSIGNED INT to and from bytes
-     */
-    public static final
-    class UInt_ {
-        @SuppressWarnings("fallthrough")
-        public static
-        UInteger from(final byte[] bytes, final int offset, final int bytenum) {
-            int number = 0;
+                 3 -> {
+                     number = number or (bytes[offset + 2].toInt() and 0xFF shl 16)
+                     number = number or (bytes[offset + 1].toInt() and 0xFF shl 8)
+                     number = number or (bytes[offset + 0].toInt() and 0xFF shl 0)
+                 }
 
-            switch (bytenum) {
-                case 4:
-                    number |= (bytes[offset + 3] & 0xFF) << 24;
-                case 3:
-                    number |= (bytes[offset + 2] & 0xFF) << 16;
-                case 2:
-                    number |= (bytes[offset + 1] & 0xFF) << 8;
-                case 1:
-                    number |= (bytes[offset + 0] & 0xFF) << 0;
-            }
+                 2 -> {
+                     number = number or (bytes[offset + 1].toInt() and 0xFF shl 8)
+                     number = number or (bytes[offset + 0].toInt() and 0xFF shl 0)
+                 }
 
-            return UInteger.valueOf(number);
-        }
+                 1 -> number = number or (bytes[offset + 0].toInt() and 0xFF shl 0)
+             }
+             return number.toUInt()
+         }
 
-        @SuppressWarnings("fallthrough")
-        public static
-        UInteger from(final byte[] bytes) {
-            int number = 0;
+         fun from(bytes: ByteArray): UInt {
+             var number = 0
+             when (bytes.size) {
+                 4 -> {
+                     number = number or (bytes[3].toInt() and 0xFF shl 24)
+                     number = number or (bytes[2].toInt() and 0xFF shl 16)
+                     number = number or (bytes[1].toInt() and 0xFF shl 8)
+                     number = number or (bytes[0].toInt() and 0xFF shl 0)
+                 }
 
-            switch (bytes.length) {
-                default:
-                case 4:
-                    number |= (bytes[3] & 0xFF) << 24;
-                case 3:
-                    number |= (bytes[2] & 0xFF) << 16;
-                case 2:
-                    number |= (bytes[1] & 0xFF) << 8;
-                case 1:
-                    number |= (bytes[0] & 0xFF) << 0;
-            }
+                 3 -> {
+                     number = number or (bytes[2].toInt() and 0xFF shl 16)
+                     number = number or (bytes[1].toInt() and 0xFF shl 8)
+                     number = number or (bytes[0].toInt() and 0xFF shl 0)
+                 }
 
-            return UInteger.valueOf(number);
-        }
+                 2 -> {
+                     number = number or (bytes[1].toInt() and 0xFF shl 8)
+                     number = number or (bytes[0].toInt() and 0xFF shl 0)
+                 }
 
-        public static
-        UInteger from(final byte b0, final byte b1, final byte b2, final byte b3) {
-            int number = (b3 & 0xFF) << 24 |
-                         (b2 & 0xFF) << 16 |
-                         (b1 & 0xFF) << 8 |
-                         (b0 & 0xFF) << 0;
+                 1 -> number = number or (bytes[0].toInt() and 0xFF shl 0)
+                 else -> {
+                     number = number or (bytes[3].toInt() and 0xFF shl 24)
+                     number = number or (bytes[2].toInt() and 0xFF shl 16)
+                     number = number or (bytes[1].toInt() and 0xFF shl 8)
+                     number = number or (bytes[0].toInt() and 0xFF shl 0)
+                 }
+             }
+             return number.toUInt()
+         }
 
-            return UInteger.valueOf(number);
-        }
+         fun from(b0: Byte, b1: Byte, b2: Byte, b3: Byte): UInt {
+             return (b3.toInt() and 0xFF shl 24 or (b2.toInt() and 0xFF shl 16) or (b1.toInt() and 0xFF shl 8) or (b0.toInt() and 0xFF shl 0)).toUInt()
+         }
 
-        public static
-        UInteger from(final ByteBuffer buff) {
-            return from(buff.get(), buff.get(), buff.get(), buff.get());
-        }
+         fun from(buff: ByteBuffer): UInt {
+             return from(buff.get(), buff.get(), buff.get(), buff.get())
+         }
 
-        public static
-        UInteger from(final InputStream inputStream) throws IOException {
-            return from((byte) inputStream.read(), (byte) inputStream.read(), (byte) inputStream.read(), (byte) inputStream.read());
-        }
+         @Throws(IOException::class)
+         fun from(inputStream: InputStream): UInt {
+             return from(inputStream.read().toByte(), inputStream.read().toByte(), inputStream.read().toByte(), inputStream.read().toByte())
+         }
 
-        public static
-        byte[] toBytes(final UInteger x) {
-            long num = x.longValue();
+         fun toBytes(x: UInt): ByteArray {
+             return byteArrayOf((x shr 0).toByte(), (x shr 8).toByte(), (x shr 16).toByte(), (x shr 24).toByte())
+         }
 
-            return new byte[] {(byte) (num & 0x000000FFL >> 0), (byte) ((num & 0x0000FF00L) >> 8), (byte) ((num & 0x00FF0000L) >> 16),
-                               (byte) ((num & 0xFF000000L) >> 24)};
-        }
+         fun toBytes(x: UInt, bytes: ByteArray, offset: Int) {
+             bytes[offset + 3] = (x shr 24).toByte()
+             bytes[offset + 2] = (x shr 16).toByte()
+             bytes[offset + 1] = (x shr 8).toByte()
+             bytes[offset + 0] = (x shr 0).toByte()
+         }
 
-        public static
-        void toBytes(final UInteger x, final byte[] bytes, final int offset) {
-            long num = x.longValue();
-
-            bytes[offset + 3] = (byte) ((num & 0xFF000000L) >> 24);
-            bytes[offset + 2] = (byte) ((num & 0x00FF0000L) >> 16);
-            bytes[offset + 1] = (byte) ((num & 0x0000FF00L) >> 8);
-            bytes[offset + 0] = (byte) (num & 0x000000FFL >> 0);
-        }
-
-
-        public static
-        void toBytes(final UInteger x, final byte[] bytes) {
-            long num = x.longValue();
-
-            bytes[3] = (byte) ((num & 0xFF000000L) >> 24);
-            bytes[2] = (byte) ((num & 0x00FF0000L) >> 16);
-            bytes[1] = (byte) ((num & 0x0000FF00L) >> 8);
-            bytes[0] = (byte) (num & 0x000000FFL >> 0);
-        }
-
-        private
-        UInt_() {
-        }
+         fun toBytes(x: UInt, bytes: ByteArray) {
+             bytes[3] = (x shr 24).toByte()
+             bytes[2] = (x shr 16).toByte()
+             bytes[1] = (x shr 8).toByte()
+             bytes[0] = (x shr 0).toByte()
+         }
     }
-
 
     /**
      * LONG to and from bytes
      */
-    public static final
-    class Long_ {
-        @SuppressWarnings("fallthrough")
-        public static
-        long from(final byte[] bytes, final int offset, final int bytenum) {
-            long number = 0;
+    object Long_ {
+        fun from(bytes: ByteArray, offset: Int, bytenum: Int): Long {
+            var number: Long = 0
+            when (bytenum) {
+                8 -> {
+                    number = number or ((bytes[offset + 7].toInt() and 0xFF).toLong() shl 56)
+                    number = number or ((bytes[offset + 6].toInt() and 0xFF).toLong() shl 48)
+                    number = number or ((bytes[offset + 5].toInt() and 0xFF).toLong() shl 40)
+                    number = number or ((bytes[offset + 4].toInt() and 0xFF).toLong() shl 32)
+                    number = number or ((bytes[offset + 3].toInt() and 0xFF).toLong() shl 24)
+                    number = number or ((bytes[offset + 2].toInt() and 0xFF).toLong() shl 16)
+                    number = number or ((bytes[offset + 1].toInt() and 0xFF).toLong() shl 8)
+                    number = number or ((bytes[offset + 0].toInt() and 0xFF).toLong() shl 0)
+                }
 
-            switch (bytenum) {
-                case 8:
-                    number |= (long) (bytes[offset + 7] & 0xFF) << 56;
-                case 7:
-                    number |= (long) (bytes[offset + 6] & 0xFF) << 48;
-                case 6:
-                    number |= (long) (bytes[offset + 5] & 0xFF) << 40;
-                case 5:
-                    number |= (long) (bytes[offset + 4] & 0xFF) << 32;
-                case 4:
-                    number |= (long) (bytes[offset + 3] & 0xFF) << 24;
-                case 3:
-                    number |= (long) (bytes[offset + 2] & 0xFF) << 16;
-                case 2:
-                    number |= (long) (bytes[offset + 1] & 0xFF) << 8;
-                case 1:
-                    number |= (long) (bytes[offset + 0] & 0xFF) << 0;
+                7 -> {
+                    number = number or ((bytes[offset + 6].toInt() and 0xFF).toLong() shl 48)
+                    number = number or ((bytes[offset + 5].toInt() and 0xFF).toLong() shl 40)
+                    number = number or ((bytes[offset + 4].toInt() and 0xFF).toLong() shl 32)
+                    number = number or ((bytes[offset + 3].toInt() and 0xFF).toLong() shl 24)
+                    number = number or ((bytes[offset + 2].toInt() and 0xFF).toLong() shl 16)
+                    number = number or ((bytes[offset + 1].toInt() and 0xFF).toLong() shl 8)
+                    number = number or ((bytes[offset + 0].toInt() and 0xFF).toLong() shl 0)
+                }
+
+                6 -> {
+                    number = number or ((bytes[offset + 5].toInt() and 0xFF).toLong() shl 40)
+                    number = number or ((bytes[offset + 4].toInt() and 0xFF).toLong() shl 32)
+                    number = number or ((bytes[offset + 3].toInt() and 0xFF).toLong() shl 24)
+                    number = number or ((bytes[offset + 2].toInt() and 0xFF).toLong() shl 16)
+                    number = number or ((bytes[offset + 1].toInt() and 0xFF).toLong() shl 8)
+                    number = number or ((bytes[offset + 0].toInt() and 0xFF).toLong() shl 0)
+                }
+
+                5 -> {
+                    number = number or ((bytes[offset + 4].toInt() and 0xFF).toLong() shl 32)
+                    number = number or ((bytes[offset + 3].toInt() and 0xFF).toLong() shl 24)
+                    number = number or ((bytes[offset + 2].toInt() and 0xFF).toLong() shl 16)
+                    number = number or ((bytes[offset + 1].toInt() and 0xFF).toLong() shl 8)
+                    number = number or ((bytes[offset + 0].toInt() and 0xFF).toLong() shl 0)
+                }
+
+                4 -> {
+                    number = number or ((bytes[offset + 3].toInt() and 0xFF).toLong() shl 24)
+                    number = number or ((bytes[offset + 2].toInt() and 0xFF).toLong() shl 16)
+                    number = number or ((bytes[offset + 1].toInt() and 0xFF).toLong() shl 8)
+                    number = number or ((bytes[offset + 0].toInt() and 0xFF).toLong() shl 0)
+                }
+
+                3 -> {
+                    number = number or ((bytes[offset + 2].toInt() and 0xFF).toLong() shl 16)
+                    number = number or ((bytes[offset + 1].toInt() and 0xFF).toLong() shl 8)
+                    number = number or ((bytes[offset + 0].toInt() and 0xFF).toLong() shl 0)
+                }
+
+                2 -> {
+                    number = number or ((bytes[offset + 1].toInt() and 0xFF).toLong() shl 8)
+                    number = number or ((bytes[offset + 0].toInt() and 0xFF).toLong() shl 0)
+                }
+
+                1 -> number = number or ((bytes[offset + 0].toInt() and 0xFF).toLong() shl 0)
             }
-
-            return number;
+            return number
         }
 
-        @SuppressWarnings("fallthrough")
-        public static
-        long from(final byte[] bytes) {
-            long number = 0L;
+        fun from(bytes: ByteArray): Long {
+            var number = 0L
+            when (bytes.size) {
+                8 -> {
+                    number = number or ((bytes[7].toInt() and 0xFF).toLong() shl 56)
+                    number = number or ((bytes[6].toInt() and 0xFF).toLong() shl 48)
+                    number = number or ((bytes[5].toInt() and 0xFF).toLong() shl 40)
+                    number = number or ((bytes[4].toInt() and 0xFF).toLong() shl 32)
+                    number = number or ((bytes[3].toInt() and 0xFF).toLong() shl 24)
+                    number = number or ((bytes[2].toInt() and 0xFF).toLong() shl 16)
+                    number = number or ((bytes[1].toInt() and 0xFF).toLong() shl 8)
+                    number = number or ((bytes[0].toInt() and 0xFF).toLong() shl 0)
+                }
 
-            switch (bytes.length) {
-                default:
-                case 8:
-                    number |= (long) (bytes[7] & 0xFF) << 56;
-                case 7:
-                    number |= (long) (bytes[6] & 0xFF) << 48;
-                case 6:
-                    number |= (long) (bytes[5] & 0xFF) << 40;
-                case 5:
-                    number |= (long) (bytes[4] & 0xFF) << 32;
-                case 4:
-                    number |= (long) (bytes[3] & 0xFF) << 24;
-                case 3:
-                    number |= (long) (bytes[2] & 0xFF) << 16;
-                case 2:
-                    number |= (long) (bytes[1] & 0xFF) << 8;
-                case 1:
-                    number |= (long) (bytes[0] & 0xFF) << 0;
+                7 -> {
+                    number = number or ((bytes[6].toInt() and 0xFF).toLong() shl 48)
+                    number = number or ((bytes[5].toInt() and 0xFF).toLong() shl 40)
+                    number = number or ((bytes[4].toInt() and 0xFF).toLong() shl 32)
+                    number = number or ((bytes[3].toInt() and 0xFF).toLong() shl 24)
+                    number = number or ((bytes[2].toInt() and 0xFF).toLong() shl 16)
+                    number = number or ((bytes[1].toInt() and 0xFF).toLong() shl 8)
+                    number = number or ((bytes[0].toInt() and 0xFF).toLong() shl 0)
+                }
+
+                6 -> {
+                    number = number or ((bytes[5].toInt() and 0xFF).toLong() shl 40)
+                    number = number or ((bytes[4].toInt() and 0xFF).toLong() shl 32)
+                    number = number or ((bytes[3].toInt() and 0xFF).toLong() shl 24)
+                    number = number or ((bytes[2].toInt() and 0xFF).toLong() shl 16)
+                    number = number or ((bytes[1].toInt() and 0xFF).toLong() shl 8)
+                    number = number or ((bytes[0].toInt() and 0xFF).toLong() shl 0)
+                }
+
+                5 -> {
+                    number = number or ((bytes[4].toInt() and 0xFF).toLong() shl 32)
+                    number = number or ((bytes[3].toInt() and 0xFF).toLong() shl 24)
+                    number = number or ((bytes[2].toInt() and 0xFF).toLong() shl 16)
+                    number = number or ((bytes[1].toInt() and 0xFF).toLong() shl 8)
+                    number = number or ((bytes[0].toInt() and 0xFF).toLong() shl 0)
+                }
+
+                4 -> {
+                    number = number or ((bytes[3].toInt() and 0xFF).toLong() shl 24)
+                    number = number or ((bytes[2].toInt() and 0xFF).toLong() shl 16)
+                    number = number or ((bytes[1].toInt() and 0xFF).toLong() shl 8)
+                    number = number or ((bytes[0].toInt() and 0xFF).toLong() shl 0)
+                }
+
+                3 -> {
+                    number = number or ((bytes[2].toInt() and 0xFF).toLong() shl 16)
+                    number = number or ((bytes[1].toInt() and 0xFF).toLong() shl 8)
+                    number = number or ((bytes[0].toInt() and 0xFF).toLong() shl 0)
+                }
+
+                2 -> {
+                    number = number or ((bytes[1].toInt() and 0xFF).toLong() shl 8)
+                    number = number or ((bytes[0].toInt() and 0xFF).toLong() shl 0)
+                }
+
+                1 -> number = number or ((bytes[0].toInt() and 0xFF).toLong() shl 0)
+                else -> {
+                    number = number or ((bytes[7].toInt() and 0xFF).toLong() shl 56)
+                    number = number or ((bytes[6].toInt() and 0xFF).toLong() shl 48)
+                    number = number or ((bytes[5].toInt() and 0xFF).toLong() shl 40)
+                    number = number or ((bytes[4].toInt() and 0xFF).toLong() shl 32)
+                    number = number or ((bytes[3].toInt() and 0xFF).toLong() shl 24)
+                    number = number or ((bytes[2].toInt() and 0xFF).toLong() shl 16)
+                    number = number or ((bytes[1].toInt() and 0xFF).toLong() shl 8)
+                    number = number or ((bytes[0].toInt() and 0xFF).toLong() shl 0)
+                }
             }
-
-            return number;
+            return number
         }
 
-        public static
-        long from(final byte b0, final byte b1, final byte b2, final byte b3, final byte b4, final byte b5, final byte b6, final byte b7) {
-            return (long) (b7 & 0xFF) << 56 |
-                   (long) (b6 & 0xFF) << 48 |
-                   (long) (b5 & 0xFF) << 40 |
-                   (long) (b4 & 0xFF) << 32 |
-                   (long) (b3 & 0xFF) << 24 |
-                   (long) (b2 & 0xFF) << 16 |
-                   (long) (b1 & 0xFF) << 8 |
-                   (long) (b0 & 0xFF) << 0;
+        fun from(b0: Byte, b1: Byte, b2: Byte, b3: Byte, b4: Byte, b5: Byte, b6: Byte, b7: Byte): Long {
+            return (b7.toInt() and 0xFF).toLong() shl 56 or ((b6.toInt() and 0xFF).toLong() shl 48) or ((b5.toInt() and 0xFF).toLong() shl 40) or ((b4.toInt() and 0xFF).toLong() shl 32) or ((b3.toInt() and 0xFF).toLong() shl 24) or ((b2.toInt() and 0xFF).toLong() shl 16) or ((b1.toInt() and 0xFF).toLong() shl 8) or ((b0.toInt() and 0xFF).toLong() shl 0)
         }
 
-        public static
-        long from(final ByteBuffer buff) {
-            return from(buff.get(), buff.get(), buff.get(), buff.get(), buff.get(), buff.get(), buff.get(), buff.get());
+        fun from(buff: ByteBuffer): Long {
+            return from(buff.get(), buff.get(), buff.get(), buff.get(), buff.get(), buff.get(), buff.get(), buff.get())
         }
 
-        public static
-        long from(final InputStream inputStream) throws IOException {
-            return from((byte) inputStream.read(),
-                        (byte) inputStream.read(),
-                        (byte) inputStream.read(),
-                        (byte) inputStream.read(),
-                        (byte) inputStream.read(),
-                        (byte) inputStream.read(),
-                        (byte) inputStream.read(),
-                        (byte) inputStream.read());
+        @Throws(IOException::class)
+        fun from(inputStream: InputStream): Long {
+            return from(
+                inputStream.read().toByte(),
+                inputStream.read().toByte(),
+                inputStream.read().toByte(),
+                inputStream.read().toByte(),
+                inputStream.read().toByte(),
+                inputStream.read().toByte(),
+                inputStream.read().toByte(),
+                inputStream.read().toByte()
+            )
         }
 
-        public static
-        byte[] toBytes(final long x) {
-            return new byte[] {(byte) (x >> 0), (byte) (x >> 8), (byte) (x >> 16), (byte) (x >> 24), (byte) (x >> 32), (byte) (x >> 40),
-                               (byte) (x >> 48), (byte) (x >> 56),};
+        fun toBytes(x: Long): ByteArray {
+            return byteArrayOf(
+                (x shr 0).toByte(),
+                (x shr 8).toByte(),
+                (x shr 16).toByte(),
+                (x shr 24).toByte(),
+                (x shr 32).toByte(),
+                (x shr 40).toByte(),
+                (x shr 48).toByte(),
+                (x shr 56).toByte()
+            )
         }
 
-        public static
-        void toBytes(final long x, final byte[] bytes, final int offset) {
-            bytes[offset + 7] = (byte) (x >> 56);
-            bytes[offset + 6] = (byte) (x >> 48);
-            bytes[offset + 5] = (byte) (x >> 40);
-            bytes[offset + 4] = (byte) (x >> 32);
-            bytes[offset + 3] = (byte) (x >> 24);
-            bytes[offset + 2] = (byte) (x >> 16);
-            bytes[offset + 1] = (byte) (x >> 8);
-            bytes[offset + 0] = (byte) (x >> 0);
+        fun toBytes(x: Long, bytes: ByteArray, offset: Int) {
+            bytes[offset + 7] = (x shr 56).toByte()
+            bytes[offset + 6] = (x shr 48).toByte()
+            bytes[offset + 5] = (x shr 40).toByte()
+            bytes[offset + 4] = (x shr 32).toByte()
+            bytes[offset + 3] = (x shr 24).toByte()
+            bytes[offset + 2] = (x shr 16).toByte()
+            bytes[offset + 1] = (x shr 8).toByte()
+            bytes[offset + 0] = (x shr 0).toByte()
         }
 
-        public static
-        void toBytes(final long x, final byte[] bytes) {
-            bytes[7] = (byte) (x >> 56);
-            bytes[6] = (byte) (x >> 48);
-            bytes[5] = (byte) (x >> 40);
-            bytes[4] = (byte) (x >> 32);
-            bytes[3] = (byte) (x >> 24);
-            bytes[2] = (byte) (x >> 16);
-            bytes[1] = (byte) (x >> 8);
-            bytes[0] = (byte) (x >> 0);
-        }
-
-        private
-        Long_() {
+        fun toBytes(x: Long, bytes: ByteArray) {
+            bytes[7] = (x shr 56).toByte()
+            bytes[6] = (x shr 48).toByte()
+            bytes[5] = (x shr 40).toByte()
+            bytes[4] = (x shr 32).toByte()
+            bytes[3] = (x shr 24).toByte()
+            bytes[2] = (x shr 16).toByte()
+            bytes[1] = (x shr 8).toByte()
+            bytes[0] = (x shr 0).toByte()
         }
     }
 
+     /**
+      * UNSIGNED LONG to and from bytes
+      */
+    object ULong_ {
+         fun from(bytes: ByteArray, offset: Int, bytenum: Int): ULong {
+             var number: Long = 0
+             when (bytenum) {
+                 8 -> {
+                     number = number or ((bytes[offset + 7].toInt() and 0xFF).toLong() shl 56)
+                     number = number or ((bytes[offset + 6].toInt() and 0xFF).toLong() shl 48)
+                     number = number or ((bytes[offset + 5].toInt() and 0xFF).toLong() shl 40)
+                     number = number or ((bytes[offset + 4].toInt() and 0xFF).toLong() shl 32)
+                     number = number or ((bytes[offset + 3].toInt() and 0xFF).toLong() shl 24)
+                     number = number or ((bytes[offset + 2].toInt() and 0xFF).toLong() shl 16)
+                     number = number or ((bytes[offset + 1].toInt() and 0xFF).toLong() shl 8)
+                     number = number or ((bytes[offset + 0].toInt() and 0xFF).toLong() shl 0)
+                 }
 
-    /**
-     * UNSIGNED LONG to and from bytes
-     */
-    public static final
-    class ULong_ {
-        @SuppressWarnings("fallthrough")
-        public static
-        ULong from(final byte[] bytes, final int offset, final int bytenum) {
-            long number = 0;
+                 7 -> {
+                     number = number or ((bytes[offset + 6].toInt() and 0xFF).toLong() shl 48)
+                     number = number or ((bytes[offset + 5].toInt() and 0xFF).toLong() shl 40)
+                     number = number or ((bytes[offset + 4].toInt() and 0xFF).toLong() shl 32)
+                     number = number or ((bytes[offset + 3].toInt() and 0xFF).toLong() shl 24)
+                     number = number or ((bytes[offset + 2].toInt() and 0xFF).toLong() shl 16)
+                     number = number or ((bytes[offset + 1].toInt() and 0xFF).toLong() shl 8)
+                     number = number or ((bytes[offset + 0].toInt() and 0xFF).toLong() shl 0)
+                 }
 
-            switch (bytenum) {
-                case 8:
-                    number |= (long) (bytes[offset + 7] & 0xFF) << 56;
-                case 7:
-                    number |= (long) (bytes[offset + 6] & 0xFF) << 48;
-                case 6:
-                    number |= (long) (bytes[offset + 5] & 0xFF) << 40;
-                case 5:
-                    number |= (long) (bytes[offset + 4] & 0xFF) << 32;
-                case 4:
-                    number |= (long) (bytes[offset + 3] & 0xFF) << 24;
-                case 3:
-                    number |= (long) (bytes[offset + 2] & 0xFF) << 16;
-                case 2:
-                    number |= (long) (bytes[offset + 1] & 0xFF) << 8;
-                case 1:
-                    number |= (long) (bytes[offset + 0] & 0xFF) << 0;
-            }
+                 6 -> {
+                     number = number or ((bytes[offset + 5].toInt() and 0xFF).toLong() shl 40)
+                     number = number or ((bytes[offset + 4].toInt() and 0xFF).toLong() shl 32)
+                     number = number or ((bytes[offset + 3].toInt() and 0xFF).toLong() shl 24)
+                     number = number or ((bytes[offset + 2].toInt() and 0xFF).toLong() shl 16)
+                     number = number or ((bytes[offset + 1].toInt() and 0xFF).toLong() shl 8)
+                     number = number or ((bytes[offset + 0].toInt() and 0xFF).toLong() shl 0)
+                 }
 
-            return ULong.valueOf(number);
-        }
+                 5 -> {
+                     number = number or ((bytes[offset + 4].toInt() and 0xFF).toLong() shl 32)
+                     number = number or ((bytes[offset + 3].toInt() and 0xFF).toLong() shl 24)
+                     number = number or ((bytes[offset + 2].toInt() and 0xFF).toLong() shl 16)
+                     number = number or ((bytes[offset + 1].toInt() and 0xFF).toLong() shl 8)
+                     number = number or ((bytes[offset + 0].toInt() and 0xFF).toLong() shl 0)
+                 }
 
-        public static
-        ULong from(final byte[] bytes) {
-            BigInteger ulong = new BigInteger(1, bytes);
-            return ULong.valueOf(ulong);
-        }
+                 4 -> {
+                     number = number or ((bytes[offset + 3].toInt() and 0xFF).toLong() shl 24)
+                     number = number or ((bytes[offset + 2].toInt() and 0xFF).toLong() shl 16)
+                     number = number or ((bytes[offset + 1].toInt() and 0xFF).toLong() shl 8)
+                     number = number or ((bytes[offset + 0].toInt() and 0xFF).toLong() shl 0)
+                 }
 
-        public static
-        ULong from(final byte b0, final byte b1, final byte b2, final byte b3, final byte b4, final byte b5, final byte b6, final byte b7) {
-            byte[] bytes = new byte[] {b7, b6, b5, b4, b3, b2, b1, b0};
-            BigInteger ulong = new BigInteger(1, bytes);
-            return ULong.valueOf(ulong);
-        }
+                 3 -> {
+                     number = number or ((bytes[offset + 2].toInt() and 0xFF).toLong() shl 16)
+                     number = number or ((bytes[offset + 1].toInt() and 0xFF).toLong() shl 8)
+                     number = number or ((bytes[offset + 0].toInt() and 0xFF).toLong() shl 0)
+                 }
 
-        public static
-        ULong from(final ByteBuffer buff) {
-            return from(buff.get(), buff.get(), buff.get(), buff.get(), buff.get(), buff.get(), buff.get(), buff.get());
-        }
+                 2 -> {
+                     number = number or ((bytes[offset + 1].toInt() and 0xFF).toLong() shl 8)
+                     number = number or ((bytes[offset + 0].toInt() and 0xFF).toLong() shl 0)
+                 }
 
-        public static
-        ULong from(final InputStream inputStream) throws IOException {
-            return from((byte) inputStream.read(),
-                        (byte) inputStream.read(),
-                        (byte) inputStream.read(),
-                        (byte) inputStream.read(),
-                        (byte) inputStream.read(),
-                        (byte) inputStream.read(),
-                        (byte) inputStream.read(),
-                        (byte) inputStream.read());
-        }
+                 1 -> number = number or ((bytes[offset + 0].toInt() and 0xFF).toLong() shl 0)
+             }
+             return number.toULong()
+         }
 
-        public static
-        byte[] toBytes(final ULong x) {
-            byte[] bytes = new byte[8];
-            int offset = 0;
+         fun from(bytes: ByteArray): ULong {
+             var number = 0L
+             when (bytes.size) {
+                 8 -> {
+                     number = number or ((bytes[7].toInt() and 0xFF).toLong() shl 56)
+                     number = number or ((bytes[6].toInt() and 0xFF).toLong() shl 48)
+                     number = number or ((bytes[5].toInt() and 0xFF).toLong() shl 40)
+                     number = number or ((bytes[4].toInt() and 0xFF).toLong() shl 32)
+                     number = number or ((bytes[3].toInt() and 0xFF).toLong() shl 24)
+                     number = number or ((bytes[2].toInt() and 0xFF).toLong() shl 16)
+                     number = number or ((bytes[1].toInt() and 0xFF).toLong() shl 8)
+                     number = number or ((bytes[0].toInt() and 0xFF).toLong() shl 0)
+                 }
 
-            byte temp_byte[] = x.toBigInteger()
-                                .toByteArray();
-            int array_count = temp_byte.length - 1;
+                 7 -> {
+                     number = number or ((bytes[6].toInt() and 0xFF).toLong() shl 48)
+                     number = number or ((bytes[5].toInt() and 0xFF).toLong() shl 40)
+                     number = number or ((bytes[4].toInt() and 0xFF).toLong() shl 32)
+                     number = number or ((bytes[3].toInt() and 0xFF).toLong() shl 24)
+                     number = number or ((bytes[2].toInt() and 0xFF).toLong() shl 16)
+                     number = number or ((bytes[1].toInt() and 0xFF).toLong() shl 8)
+                     number = number or ((bytes[0].toInt() and 0xFF).toLong() shl 0)
+                 }
 
-            for (int i = 7; i >= 0; i--) {
-                if (array_count >= 0) {
-                    bytes[offset] = temp_byte[array_count];
-                }
-                else {
-                    bytes[offset] = (byte) 00;
-                }
+                 6 -> {
+                     number = number or ((bytes[5].toInt() and 0xFF).toLong() shl 40)
+                     number = number or ((bytes[4].toInt() and 0xFF).toLong() shl 32)
+                     number = number or ((bytes[3].toInt() and 0xFF).toLong() shl 24)
+                     number = number or ((bytes[2].toInt() and 0xFF).toLong() shl 16)
+                     number = number or ((bytes[1].toInt() and 0xFF).toLong() shl 8)
+                     number = number or ((bytes[0].toInt() and 0xFF).toLong() shl 0)
+                 }
 
-                offset++;
-                array_count--;
-            }
+                 5 -> {
+                     number = number or ((bytes[4].toInt() and 0xFF).toLong() shl 32)
+                     number = number or ((bytes[3].toInt() and 0xFF).toLong() shl 24)
+                     number = number or ((bytes[2].toInt() and 0xFF).toLong() shl 16)
+                     number = number or ((bytes[1].toInt() and 0xFF).toLong() shl 8)
+                     number = number or ((bytes[0].toInt() and 0xFF).toLong() shl 0)
+                 }
 
-            return bytes;
-        }
+                 4 -> {
+                     number = number or ((bytes[3].toInt() and 0xFF).toLong() shl 24)
+                     number = number or ((bytes[2].toInt() and 0xFF).toLong() shl 16)
+                     number = number or ((bytes[1].toInt() and 0xFF).toLong() shl 8)
+                     number = number or ((bytes[0].toInt() and 0xFF).toLong() shl 0)
+                 }
 
-        public static
-        void toBytes(final ULong x, final byte[] bytes, final int offset) {
-            final byte[] bytes1 = toBytes(x);
-            int length = bytes.length;
-            int pos = 8;
+                 3 -> {
+                     number = number or ((bytes[2].toInt() and 0xFF).toLong() shl 16)
+                     number = number or ((bytes[1].toInt() and 0xFF).toLong() shl 8)
+                     number = number or ((bytes[0].toInt() and 0xFF).toLong() shl 0)
+                 }
 
-            while (length > 0) {
-                bytes[pos--] = bytes1[offset + length--];
-            }
-        }
+                 2 -> {
+                     number = number or ((bytes[1].toInt() and 0xFF).toLong() shl 8)
+                     number = number or ((bytes[0].toInt() and 0xFF).toLong() shl 0)
+                 }
 
-        public static
-        void toBytes(final ULong x, final byte[] bytes) {
-            final byte[] bytes1 = toBytes(x);
-            int length = bytes.length;
-            int pos = 8;
+                 1 -> number = number or ((bytes[0].toInt() and 0xFF).toLong() shl 0)
+                 else -> {
+                     number = number or ((bytes[7].toInt() and 0xFF).toLong() shl 56)
+                     number = number or ((bytes[6].toInt() and 0xFF).toLong() shl 48)
+                     number = number or ((bytes[5].toInt() and 0xFF).toLong() shl 40)
+                     number = number or ((bytes[4].toInt() and 0xFF).toLong() shl 32)
+                     number = number or ((bytes[3].toInt() and 0xFF).toLong() shl 24)
+                     number = number or ((bytes[2].toInt() and 0xFF).toLong() shl 16)
+                     number = number or ((bytes[1].toInt() and 0xFF).toLong() shl 8)
+                     number = number or ((bytes[0].toInt() and 0xFF).toLong() shl 0)
+                 }
+             }
+             return number.toULong()
+         }
 
-            while (length > 0) {
-                bytes[pos--] = bytes1[length--];
-            }
-        }
+         fun from(b0: Byte, b1: Byte, b2: Byte, b3: Byte, b4: Byte, b5: Byte, b6: Byte, b7: Byte): ULong {
+             return ((b7.toInt() and 0xFF).toLong() shl 56 or ((b6.toInt() and 0xFF).toLong() shl 48) or ((b5.toInt() and 0xFF).toLong() shl 40) or ((b4.toInt() and 0xFF).toLong() shl 32) or ((b3.toInt() and 0xFF).toLong() shl 24) or ((b2.toInt() and 0xFF).toLong() shl 16) or ((b1.toInt() and 0xFF).toLong() shl 8) or ((b0.toInt() and 0xFF).toLong() shl 0)).toULong()
+         }
 
-        private
-        ULong_() {
-        }
+         fun from(buff: ByteBuffer): ULong {
+             return from(buff.get(), buff.get(), buff.get(), buff.get(), buff.get(), buff.get(), buff.get(), buff.get())
+         }
+
+         @Throws(IOException::class)
+         fun from(inputStream: InputStream): ULong {
+             return from(
+                 inputStream.read().toByte(),
+                 inputStream.read().toByte(),
+                 inputStream.read().toByte(),
+                 inputStream.read().toByte(),
+                 inputStream.read().toByte(),
+                 inputStream.read().toByte(),
+                 inputStream.read().toByte(),
+                 inputStream.read().toByte()
+             )
+         }
+
+         fun toBytes(x: ULong): ByteArray {
+             return byteArrayOf(
+                 (x shr 0).toByte(),
+                 (x shr 8).toByte(),
+                 (x shr 16).toByte(),
+                 (x shr 24).toByte(),
+                 (x shr 32).toByte(),
+                 (x shr 40).toByte(),
+                 (x shr 48).toByte(),
+                 (x shr 56).toByte()
+             )
+         }
+
+         fun toBytes(x: ULong, bytes: ByteArray, offset: Int) {
+             bytes[offset + 7] = (x shr 56).toByte()
+             bytes[offset + 6] = (x shr 48).toByte()
+             bytes[offset + 5] = (x shr 40).toByte()
+             bytes[offset + 4] = (x shr 32).toByte()
+             bytes[offset + 3] = (x shr 24).toByte()
+             bytes[offset + 2] = (x shr 16).toByte()
+             bytes[offset + 1] = (x shr 8).toByte()
+             bytes[offset + 0] = (x shr 0).toByte()
+         }
+
+         fun toBytes(x: ULong, bytes: ByteArray) {
+             bytes[7] = (x shr 56).toByte()
+             bytes[6] = (x shr 48).toByte()
+             bytes[5] = (x shr 40).toByte()
+             bytes[4] = (x shr 32).toByte()
+             bytes[3] = (x shr 24).toByte()
+             bytes[2] = (x shr 16).toByte()
+             bytes[1] = (x shr 8).toByte()
+             bytes[0] = (x shr 0).toByte()
+         }
     }
+    // public static final
+    // class ULong_ {
+    //     @SuppressWarnings("fallthrough")
+    //     public static
+    //     ULong from(final byte[] bytes, final int offset, final int bytenum) {
+    //         long number = 0;
+    //
+    //         switch (bytenum) {
+    //             case 8:
+    //                 number |= (long) (bytes[offset + 7] & 0xFF) << 56;
+    //             case 7:
+    //                 number |= (long) (bytes[offset + 6] & 0xFF) << 48;
+    //             case 6:
+    //                 number |= (long) (bytes[offset + 5] & 0xFF) << 40;
+    //             case 5:
+    //                 number |= (long) (bytes[offset + 4] & 0xFF) << 32;
+    //             case 4:
+    //                 number |= (long) (bytes[offset + 3] & 0xFF) << 24;
+    //             case 3:
+    //                 number |= (long) (bytes[offset + 2] & 0xFF) << 16;
+    //             case 2:
+    //                 number |= (long) (bytes[offset + 1] & 0xFF) << 8;
+    //             case 1:
+    //                 number |= (long) (bytes[offset + 0] & 0xFF) << 0;
+    //         }
+    //
+    //         return ULong.valueOf(number);
+    //     }
+    //
+    //     public static
+    //     ULong from(final byte[] bytes) {
+    //         BigInteger ulong = new BigInteger(1, bytes);
+    //         return ULong.valueOf(ulong);
+    //     }
+    //
+    //     public static
+    //     ULong from(final byte b0, final byte b1, final byte b2, final byte b3, final byte b4, final byte b5, final byte b6, final byte b7) {
+    //         byte[] bytes = new byte[] {b7, b6, b5, b4, b3, b2, b1, b0};
+    //         BigInteger ulong = new BigInteger(1, bytes);
+    //         return ULong.valueOf(ulong);
+    //     }
+    //
+    //     public static
+    //     ULong from(final ByteBuffer buff) {
+    //         return from(buff.get(), buff.get(), buff.get(), buff.get(), buff.get(), buff.get(), buff.get(), buff.get());
+    //     }
+    //
+    //     public static
+    //     ULong from(final InputStream inputStream) throws IOException {
+    //         return from((byte) inputStream.read(),
+    //                     (byte) inputStream.read(),
+    //                     (byte) inputStream.read(),
+    //                     (byte) inputStream.read(),
+    //                     (byte) inputStream.read(),
+    //                     (byte) inputStream.read(),
+    //                     (byte) inputStream.read(),
+    //                     (byte) inputStream.read());
+    //     }
+    //
+    //     public static
+    //     byte[] toBytes(final ULong x) {
+    //         byte[] bytes = new byte[8];
+    //         int offset = 0;
+    //
+    //         byte temp_byte[] = x.toBigInteger()
+    //                             .toByteArray();
+    //         int array_count = temp_byte.length - 1;
+    //
+    //         for (int i = 7; i >= 0; i--) {
+    //             if (array_count >= 0) {
+    //                 bytes[offset] = temp_byte[array_count];
+    //             }
+    //             else {
+    //                 bytes[offset] = (byte) 00;
+    //             }
+    //
+    //             offset++;
+    //             array_count--;
+    //         }
+    //
+    //         return bytes;
+    //     }
+    //
+    //     public static
+    //     void toBytes(final ULong x, final byte[] bytes, final int offset) {
+    //         final byte[] bytes1 = toBytes(x);
+    //         int length = bytes.length;
+    //         int pos = 8;
+    //
+    //         while (length > 0) {
+    //             bytes[pos--] = bytes1[offset + length--];
+    //         }
+    //     }
+    //
+    //     public static
+    //     void toBytes(final ULong x, final byte[] bytes) {
+    //         final byte[] bytes1 = toBytes(x);
+    //         int length = bytes.length;
+    //         int pos = 8;
+    //
+    //         while (length > 0) {
+    //             bytes[pos--] = bytes1[length--];
+    //         }
+    //     }
+    //
+    //     private
+    //     ULong_() {
+    //     }
+    // }
 }
-
