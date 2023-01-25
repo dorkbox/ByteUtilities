@@ -5,16 +5,6 @@
      Dorkbox LLC
 
    Extra license information
-     - Byte Utils (UByte, UInteger, ULong, Unsigned, UNumber, UShort) - 
-       [The Apache Software License, Version 2.0]
-       https://github.com/jOOQ/jOOQ/tree/master/jOOQ/src/main/java/org/jooq/types
-       Copyright 2017
-         Data Geekery GmbH (http://www.datageekery.com)
-         Lukas Eder
-         Ed Schaller
-         Jens Nerche
-         Ivan Sokolov
-
      - Kryo Serialization - 
        [BSD 3-Clause License]
        https://github.com/EsotericSoftware/kryo
