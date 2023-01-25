@@ -108,7 +108,7 @@ dependencies {
     compileOnly("com.esotericsoftware:kryo:5.4.0")
 
 
-    testImplementation("io.netty:netty-buffer:4.1.86.Final")
+    testImplementation("io.netty:netty-buffer:4.1.87.Final")
     testImplementation("com.esotericsoftware:kryo:5.4.0")
     testImplementation("junit:junit:4.13.2")
 }
