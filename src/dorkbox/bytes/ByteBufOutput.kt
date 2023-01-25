@@ -63,7 +63,7 @@ import java.io.OutputStream
  *
  * Modified from KRYO to use ByteBuf.
  */
-@Suppress("MemberVisibilityCanBePrivate")
+@Suppress("MemberVisibilityCanBePrivate", "NAME_SHADOWING")
 class ByteBufOutput : Output {
     companion object {
         /**
@@ -806,7 +806,7 @@ class ByteBufOutput : Output {
         require(count shl 1)
         val n = offset + count
         while (offset < n) {
-            val value = array[offset].toInt()
+            val value = array[offset].code
             byteBuf.writeByte(value.toByte().toInt())
             byteBuf.writeByte((value ushr 8).toByte().toInt())
             offset++

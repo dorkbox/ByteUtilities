@@ -1,4 +1,20 @@
 /*
+ * Copyright 2023 dorkbox, llc
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+/*
  * Copyright 2011 Google Inc.
  * Copyright 2018 Andreas Schildbach
  *
@@ -151,9 +167,9 @@ fun String.decodeBase58(): ByteArray {
 
     // Convert the base58-encoded ASCII chars to a base58 byte sequence (base58 digits).
     val input58 = ByteArray(length)
-    for (i in 0 until length) {
+    for (i in indices) {
         val c = this[i]
-        val digit = if (c.code < 128) Base58.alphabetIndices[c.toInt()] else -1
+        val digit = if (c.code < 128) Base58.alphabetIndices[c.code] else -1
         if (digit < 0) {
             throw NumberFormatException("Illegal character $c at position $i")
         }

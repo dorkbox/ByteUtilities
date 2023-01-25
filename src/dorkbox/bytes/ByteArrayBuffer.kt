@@ -535,34 +535,7 @@ class ByteArrayBuffer {
      */
     private fun readVarInt(optimizePositive: Boolean): Int {
         val buffer = bytes
-        if (capacity - position < 5) {
-            return readInt_slow(optimizePositive)
-        }
-        var b = buffer[position++].toInt()
-        var result = b and 0x7F
-        if (b and 0x80 != 0) {
-            b = buffer[position++].toInt()
-            result = result or (b and 0x7F shl 7)
-            if (b and 0x80 != 0) {
-                b = buffer[position++].toInt()
-                result = result or (b and 0x7F shl 14)
-                if (b and 0x80 != 0) {
-                    b = buffer[position++].toInt()
-                    result = result or (b and 0x7F shl 21)
-                    if (b and 0x80 != 0) {
-                        b = buffer[position++].toInt()
-                        result = result or (b and 0x7F shl 28)
-                    }
-                }
-            }
-        }
-        return if (optimizePositive) result else result ushr 1 xor -(result and 1)
-    }
-
-    private fun readInt_slow(optimizePositive: Boolean): Int {
-        val buffer = bytes
-
-        // The buffer is guaranteed to have at least 1 byte.
+       
         var b = buffer[position++].toInt()
         var result = b and 0x7F
         if (b and 0x80 != 0) {
@@ -1056,7 +1029,7 @@ class ByteArrayBuffer {
         val n = capacity
 
         while (i < n) {
-            chars[ii] = buffer[i].toChar()
+            chars[ii] = buffer[i].toInt().toChar()
             i++
             ii++
         }

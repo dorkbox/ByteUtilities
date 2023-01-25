@@ -42,6 +42,7 @@ import java.io.InputStream
  *
  * Modified from KRYO ByteBufferInput to use ByteBuf instead of ByteBuffer.
  */
+@Suppress("NAME_SHADOWING")
 class ByteBufInput : Input {
     companion object {
         /**
