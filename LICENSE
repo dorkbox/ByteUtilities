@@ -55,7 +55,7 @@
 
          - Objenesis - 
            [The Apache Software License, Version 2.0]
-           http://objenesis.org
+           https://github.com/easymock/objenesis
              Objenesis Team and all contributors
 
          - MinLog-SLF4J - 

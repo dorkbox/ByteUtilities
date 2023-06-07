@@ -19,15 +19,15 @@
 ////// TESTING : (to local maven repo) <'publish and release' - 'publishToMavenLocal'>
 ////// RELEASE : (to sonatype/maven central), <'publish and release' - 'publishToSonatypeAndRelease'>
 ///////////////////////////////
-import java.time.Instant
+import org.gradle.kotlin.dsl.GradleUtils
 
 gradle.startParameter.showStacktrace = ShowStacktrace.ALWAYS   // always show the stacktrace!
 
 plugins {
-    id("com.dorkbox.GradleUtils") version "3.9"
-    id("com.dorkbox.Licensing") version "2.19.1"
-    id("com.dorkbox.VersionUpdate") version "2.5"
-    id("com.dorkbox.GradlePublish") version "1.17"
+    id("com.dorkbox.GradleUtils") version "3.17"
+    id("com.dorkbox.Licensing") version "2.22"
+    id("com.dorkbox.VersionUpdate") version "2.8"
+    id("com.dorkbox.GradlePublish") version "1.18"
 
     kotlin("jvm") version "1.8.0"
 }
@@ -44,8 +44,6 @@ object Extras {
     const val vendor = "Dorkbox LLC"
     const val vendorUrl = "https://dorkbox.com"
     const val url = "https://git.dorkbox.com/dorkbox/ByteUtilities"
-
-    val buildDate = Instant.now().toString()
 }
 
 ///////////////////////////////
@@ -95,7 +93,7 @@ tasks.jar.get().apply {
         attributes["Specification-Vendor"] = Extras.vendor
 
         attributes["Implementation-Title"] = "${Extras.group}.${Extras.id}"
-        attributes["Implementation-Version"] = Extras.buildDate
+        attributes["Implementation-Version"] = GradleUtils.now()
         attributes["Implementation-Vendor"] = Extras.vendor
     }
 }
@@ -104,12 +102,12 @@ dependencies {
     api("com.dorkbox:Updates:1.1")
 
     // listed as compileOnly, since we will be using netty bytebuf utils if we ALREADY are using netty byte buffs. **We don't want a hard dependency.**
-    compileOnly("io.netty:netty-buffer:4.1.87.Final")
-    compileOnly("com.esotericsoftware:kryo:5.4.0")
+    compileOnly("io.netty:netty-buffer:4.1.93.Final")
+    compileOnly("com.esotericsoftware:kryo:5.5.0")
 
 
-    testImplementation("io.netty:netty-buffer:4.1.87.Final")
-    testImplementation("com.esotericsoftware:kryo:5.4.0")
+    testImplementation("io.netty:netty-buffer:4.1.93.Final")
+    testImplementation("com.esotericsoftware:kryo:5.5.0")
     testImplementation("junit:junit:4.13.2")
 }
 
