@@ -33,24 +33,16 @@ class ByteArrayWrapper(
          * Makes a safe copy of the byte array, so that changes to the original do not affect the wrapper.
          * One side effect is that additional memory is used.
          */
-        fun copy(data: ByteArray?): ByteArrayWrapper? {
-            return if (data == null) {
-                null
-            } else {
-                ByteArrayWrapper(data, true)
-            }
+        fun copy(data: ByteArray): ByteArrayWrapper {
+            return ByteArrayWrapper(data, true)
         }
 
         /**
          * Does not make a copy of the data, so changes to the original will also affect the wrapper.
          * One side effect is that no extra memory is needed.
          */
-        fun wrap(data: ByteArray?): ByteArrayWrapper? {
-            return if (data == null) {
-                null
-            } else {
-                ByteArrayWrapper(data, false)
-            }
+        fun wrap(data: ByteArray): ByteArrayWrapper {
+            return ByteArrayWrapper(data, false)
         }
     }
 
