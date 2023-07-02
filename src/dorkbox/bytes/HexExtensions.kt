@@ -1,4 +1,20 @@
 /*
+ * Copyright 2023 dorkbox, llc
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+/*
  * MIT License
  *
  * Copyright (c) 2017 ligi
@@ -30,12 +46,12 @@ package dorkbox.bytes
  * If you want to have the representation without the 0x prefix, use the [toNoPrefixHexString] method or
  * pass to this method an empty [prefix].
  */
-public fun ByteArray.toHexString(prefix: String = "0x"): String = Hex.encode(this, prefix)
+fun ByteArray.toHexString(prefix: String = "0x"): String = Hex.encode(this, prefix)
 
 /**
  * Converts [this] [ByteArray] into its hexadecimal representation without prepending any prefix to it.
  */
-public fun ByteArray.toNoPrefixHexString(): String = toHexString(prefix = "")
+fun ByteArray.toNoPrefixHexString(): String = toHexString(prefix = "")
 
 
 /**
@@ -45,12 +61,12 @@ public fun ByteArray.toNoPrefixHexString(): String = toHexString(prefix = "")
  * If you want to have the representation without the 0x prefix, use the [toNoPrefixHexString] method or
  * pass to this method an empty [prefix].
  */
-public fun Collection<Byte>.toHexString(prefix: String = "0x"): String = Hex.encode(this.toByteArray(), prefix)
+fun Collection<Byte>.toHexString(prefix: String = "0x"): String = Hex.encode(this.toByteArray(), prefix)
 
 /**
  * Converts [this] [Collection] of bytes into its hexadecimal representation without prepending any prefix to it.
  */
-public fun Collection<Byte>.toNoPrefixHexString(): String = toHexString("")
+fun Collection<Byte>.toNoPrefixHexString(): String = toHexString("")
 
 
 /**
@@ -60,14 +76,14 @@ public fun Collection<Byte>.toNoPrefixHexString(): String = toHexString("")
  *
  * @throws IllegalArgumentException if [this] is not a hexadecimal string.
  */
-public fun HexString.hexToByteArray(): ByteArray = Hex.decode(string)
-public fun    String.hexToByteArray(): ByteArray = Hex.decode(this)
+fun HexString.hexToByteArray(): ByteArray = Hex.decode(string)
+fun    String.hexToByteArray(): ByteArray = Hex.decode(this)
 
 /**
  * Returns `true` if and only if [this] value starts with the `0x` prefix.
  */
-public fun HexString.has0xPrefix(): Boolean = string.startsWith("0x")
-public fun    String.has0xPrefix(): Boolean = this.startsWith("0x")
+fun HexString.has0xPrefix(): Boolean = string.startsWith("0x")
+fun    String.has0xPrefix(): Boolean = this.startsWith("0x")
 
 /**
  * Returns a new [String] obtained by prepends the `0x` prefix to [this] value,
@@ -80,8 +96,8 @@ public fun    String.has0xPrefix(): Boolean = this.startsWith("0x")
  * assertEquals("0x0x123", myString.prepend0xPrefix().prepend0xPrefix().string)
  * ```
  */
-public fun HexString.prepend0xPrefix(): HexString = if (has0xPrefix()) this else HexString("0x$string")
-public fun    String.prepend0xPrefix(): String = if (has0xPrefix()) this else "0x$this"
+fun HexString.prepend0xPrefix(): HexString = if (has0xPrefix()) this else HexString("0x$string")
+fun    String.prepend0xPrefix(): String = if (has0xPrefix()) this else "0x$this"
 
 /**
  * Returns a new [String] obtained by removing the first occurrence of the `0x` prefix from [this] string, if it has it.
@@ -93,20 +109,20 @@ public fun    String.prepend0xPrefix(): String = if (has0xPrefix()) this else "0
  * assertEquals("0x123", HexString("0x0x123").clean0xPrefix().string)
  * ```
  */
-public fun HexString.clean0xPrefix(): HexString = if (has0xPrefix()) HexString(string.substring(2)) else this
-public fun    String.clean0xPrefix(): String = if (has0xPrefix()) this.substring(2) else this
+fun HexString.clean0xPrefix(): HexString = if (has0xPrefix()) HexString(string.substring(2)) else this
+fun    String.clean0xPrefix(): String = if (has0xPrefix()) this.substring(2) else this
 
 /**
  * Returns if a given string is a valid hex-string - either with or without 0x prefix
  */
-public fun HexString.isValidHex(): Boolean = Hex.HEX_REGEX.matches(string)
-public fun    String.isValidHex(): Boolean = Hex.HEX_REGEX.matches(this)
+fun HexString.isValidHex(): Boolean = Hex.HEX_REGEX.matches(string)
+fun    String.isValidHex(): Boolean = Hex.HEX_REGEX.matches(this)
 
 
 /**
  * Returns a HexString if a given string is a valid hex-string - either with or without 0x prefix
  */
-public fun String.toHex(): HexString  {
+fun String.toHex(): HexString  {
     if (!this.isValidHex()) {
         throw IllegalArgumentException("String is not hex")
     }
