@@ -20,6 +20,11 @@ package dorkbox.bytes
 @Suppress("unused")
 object OptimizeUtilsByteArray {
     /**
+     * Gets the version number.
+     */
+    const val version = BytesInfo.version
+
+    /**
      * Returns the number of bytes that would be written with [.writeInt].
      *
      * @param optimizePositive

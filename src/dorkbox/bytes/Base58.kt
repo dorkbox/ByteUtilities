@@ -71,11 +71,6 @@ object Base58 {
      */
     const val version = BytesInfo.version
 
-    init {
-        // Add this project to the updates system, which verifies this class + UUID + version information
-        dorkbox.updates.Updates.add(Base58::class.java, "f176cecea06e48e1a96d59c08a6e98c3", BytesInfo.version)
-    }
-
 
     internal const val ENCODED_ZERO = '1'
     internal const val CHECKSUM_SIZE = 4

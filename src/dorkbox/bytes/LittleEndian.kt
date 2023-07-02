@@ -28,8 +28,14 @@ import java.nio.ByteBuffer
  *
  * Network byte order IS big endian, as is Java.
  */
-class LittleEndian {
+object LittleEndian {
     // the following are ALL in Little-Endian (byte[0] is LEAST significant)
+
+    /**
+     * Gets the version number.
+     */
+    const val version = BytesInfo.version
+
 
     // NOTE: CHAR and SHORT are the exact same.
 

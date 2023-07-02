@@ -58,11 +58,6 @@ class ByteArrayBuffer {
          */
         const val version = BytesInfo.version
 
-        init {
-            // Add this project to the updates system, which verifies this class + UUID + version information
-            dorkbox.updates.Updates.add(ByteArrayBuffer::class.java, "f176cecea06e48e1a96d59c08a6e98c3", BytesInfo.version)
-        }
-
         /**
          * Returns the number of bytes that would be written with [.writeInt].
          */

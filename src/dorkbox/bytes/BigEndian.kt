@@ -28,8 +28,13 @@ import java.nio.ByteBuffer
  *
  * arm is technically bi-endian
  */
-class BigEndian {
+object BigEndian {
     // the following are ALL in Bit-Endian (byte[0] is MOST significant)
+
+    /**
+     * Gets the version number.
+     */
+    const val version = BytesInfo.version
 
     // NOTE: CHAR and SHORT are the exact same.
 

@@ -21,6 +21,11 @@ import io.netty.buffer.ByteBuf
 
 @Suppress("unused")
 object OptimizeUtilsByteBuf {
+    /**
+     * Gets the version number.
+     */
+    const val version = BytesInfo.version
+
     // int
     /**
      * FROM KRYO

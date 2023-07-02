@@ -30,6 +30,11 @@ class ByteArrayWrapper(
 ) {
     companion object {
         /**
+         * Gets the version number.
+         */
+        const val version = BytesInfo.version
+
+        /**
          * Makes a safe copy of the byte array, so that changes to the original do not affect the wrapper.
          * One side effect is that additional memory is used.
          */
