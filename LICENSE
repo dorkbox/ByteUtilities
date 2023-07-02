@@ -1,4 +1,4 @@
- - ByteUtilties - Byte manipulation and Unsigned Number Utilities
+ - ByteUtilities - Byte manipulation and SHA/xxHash utilities
    [The Apache Software License, Version 2.0]
    https://git.dorkbox.com/dorkbox/ByteUtilities
    Copyright 2023
@@ -62,6 +62,12 @@
            [BSD 3-Clause License]
            https://github.com/EsotericSoftware/minlog
              Nathan Sweet
+
+     - Lightweight Java Game Library - Java library that enables cross-platform access to popular native APIs
+       [BSD 3-Clause License]
+       https://github.com/LWJGL/lwjgl3
+       Copyright 2023
+         Lightweight Java Game Library
 
      - Updates - Software Update Management
        [The Apache Software License, Version 2.0]
