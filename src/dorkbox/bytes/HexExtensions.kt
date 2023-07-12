@@ -76,11 +76,11 @@ object Hex {
      * Note that by default the 0x prefix is prepended to the result of the conversion.
      * If you want to have the representation without the 0x prefix, pass to this method an empty prefix.
      */
-    fun encode(value: ByteArray, prefix: String = "0x", toUpperCase: Boolean = false): String {
+    fun encode(value: ByteArray, prefix: String = "0x", limit: Int = value.size, toUpperCase: Boolean = false): String {
         return if (toUpperCase) {
-            prefix + value.joinToString("") { encodeUpper(it) }
+            prefix + value.joinToString(separator = "", limit = limit, truncated = "") { encodeUpper(it) }
         } else {
-            prefix + value.joinToString("") { encode(it) }
+            prefix + value.joinToString(separator = "", limit = limit, truncated = "") { encode(it) }
         }
     }
 
@@ -127,12 +127,12 @@ object Hex {
  * If you want to have the representation without the 0x prefix, use the [toNoPrefixHexString] method or
  * pass to this method an empty [prefix].
  */
-fun ByteArray.toHexString(prefix: String = "0x", toUpperCase: Boolean = false): String = Hex.encode(this, prefix, toUpperCase)
+fun ByteArray.toHexString(prefix: String = "0x", limit: Int = this.size, toUpperCase: Boolean = false): String = Hex.encode(this, prefix, limit, toUpperCase)
 
 /**
  * Converts [this] [ByteArray] into its hexadecimal representation without prepending any prefix to it.
  */
-fun ByteArray.toNoPrefixHexString(toUpperCase: Boolean = false): String = Hex.encode(this, "", toUpperCase)
+fun ByteArray.toNoPrefixHexString(limit: Int = this.size, toUpperCase: Boolean = false): String = Hex.encode(this, "", limit, toUpperCase)
 
 
 /**
@@ -142,12 +142,12 @@ fun ByteArray.toNoPrefixHexString(toUpperCase: Boolean = false): String = Hex.en
  * If you want to have the representation without the 0x prefix, use the [toNoPrefixHexString] method or
  * pass to this method an empty [prefix].
  */
-fun Collection<Byte>.toHexString(prefix: String = "0x"): String = Hex.encode(this.toByteArray(), prefix)
+fun Collection<Byte>.toHexString(prefix: String = "0x", limit: Int = this.size): String = Hex.encode(this.toByteArray(), prefix, limit)
 
 /**
  * Converts [this] [Collection] of bytes into its hexadecimal representation without prepending any prefix to it.
  */
-fun Collection<Byte>.toNoPrefixHexString(): String = Hex.encode(this.toByteArray(), "")
+fun Collection<Byte>.toNoPrefixHexString(limit: Int = this.size): String = Hex.encode(this.toByteArray(), "", limit)
 
 
 /**

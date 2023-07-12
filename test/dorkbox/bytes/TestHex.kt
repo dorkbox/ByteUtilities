@@ -1,5 +1,5 @@
 /*
- * Copyright 2021 dorkbox, llc
+ * Copyright 2023 dorkbox, llc
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,16 +23,16 @@ class TestHex {
 
     @Test
     fun weCanProduceSingleDigitHex() {
-        assertEquals(Hex.encode(0.toByte()), "00")
-        assertEquals(Hex.encode(1.toByte()), "01")
-        assertEquals(Hex.encode(15.toByte()), "0f")
+        assertEquals("00", Hex.encode(0.toByte()))
+        assertEquals("01", Hex.encode(1.toByte()))
+        assertEquals("0f", Hex.encode(15.toByte()))
     }
 
     @Test
     fun weCanProduceDoubleDigitHex() {
-        assertEquals(Hex.encode(16.toByte()), "10")
-        assertEquals(Hex.encode(42.toByte()), "2a")
-        assertEquals(Hex.encode(255.toByte()), "ff")
+        assertEquals("10", Hex.encode(16.toByte()))
+        assertEquals("2a", Hex.encode(42.toByte()))
+        assertEquals("ff", Hex.encode(255.toByte()))
     }
 
     @Test
@@ -42,14 +42,29 @@ class TestHex {
 
     @Test
     fun sizesAreOk() {
-        assertEquals(Hex.decode("0x").size, 0)
-        assertEquals(Hex.decode("ff").size, 1)
-        assertEquals(Hex.decode("ffaa").size, 2)
-        assertEquals(Hex.decode("ffaabb").size, 3)
-        assertEquals(Hex.decode("ffaabb44").size, 4)
-        assertEquals(Hex.decode("0xffaabb4455").size, 5)
-        assertEquals(Hex.decode("0xffaabb445566").size, 6)
-        assertEquals(Hex.decode("ffaabb44556677").size, 7)
+        assertEquals(0, Hex.decode("0x").size)
+        assertEquals(1, Hex.decode("ff").size)
+        assertEquals(2, Hex.decode("ffaa").size)
+        assertEquals(3, Hex.decode("ffaabb").size)
+        assertEquals(4, Hex.decode("ffaabb44").size)
+        assertEquals(5, Hex.decode("0xffaabb4455").size)
+        assertEquals(6, Hex.decode("0xffaabb445566").size)
+        assertEquals(7, Hex.decode("ffaabb44556677").size)
+    }
+
+    @Test
+    fun byteArrayLimitWorks() {
+        assertEquals("0x", Hex.encode(Hex.decode("00"), limit = 0))
+        assertEquals("0x00", Hex.encode(Hex.decode("00"), limit = 1))
+        assertEquals("0x", Hex.encode(Hex.decode("ff"), limit = 0))
+        assertEquals("0xff", Hex.encode(Hex.decode("ff"), limit = 1))
+        assertEquals("0x", Hex.encode(Hex.decode("abcdef"), limit = 0))
+        assertEquals("0xab", Hex.encode(Hex.decode("abcdef"), limit = 1))
+        assertEquals("0xabcd", Hex.encode(Hex.decode("abcdef"), limit = 2))
+        assertEquals("0xabcdef", Hex.encode(Hex.decode("abcdef"), limit = 3))
+        assertEquals("0xabcdef", Hex.encode(Hex.decode("abcdef"), limit = 32))
+        assertEquals("0xaa12456789bb", Hex.encode(Hex.decode("0xaa12456789bb"), limit = 6))
+        assertEquals("0xaa12456789bb", Hex.encode(Hex.decode("0xaa12456789bb"), limit = 9))
     }
 
     @Test
@@ -65,10 +80,10 @@ class TestHex {
 
     @Test
     fun testRoundTrip() {
-        assertEquals(Hex.encode(Hex.decode("00")), "0x00")
-        assertEquals(Hex.encode(Hex.decode("ff")), "0xff")
-        assertEquals(Hex.encode(Hex.decode("abcdef")), "0xabcdef")
-        assertEquals(Hex.encode(Hex.decode("0xaa12456789bb")), "0xaa12456789bb")
+        assertEquals("0x00", Hex.encode(Hex.decode("00")))
+        assertEquals("0xff", Hex.encode(Hex.decode("ff")))
+        assertEquals("0xabcdef", Hex.encode(Hex.decode("abcdef")))
+        assertEquals("0xaa12456789bb", Hex.encode(Hex.decode("0xaa12456789bb")))
     }
 
     @Test
