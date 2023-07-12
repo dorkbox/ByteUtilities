@@ -58,7 +58,7 @@ import dorkbox.bytes.Base58.divmod
  * <li>Doubleclicking selects the whole number as one word if it's all alphanumeric.</li>
  * </ul>
  * <p>
- * However, note that the encoding/decoding runs in O(n&sup2;) time, so it is not useful for large data.
+ * However, note that the encoding/decoding runs in O(n^2;) time, so it is not useful for large data.
  * <p>
  * The basic idea of the encoding is to treat the data bytes as a large number represented using
  * base-256 digits, convert the number to be represented using base-58 digits, preserve the exact
@@ -206,7 +206,6 @@ fun ByteArray.encodeToBase58WithChecksum() = ByteArray(size + Base58.CHECKSUM_SI
     System.arraycopy(this@encodeToBase58WithChecksum, 0, this, 0, this@encodeToBase58WithChecksum.size)
     val checksum = this@encodeToBase58WithChecksum.sha256().sha256()
     System.arraycopy(checksum, 0, this, this@encodeToBase58WithChecksum.size, Base58.CHECKSUM_SIZE)
-
 }.encodeToBase58String()
 
 fun String.decodeBase58WithChecksum(): ByteArray {
