@@ -15,14 +15,6 @@
  */
 package dorkbox.bytes
 
-import dorkbox.bytes.Hash.charToBytes16
-import dorkbox.bytes.Hash.digest1
-import dorkbox.bytes.Hash.digest256
-import java.awt.SystemColor.text
-import java.security.MessageDigest
-import java.security.NoSuchAlgorithmException
-
-
 object ArrayExtensions {
     /**
      * Gets the version number.
@@ -32,47 +24,92 @@ object ArrayExtensions {
 
 
 /**
- * this saves the char array in UTF-16 format of bytes
+ * this saves the string in a RAW UTF-16 format of bytes, without the BOM
+ *
+ *
+ * The difference between THIS and .toByteArray(Charsets.UTF_16), is that this DOES NOT prepend a
+ * BOM (Byte Order Mark) of FEFF. This is against RFC 2781 for charsets.
+ *
+ * https://stackoverflow.com/questions/54247407/why-utf-8-bom-bytes-efbbbf-can-be-replaced-by-ufeff
  */
-fun CharArray.charToBytes16(): ByteArray {
+fun String.toBytes16(start: Int = 0, length: Int = this.length): ByteArray {
     // NOTE: this saves the char array in UTF-16 format of bytes.
-    val bytes = ByteArray(this.size * 2)
-    for (i in this.indices) {
-        bytes[2 * i] = (this[i].code shr 8).toByte()
-        bytes[2 * i + 1] = this[i].code.toByte()
+    val bytes = ByteArray(length * 2)
+
+    var j = 0
+    val endPosition = start + length
+    for (i in start until endPosition) {
+        val code = this[i].code
+        val srcIndx = j++
+        bytes[2 * srcIndx] = (code shr 8).toByte()
+        bytes[2 * srcIndx + 1] = code.toByte()
     }
+
     return bytes
 }
 
-fun CharArray.charToBytesRaw(): ByteArray {
+/**
+ * this saves the char array in a RAW UTF-16 format of bytes, without the BOM
+ *
+ *
+ * The difference between THIS and .toByteArray(Charsets.UTF_16), is that this DOES NOT prepend a
+ * BOM (Byte Order Mark) of FEFF. This is against RFC 2781 for charsets.
+ *
+ * https://stackoverflow.com/questions/54247407/why-utf-8-bom-bytes-efbbbf-can-be-replaced-by-ufeff
+ */
+fun CharArray.toBytes16(start: Int = 0, length: Int = this.size): ByteArray {
+    // NOTE: this saves the char array in UTF-16 format of bytes.
+    val bytes = ByteArray(length * 2)
+
+    var j = 0
+    val endPosition = start + length
+    for (i in start until endPosition) {
+        val code = this[i].code
+        val srcIndx = j++
+        bytes[2 * srcIndx] = (code shr 8).toByte()
+        bytes[2 * srcIndx + 1] = code.toByte()
+    }
+
+    return bytes
+}
+
+fun CharArray.toBytes(): ByteArray {
     val length = this.size
     val bytes = ByteArray(length)
+
     for (i in 0 until length) {
         val charValue = this[i]
         bytes[i] = charValue.code.toByte()
     }
+
     return bytes
 }
 
-fun IntArray.intsToBytes(startPosition: Int = 0, length: Int = this.size): ByteArray {
+fun IntArray.toBytes(start: Int = 0, length: Int = this.size): ByteArray {
     val bytes = ByteArray(length)
-    val endPosition = startPosition + length
-    for (i in startPosition until endPosition) {
+
+    val endPosition = start + length
+    var j = 0
+    for (i in start until endPosition) {
         val intValue = this[i]
         if (intValue < 0 || intValue > 255) {
             throw IllegalArgumentException("Int at index $i($intValue) was not a valid byte value (0-255)")
         }
-        bytes[i] = intValue.toByte()
+        bytes[j++] = intValue.toByte()
     }
+
     return bytes
 }
 
-fun ByteArray.bytesToInts(startPosition: Int = 0, length: Int = this.size): IntArray {
+fun ByteArray.toInts(startPosition: Int = 0, length: Int = this.size): IntArray {
     val ints = IntArray(length)
+
     val endPosition = startPosition + length
+    var j = 0
     for (i in startPosition until endPosition) {
-        ints[i] = this[i].toInt() and 0xFF
+        ints[j++] = this[i].toInt() and 0xFF
     }
+
     return ints
 }
 
@@ -84,6 +121,7 @@ fun ByteArray.bytesToInts(startPosition: Int = 0, length: Int = this.size): IntA
 fun ByteArray.xor(keyArray: ByteArray) {
     var keyIndex = 0
     val keyLength = keyArray.size
+
     for (i in this.indices) {
         // XOR the data and start over if necessary
         this[i] = (this[i].toInt() xor keyArray[keyIndex++ % keyLength].toInt()).toByte()
