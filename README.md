@@ -11,7 +11,7 @@ Maven Info
     <dependency>
       <groupId>com.dorkbox</groupId>
       <artifactId>ByteUtilities</artifactId>
-      <version>1.11</version>
+      <version>1.12</version>
     </dependency>
 </dependencies>
 ```
