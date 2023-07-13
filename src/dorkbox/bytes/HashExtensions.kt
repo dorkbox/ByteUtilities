@@ -15,11 +15,14 @@
  */
 package dorkbox.bytes
 
+import net.jpountz.xxhash.StreamingXXHash32
+import net.jpountz.xxhash.StreamingXXHash64
+import net.jpountz.xxhash.XXHashFactory
 import java.io.File
 import java.io.InputStream
-import java.nio.ByteBuffer
 import java.security.MessageDigest
 import java.security.NoSuchAlgorithmException
+
 
 
 object Hash {
@@ -32,14 +35,18 @@ object Hash {
         @Deprecated("Do not use this, it is insecure and prone to attack!")
         const val MD2 = "MD2"
         const val MD5 = "MD5"
+
         const val SHA_1 = "SHA-1"
+
         const val SHA_224 = "SHA-224"
         const val SHA_256 = "SHA-256"
         const val SHA_384 = "SHA-384"
+
         @Deprecated("Do not use this, it is vulnerable to ht-extension attacks")
         const val SHA_512 = "SHA-512"
         const val SHA_512_224 = "SHA-512/224"
         const val SHA_512_256 = "SHA-512/256"
+
         const val SHA3_224 = "SHA3-224"
         const val SHA3_256 = "SHA3-256"
         const val SHA3_384 = "SHA3-384"
@@ -47,78 +54,87 @@ object Hash {
     }
 
     @Deprecated("Do not use this, it is insecure and prone to attack!")
-    internal val digestMd5 = ThreadLocal.withInitial {
-        try {
-            return@withInitial MessageDigest.getInstance(MessageDigestAlgorithm.MD5)
-        } catch (e: NoSuchAlgorithmException) {
-            throw RuntimeException("Unable to initialize hash algorithm. MD5 digest doesn't exist?!?")
+    internal val digestMd5: ThreadLocal<MessageDigest> by lazy {
+        ThreadLocal.withInitial {
+            try {
+                return@withInitial MessageDigest.getInstance(MessageDigestAlgorithm.MD5)
+            } catch (e: NoSuchAlgorithmException) {
+                throw RuntimeException("Unable to initialize hash algorithm. MD5 digest doesn't exist?!?")
+            }
         }
     }
-    internal val digest1 = ThreadLocal.withInitial {
-        try {
-            return@withInitial MessageDigest.getInstance(MessageDigestAlgorithm.SHA_1)
-        } catch (e: NoSuchAlgorithmException) {
-            throw RuntimeException("Unable to initialize hash algorithm. SHA1 digest doesn't exist?!?")
+    internal val digest1: ThreadLocal<MessageDigest> by lazy {
+        ThreadLocal.withInitial {
+            try {
+                return@withInitial MessageDigest.getInstance(MessageDigestAlgorithm.SHA_1)
+            } catch (e: NoSuchAlgorithmException) {
+                throw RuntimeException("Unable to initialize hash algorithm. SHA1 digest doesn't exist?!?")
+            }
         }
     }
-
-    internal val digest256 = ThreadLocal.withInitial {
-        try {
-            return@withInitial MessageDigest.getInstance(MessageDigestAlgorithm.SHA_256)
-        } catch (e: NoSuchAlgorithmException) {
-            throw RuntimeException("Unable to initialize hash algorithm. SHA256 digest doesn't exist?!?")
+    internal val digest256: ThreadLocal<MessageDigest> by lazy {
+        ThreadLocal.withInitial {
+            try {
+                return@withInitial MessageDigest.getInstance(MessageDigestAlgorithm.SHA_256)
+            } catch (e: NoSuchAlgorithmException) {
+                throw RuntimeException("Unable to initialize hash algorithm. SHA256 digest doesn't exist?!?")
+            }
         }
     }
-
-    internal val digest384 = ThreadLocal.withInitial {
-        try {
-            return@withInitial MessageDigest.getInstance(MessageDigestAlgorithm.SHA_384)
-        } catch (e: NoSuchAlgorithmException) {
-            throw RuntimeException("Unable to initialize hash algorithm. SHA384 digest doesn't exist?!?")
+    internal val digest384: ThreadLocal<MessageDigest> by lazy {
+        ThreadLocal.withInitial {
+            try {
+                return@withInitial MessageDigest.getInstance(MessageDigestAlgorithm.SHA_384)
+            } catch (e: NoSuchAlgorithmException) {
+                throw RuntimeException("Unable to initialize hash algorithm. SHA384 digest doesn't exist?!?")
+            }
         }
     }
-    internal val digest512 = ThreadLocal.withInitial {
-        try {
-            return@withInitial MessageDigest.getInstance(MessageDigestAlgorithm.SHA_512_256)
-        } catch (e: NoSuchAlgorithmException) {
-            throw RuntimeException("Unable to initialize hash algorithm. SHA512 digest doesn't exist?!?")
+    internal val digest512: ThreadLocal<MessageDigest> by lazy {
+        ThreadLocal.withInitial {
+            try {
+                return@withInitial MessageDigest.getInstance(MessageDigestAlgorithm.SHA_512_256)
+            } catch (e: NoSuchAlgorithmException) {
+                throw RuntimeException("Unable to initialize hash algorithm. SHA512 digest doesn't exist?!?")
+            }
         }
     }
-    internal val digest3_256 = ThreadLocal.withInitial {
-        try {
-            return@withInitial MessageDigest.getInstance(MessageDigestAlgorithm.SHA3_256)
-        } catch (e: NoSuchAlgorithmException) {
-            throw RuntimeException("Unable to initialize hash algorithm. SHA3-256 digest doesn't exist?!?")
+    internal val digest3_256: ThreadLocal<MessageDigest> by lazy {
+        ThreadLocal.withInitial {
+            try {
+                return@withInitial MessageDigest.getInstance(MessageDigestAlgorithm.SHA3_256)
+            } catch (e: NoSuchAlgorithmException) {
+                throw RuntimeException("Unable to initialize hash algorithm. SHA3-256 digest doesn't exist?!?")
+            }
         }
     }
-    internal val digest3_384 = ThreadLocal.withInitial {
-        try {
-            return@withInitial MessageDigest.getInstance(MessageDigestAlgorithm.SHA3_384)
-        } catch (e: NoSuchAlgorithmException) {
-            throw RuntimeException("Unable to initialize hash algorithm. SHA3-384 digest doesn't exist?!?")
+    internal val digest3_384: ThreadLocal<MessageDigest> by lazy {
+        ThreadLocal.withInitial {
+            try {
+                return@withInitial MessageDigest.getInstance(MessageDigestAlgorithm.SHA3_384)
+            } catch (e: NoSuchAlgorithmException) {
+                throw RuntimeException("Unable to initialize hash algorithm. SHA3-384 digest doesn't exist?!?")
+            }
         }
     }
-    internal val digest3_512 = ThreadLocal.withInitial {
-        try {
-            return@withInitial MessageDigest.getInstance(MessageDigestAlgorithm.SHA3_512)
-        } catch (e: NoSuchAlgorithmException) {
-            throw RuntimeException("Unable to initialize hash algorithm. SHA3-512 digest doesn't exist?!?")
+    internal val digest3_512: ThreadLocal<MessageDigest> by lazy {
+        ThreadLocal.withInitial {
+            try {
+                return@withInitial MessageDigest.getInstance(MessageDigestAlgorithm.SHA3_512)
+            } catch (e: NoSuchAlgorithmException) {
+                throw RuntimeException("Unable to initialize hash algorithm. SHA3-512 digest doesn't exist?!?")
+            }
         }
     }
-
-    /**
-     * this saves the char array in UTF-16 format of bytes
-     */
-    fun charToBytes16(text: CharArray): ByteArray {
-        // NOTE: this saves the char array in UTF-16 format of bytes.
-        val bytes = ByteArray(text.size * 2)
-        for (i in text.indices) {
-            bytes[2 * i] = (text[i].code shr 8).toByte()
-            bytes[2 * i + 1] = text[i].code.toByte()
+    internal val xxHashFactory: ThreadLocal<XXHashFactory> by lazy {
+        ThreadLocal.withInitial {
+            try {
+                return@withInitial XXHashFactory.fastestInstance()
+            } catch (e: NoSuchAlgorithmException) {
+                throw RuntimeException("Unable to initialize xxHash algorithm. xxHash doesn't exist?!?")
+            }
         }
-        return bytes
     }
-
 
     @Deprecated("Do not use this, it is insecure and prone to attack!")
     val md5 get() = digest1.get()
@@ -134,62 +150,125 @@ object Hash {
 /**
  * Reads an InputStream and updates the digest for the data
  */
-private fun updateDigest(digest: MessageDigest, data: InputStream, bufferSize: Int = 4096): MessageDigest {
-    val buffer = ByteArray(bufferSize)
-    var read = data.read(buffer, 0, bufferSize)
-    while (read > -1) {
-        digest.update(buffer, 0, read)
-        read = data.read(buffer, 0, bufferSize)
+private fun updateDigest(digest: MessageDigest, data: InputStream, bufferSize: Int, start: Long, length: Long) {
+    val skipped = data.skip(start)
+    if (skipped != start) {
+        throw IllegalArgumentException("Unable to skip $start bytes. Only able to skip $skipped bytes instead")
     }
-    return digest
+
+    var readLength = length
+    val adjustedBufferSize = if (bufferSize > readLength) {
+        readLength.toInt()
+    } else {
+        bufferSize
+    }
+
+    val buffer = ByteArray(adjustedBufferSize)
+    var read = 1
+    while (read > 0 && readLength > 0) {
+        read = if (adjustedBufferSize > readLength) {
+            data.read(buffer, 0, readLength.toInt())
+        } else {
+            data.read(buffer, 0, adjustedBufferSize)
+        }
+        digest.update(buffer, 0, read)
+        readLength -= read
+    }
 }
 
 /**
  * Reads an InputStream and updates the digest for the data
  */
-private fun updateDigest(state: org.lwjgl.util.xxhash.XXH32State, data: InputStream, bufferSize: Int = 4096) {
-    val buffer = ByteArray(bufferSize)
-    val bbuffer = ByteBuffer.wrap(buffer)
+private fun updateDigest32(hash32: StreamingXXHash32, data: InputStream, bufferSize: Int, start: Long, length: Long) {
+    val skipped = data.skip(start)
+    if (skipped != start) {
+        throw IllegalArgumentException("Unable to skip $start bytes. Only able to skip $skipped bytes instead")
+    }
 
-    var read = data.read(buffer, 0, bufferSize)
-    while (read > -1) {
-        bbuffer.limit(read)
-        org.lwjgl.util.xxhash.XXHash.XXH32_update(state, bbuffer)
-        read = data.read(buffer, 0, bufferSize)
+    var readLength = length
+    val adjustedBufferSize = if (bufferSize > readLength) {
+        readLength.toInt()
+    } else {
+        bufferSize
+    }
+
+    val buffer = ByteArray(adjustedBufferSize)
+    var read = 1
+    while (read > 0 && readLength > 0) {
+        read = if (adjustedBufferSize > readLength) {
+            data.read(buffer, 0, readLength.toInt())
+        } else {
+            data.read(buffer, 0, adjustedBufferSize)
+        }
+        hash32.update(buffer, 0, read)
+        readLength -= read
+    }
+}
+private fun updateDigest64(hash64: StreamingXXHash64, data: InputStream, bufferSize: Int, start: Long, length: Long) {
+    val skipped = data.skip(start)
+    if (skipped != start) {
+        throw IllegalArgumentException("Unable to skip $start bytes. Only able to skip $skipped bytes instead")
+    }
+
+    var readLength = length
+    val adjustedBufferSize = if (bufferSize > readLength) {
+        readLength.toInt()
+    } else {
+        bufferSize
+    }
+
+    val buffer = ByteArray(adjustedBufferSize)
+    var read = 1
+    while (read > 0 && readLength > 0) {
+        read = if (adjustedBufferSize > readLength) {
+            data.read(buffer, 0, readLength.toInt())
+        } else {
+            data.read(buffer, 0, adjustedBufferSize)
+        }
+        hash64.update(buffer, 0, read)
+        readLength -= read
     }
 }
 
-private fun hash(byteArray: ByteArray, digest: MessageDigest): ByteArray {
+private fun hash(byteArray: ByteArray, start: Int, length: Int, digest: MessageDigest): ByteArray {
     digest.reset()
-    digest.update(byteArray)
+    digest.update(byteArray, start, length)
     return digest.digest()
 }
 
 @Deprecated("Do not use this, it is insecure and prone to attack!")
-fun ByteArray.md5(): ByteArray = hash(this, Hash.digestMd5.get())
-fun ByteArray.sha1(): ByteArray = hash(this, Hash.digest1.get())
-fun ByteArray.sha256(): ByteArray = hash(this, Hash.digest256.get())
-fun ByteArray.sha384(): ByteArray = hash(this, Hash.digest384.get())
-fun ByteArray.sha512(): ByteArray = hash(this, Hash.digest512.get())
-fun ByteArray.sha3_256(): ByteArray = hash(this, Hash.digest3_256.get())
-fun ByteArray.sha3_384(): ByteArray = hash(this, Hash.digest3_384.get())
-fun ByteArray.sha3_512(): ByteArray = hash(this, Hash.digest3_512.get())
+fun ByteArray.md5(start: Int = 0, length: Int = this.size): ByteArray = hash(this, start, length, Hash.digestMd5.get())
+fun ByteArray.sha1(start: Int = 0, length: Int = this.size): ByteArray = hash(this, start, length, Hash.digest1.get())
+fun ByteArray.sha256(start: Int = 0, length: Int = this.size): ByteArray = hash(this, start, length, Hash.digest256.get())
+fun ByteArray.sha384(start: Int = 0, length: Int = this.size): ByteArray = hash(this, start, length, Hash.digest384.get())
+fun ByteArray.sha512(start: Int = 0, length: Int = this.size): ByteArray = hash(this, start, length, Hash.digest512.get())
+fun ByteArray.sha3_256(start: Int = 0, length: Int = this.size): ByteArray = hash(this, start, length, Hash.digest3_256.get())
+fun ByteArray.sha3_384(start: Int = 0, length: Int = this.size): ByteArray = hash(this, start, length, Hash.digest3_384.get())
+fun ByteArray.sha3_512(start: Int = 0, length: Int = this.size): ByteArray = hash(this, start, length, Hash.digest3_512.get())
 /**
  * @param seed used to initialize the hash value (for the xxhash seed), use whatever value you want, but always the same
  */
-fun ByteArray.xxHash(seed: Int = -0x31bf6a3c): Int {
-    val state: org.lwjgl.util.xxhash.XXH32State = org.lwjgl.util.xxhash.XXHash.XXH32_createState()!!
-    org.lwjgl.util.xxhash.XXHash.XXH32_reset(state, seed)
+fun ByteArray.xxHash32(seed: Int = -0x31bf6a3c, start: Int = 0, length: Int = this.size): Int {
+    val xxHash = Hash.xxHashFactory.get()
+    val hash32 = xxHash.newStreamingHash32(seed)!!
 
-    val bbuffer = ByteBuffer.wrap(this)
+    hash32.update(this, start, length)
+    return hash32.value
+}
+/**
+ * @param seed used to initialize the hash value (for the xxhash seed), use whatever value you want, but always the same
+ */
+fun ByteArray.xxHash64(seed: Long = -0x31bf6a3c, start: Int = 0, length: Int = this.size): Long {
+    val xxHash = Hash.xxHashFactory.get()
+    val hash64 = xxHash.newStreamingHash64(seed)!!
 
-    org.lwjgl.util.xxhash.XXHash.XXH32_update(state, bbuffer)
-    return org.lwjgl.util.xxhash.XXHash.XXH32_digest(state)
+    hash64.update(this, start, length)
+    return hash64.value
 }
 
 
-private fun hash(string: String, digest: MessageDigest): ByteArray {
-    val charToBytes = string.toCharArray().charToBytes16()
+private fun hash(string: String, start: Int, length: Int, digest: MessageDigest): ByteArray {
+    val charToBytes = string.toCharArray().toBytes16(start, length)
     digest.reset()
     digest.update(charToBytes, 0, charToBytes.size)
     return digest.digest()
@@ -199,57 +278,69 @@ private fun hash(string: String, digest: MessageDigest): ByteArray {
  * gets the MD5 hash of the specified string, as UTF-16
  */
 @Deprecated("Do not use this, it is insecure and prone to attack!")
-fun String.md5(): ByteArray = hash(this, Hash.digestMd5.get())
+fun String.md5(start: Int = 0, length: Int = this.length): ByteArray = hash(this, start, length, Hash.digestMd5.get())
 /**
  * gets the SHA1 hash of the specified string, as UTF-16
  */
-fun String.sha1(): ByteArray = hash(this, Hash.digest1.get())
+fun String.sha1(start: Int = 0, length: Int = this.length): ByteArray = hash(this, start, length, Hash.digest1.get())
 /**
  * gets the SHA256 hash of the specified string, as UTF-16
  */
-fun String.sha256(): ByteArray = hash(this, Hash.digest256.get())
+fun String.sha256(start: Int = 0, length: Int = this.length): ByteArray = hash(this, start, length, Hash.digest256.get())
 /**
  * gets the SHA384 hash of the specified string, as UTF-16
  */
-fun String.sha384(): ByteArray = hash(this, Hash.digest384.get())
+fun String.sha384(start: Int = 0, length: Int = this.length): ByteArray = hash(this, start, length, Hash.digest384.get())
 /**
  * gets the SHA512 hash of the specified string, as UTF-16
  */
-fun String.sha512(): ByteArray = hash(this, Hash.digest512.get())
+fun String.sha512(start: Int = 0, length: Int = this.length): ByteArray = hash(this, start, length, Hash.digest512.get())
 /**
  * gets the SHA3_256 hash of the specified string, as UTF-16
  */
-fun String.sha3_256(): ByteArray = hash(this, Hash.digest3_256.get())
+fun String.sha3_256(start: Int = 0, length: Int = this.length): ByteArray = hash(this, start, length, Hash.digest3_256.get())
 /**
  * gets the SHA3_384 hash of the specified string, as UTF-16
  */
-fun String.sha3_384(): ByteArray = hash(this, Hash.digest3_384.get())
+fun String.sha3_384(start: Int = 0, length: Int = this.length): ByteArray = hash(this, start, length, Hash.digest3_384.get())
 /**
  * gets the SHA3_512 hash of the specified string, as UTF-16
  */
-fun String.sha3_512(): ByteArray = hash(this, Hash.digest3_512.get())
+fun String.sha3_512(start: Int = 0, length: Int = this.length): ByteArray = hash(this, start, length, Hash.digest3_512.get())
 /**
- * gets the xxHash of the string, as UTF-16
+ * gets the xxHash32 of the string, as UTF-16
  *
  * @param seed used to initialize the hash value (for the xxhash seed), use whatever value you want, but always the same
  */
-fun String.xxHash(saltBytes: ByteArray, seed: Int = -0x31bf6a3c): Int {
-    val state: org.lwjgl.util.xxhash.XXH32State = org.lwjgl.util.xxhash.XXHash.XXH32_createState()!!
-    org.lwjgl.util.xxhash.XXHash.XXH32_reset(state, seed)
+fun String.xxHash32(seed: Int = -0x31bf6a3c, start: Int = 0, length: Int = this.length): Int {
+    val xxHash = Hash.xxHashFactory.get()
+    val hash32 = xxHash.newStreamingHash32(seed)!!
 
-    val charToBytes = this.toCharArray().charToBytes16()
+    val charToBytes = this.toCharArray().toBytes16(start, length)
+    hash32.update(charToBytes, 0, charToBytes.size)
+    return hash32.value
+}
+/**
+ * gets the xxHash64 of the string, as UTF-16
+ *
+ * @param seed used to initialize the hash value (for the xxhash seed), use whatever value you want, but always the same
+ */
+fun String.xxHash64(seed: Long = -0x31bf6a3c, start: Int = 0, length: Int = this.length): Long {
+    val xxHash = Hash.xxHashFactory.get()
+    val hash64 = xxHash.newStreamingHash64(seed)!!
 
-    val bbuffer = ByteBuffer.wrap(charToBytes)
-
-    org.lwjgl.util.xxhash.XXHash.XXH32_update(state, bbuffer)
-    return org.lwjgl.util.xxhash.XXHash.XXH32_digest(state)
+    val charToBytes = this.toCharArray().toBytes16(start, length)
+    hash64.update(charToBytes, 0, charToBytes.size)
+    return hash64.value
 }
 
 /**
- * gets the SHA256 hash + SALT of the string, as UTF-16
+ * gets the hash + SALT of the string, as UTF-16
+ *
+ * LENGTH is specifically the length of what we want to hash of the orig string (it doesn't include the salt)
  */
-private fun hashWithSalt(string: String, saltBytes: ByteArray, digest: MessageDigest): ByteArray {
-    val charToBytes = string.toCharArray().charToBytes16()
+private fun hashWithSalt(string: String, saltBytes: ByteArray, start: Int, length: Int, digest: MessageDigest): ByteArray {
+    val charToBytes = string.toCharArray().toBytes16(start, length)
     val withSalt = charToBytes + saltBytes
 
     digest.reset()
@@ -261,55 +352,86 @@ private fun hashWithSalt(string: String, saltBytes: ByteArray, digest: MessageDi
 /**
  * gets the SHA256 hash + SALT of the string, as UTF-16
  */
-fun String.sha1WithSalt(saltBytes: ByteArray): ByteArray = hashWithSalt(this, saltBytes, Hash.digest1.get())
+fun String.sha1WithSalt(saltBytes: ByteArray, start: Int = 0, length: Int = this.length + saltBytes.size): ByteArray =
+    hashWithSalt(this, saltBytes, start, length, Hash.digest1.get())
 /**
  * gets the SHA256 hash + SALT of the string, as UTF-16
  */
-fun String.sha256WithSalt(saltBytes: ByteArray): ByteArray = hashWithSalt(this, saltBytes, Hash.digest256.get())
+fun String.sha256WithSalt(saltBytes: ByteArray, start: Int = 0, length: Int = this.length + saltBytes.size): ByteArray =
+    hashWithSalt(this, saltBytes, start, length, Hash.digest256.get())
 /**
  * gets the SHA384 hash + SALT of the string, as UTF-16
  */
-fun String.sha384WithSalt(saltBytes: ByteArray): ByteArray = hashWithSalt(this, saltBytes, Hash.digest384.get())
+fun String.sha384WithSalt(saltBytes: ByteArray, start: Int = 0, length: Int = this.length + saltBytes.size): ByteArray =
+    hashWithSalt(this, saltBytes, start, length, Hash.digest384.get())
 /**
  * gets the SHA512 hash + SALT of the string, as UTF-16
  */
-fun String.sha512WithSalt(saltBytes: ByteArray): ByteArray = hashWithSalt(this, saltBytes, Hash.digest512.get())
+fun String.sha512WithSalt(saltBytes: ByteArray, start: Int = 0, length: Int = this.length + saltBytes.size): ByteArray =
+    hashWithSalt(this, saltBytes, start, length, Hash.digest512.get())
 /**
  * gets the SHA3_256 hash + SALT of the string, as UTF-16
  */
-fun String.sha3_256WithSalt(saltBytes: ByteArray): ByteArray = hashWithSalt(this, saltBytes, Hash.digest3_256.get())
+fun String.sha3_256WithSalt(saltBytes: ByteArray, start: Int = 0, length: Int = this.length + saltBytes.size): ByteArray =
+    hashWithSalt(this, saltBytes, start, length, Hash.digest3_256.get())
 /**
  * gets the SHA3_384 hash + SALT of the string, as UTF-16
  */
-fun String.sha3_384WithSalt(saltBytes: ByteArray): ByteArray = hashWithSalt(this, saltBytes, Hash.digest3_384.get())
+fun String.sha3_384WithSalt(saltBytes: ByteArray, start: Int = 0, length: Int = this.length + saltBytes.size): ByteArray =
+    hashWithSalt(this, saltBytes, start, length, Hash.digest3_384.get())
 /**
  * gets the SHA3_512 hash + SALT of the string, as UTF-16
  */
-fun String.sha3_512WithSalt(saltBytes: ByteArray): ByteArray = hashWithSalt(this, saltBytes, Hash.digest3_512.get())
+fun String.sha3_512WithSalt(saltBytes: ByteArray, start: Int = 0, length: Int = this.length + saltBytes.size): ByteArray =
+    hashWithSalt(this, saltBytes, start, length, Hash.digest3_512.get())
 /**
- * gets the xxHash + SALT of the string, as UTF-16
+ * gets the xxHash32 + SALT of the string, as UTF-16
  *
  * @param seed used to initialize the hash value (for the xxhash seed), use whatever value you want, but always the same
  */
-fun String.xxHashWithSalt(saltBytes: ByteArray, seed: Int = -0x31bf6a3c): Int {
-    val state: org.lwjgl.util.xxhash.XXH32State = org.lwjgl.util.xxhash.XXHash.XXH32_createState()!!
-    org.lwjgl.util.xxhash.XXHash.XXH32_reset(state, seed)
+fun String.xxHash32WithSalt(saltBytes: ByteArray, seed: Int = -0x31bf6a3c, start: Int = 0, length: Int = this.length + saltBytes.size): Int {
+    require(start >= 0) { "Start ($start) must be >= 0" }
+    require(length >= 0) { "Length ($length) must be >= 0" }
+    require(start < length) { "Start ($start) position must be smaller than the size of the String" }
 
-    val charToBytes = this.toCharArray().charToBytes16()
-    val withSalt = charToBytes + saltBytes
+    val xxHash = Hash.xxHashFactory.get()
+    val hash32 = xxHash.newStreamingHash32(seed)!!
 
-    val bbuffer = ByteBuffer.wrap(withSalt)
+    val charToBytes = this.toCharArray().toBytes16(start, length)
 
-    org.lwjgl.util.xxhash.XXHash.XXH32_update(state, bbuffer)
-    return org.lwjgl.util.xxhash.XXHash.XXH32_digest(state)
+    hash32.update(charToBytes, 0, charToBytes.size)
+    hash32.update(saltBytes, 0, saltBytes.size)
+    return hash32.value
+}
+/**
+ * gets the xxHash64 + SALT of the string, as UTF-16
+ *
+ * @param seed used to initialize the hash value (for the xxhash seed), use whatever value you want, but always the same
+ */
+fun String.xxHash64WithSalt(saltBytes: ByteArray, seed: Long = -0x31bf6a3c, start: Int = 0, length: Int = this.length + saltBytes.size): Long {
+    require(start >= 0) { "Start ($start) must be >= 0" }
+    require(length >= 0) { "Length ($length) must be >= 0" }
+    require(start < length) { "Start ($start) position must be smaller than the size of the String" }
+
+    val xxHash = Hash.xxHashFactory.get()
+    val hash64 = xxHash.newStreamingHash64(seed)!!
+
+    val charToBytes = this.toCharArray().toBytes16(start, length)
+
+    hash64.update(charToBytes, 0, charToBytes.size)
+    hash64.update(saltBytes, 0, saltBytes.size)
+    return hash64.value
 }
 
 
-private fun hashWithSalt(bytes: ByteArray, saltBytes: ByteArray, digest: MessageDigest): ByteArray {
-    val bytesWithSalt = bytes + saltBytes
+private fun hashWithSalt(bytes: ByteArray, saltBytes: ByteArray, start: Int, length: Int, digest: MessageDigest): ByteArray {
+    require(start >= 0) { "Start ($start) must be >= 0" }
+    require(length >= 0) { "Length ($length) must be >= 0" }
+    require(start < bytes.size) { "Start ($start) position must be smaller than the size of the byte array" }
 
     digest.reset()
-    digest.update(bytesWithSalt, 0, bytesWithSalt.size)
+    digest.update(bytes, 0, bytes.size)
+    digest.update(saltBytes, 0, saltBytes.size)
     return digest.digest()
 }
 
@@ -317,74 +439,79 @@ private fun hashWithSalt(bytes: ByteArray, saltBytes: ByteArray, digest: Message
 /**
  * gets the SHA1 hash + SALT of the byte array
  */
-fun ByteArray.sha1WithSalt(saltBytes: ByteArray): ByteArray = hashWithSalt(this, saltBytes, Hash.digest1.get())
+fun ByteArray.sha1WithSalt(saltBytes: ByteArray, start: Int = 0, length: Int = this.size + saltBytes.size): ByteArray =
+    hashWithSalt(this, saltBytes, start, length, Hash.digest1.get())
 /**
  * gets the SHA256 hash + SALT of the byte array
  */
-fun ByteArray.sha256WithSalt(saltBytes: ByteArray): ByteArray = hashWithSalt(this, saltBytes, Hash.digest256.get())
+fun ByteArray.sha256WithSalt(saltBytes: ByteArray, start: Int = 0, length: Int = this.size + saltBytes.size): ByteArray =
+    hashWithSalt(this, saltBytes, start, length, Hash.digest256.get())
 /**
  * gets the SHA384 hash + SALT of the byte array
  */
-fun ByteArray.sha384WithSalt(saltBytes: ByteArray): ByteArray = hashWithSalt(this, saltBytes, Hash.digest384.get())
+fun ByteArray.sha384WithSalt(saltBytes: ByteArray, start: Int = 0, length: Int = this.size + saltBytes.size): ByteArray =
+    hashWithSalt(this, saltBytes, start, length, Hash.digest384.get())
 /**
  * gets the SHA512 hash + SALT of the byte array
  */
-fun ByteArray.sha512WithSalt(saltBytes: ByteArray): ByteArray = hashWithSalt(this, saltBytes, Hash.digest512.get())
+fun ByteArray.sha512WithSalt(saltBytes: ByteArray, start: Int = 0, length: Int = this.size + saltBytes.size): ByteArray =
+    hashWithSalt(this, saltBytes, start, length, Hash.digest512.get())
 /**
  * gets the SHA3_256 hash + SALT of the byte array
  */
-fun ByteArray.sha3_256WithSalt(saltBytes: ByteArray): ByteArray = hashWithSalt(this, saltBytes, Hash.digest3_256.get())
+fun ByteArray.sha3_256WithSalt(saltBytes: ByteArray, start: Int = 0, length: Int = this.size + saltBytes.size): ByteArray =
+    hashWithSalt(this, saltBytes, start, length, Hash.digest3_256.get())
 /**
  * gets the SHA3_384 hash + SALT of the byte array
  */
-fun ByteArray.sha3_384WithSalt(saltBytes: ByteArray): ByteArray = hashWithSalt(this, saltBytes, Hash.digest3_384.get())
+fun ByteArray.sha3_384WithSalt(saltBytes: ByteArray, start: Int = 0, length: Int = this.size + saltBytes.size): ByteArray =
+    hashWithSalt(this, saltBytes, start, length, Hash.digest3_384.get())
 /**
  * gets the SHA3_512 hash + SALT of the byte array
  */
-fun ByteArray.sha3_512WithSalt(saltBytes: ByteArray): ByteArray = hashWithSalt(this, saltBytes, Hash.digest3_512.get())
+fun ByteArray.sha3_512WithSalt(saltBytes: ByteArray, start: Int = 0, length: Int = this.size + saltBytes.size): ByteArray =
+    hashWithSalt(this, saltBytes, start, length, Hash.digest3_512.get())
 /**
- * gets the xxHash + SALT of the byte array
+ * gets the xxHash32 + SALT of the byte array
  *
  * @param seed used to initialize the hash value (for the xxhash seed), use whatever value you want, but always the same
  */
-fun ByteArray.xxHashWithSalt(saltBytes: ByteArray, seed: Int = -0x31bf6a3c): Int {
-    val state: org.lwjgl.util.xxhash.XXH32State = org.lwjgl.util.xxhash.XXHash.XXH32_createState()!!
-    org.lwjgl.util.xxhash.XXHash.XXH32_reset(state, seed)
+fun ByteArray.xxHash32WithSalt(saltBytes: ByteArray, seed: Int = -0x31bf6a3c, start: Int = 0, length: Int = this.size + saltBytes.size): Int {
+    val xxHash = Hash.xxHashFactory.get()
+    val hash32 = xxHash.newStreamingHash32(seed)!!
 
-    val bytesWithSalt = this + saltBytes
-    val bbuffer = ByteBuffer.wrap(bytesWithSalt)
+    hash32.update(this, start, length)
+    hash32.update(saltBytes, 0, saltBytes.size)
+    return hash32.value
+}
+/**
+ * gets the xxHash64 + SALT of the byte array
+ *
+ * @param seed used to initialize the hash value (for the xxhash seed), use whatever value you want, but always the same
+ */
+fun ByteArray.xxHash64WithSalt(saltBytes: ByteArray, seed: Long = -0x31bf6a3c, start: Int = 0, length: Int = this.size + saltBytes.size): Long {
+    val xxHash = Hash.xxHashFactory.get()
+    val hash64 = xxHash.newStreamingHash64(seed)!!
 
-    org.lwjgl.util.xxhash.XXHash.XXH32_update(state, bbuffer)
-    return org.lwjgl.util.xxhash.XXHash.XXH32_digest(state)
+    hash64.update(this, start, length)
+    hash64.update(saltBytes, 0, saltBytes.size)
+    return hash64.value
 }
 
 
 
 
+private fun hash(file: File, start: Long, length: Long, bufferSize: Int, digest: MessageDigest): ByteArray {
+    require(file.isFile) { "Unable open as file: ${file.absolutePath}" }
+    require(file.canRead()) { "Unable to read file: ${file.absolutePath}" }
 
-private fun hash(file: File, startPosition: Long = 0L, endPosition: Long = file.length(), bufferSize: Int = 4096, digest: MessageDigest): ByteArray {
-    digest.reset()
-
-    if (!file.isFile) {
-        throw IllegalArgumentException("Unable open as file: ${file.absolutePath}")
-    }
-    if (!file.canRead()) {
-        throw IllegalArgumentException("Unable to read file: ${file.absolutePath}")
-    }
+    require(start >= 0) { "Start ($start) must be >= 0" }
+    require(length >= 0) { "Length ($length) must be >= 0" }
+    require(start < file.length()) { "Start ($start) position must be smaller than the size of the file" }
 
     file.inputStream().use {
-        val skipped = it.skip(startPosition)
-        if (skipped != startPosition) {
-            throw IllegalArgumentException("Unable to skip $startPosition bytes. Only able to skip $skipped bytes instead")
-        }
-
-        var size = file.length() - startPosition
-        val lengthFromEnd = size - endPosition
-        if (lengthFromEnd in 1 until size) {
-            size -= lengthFromEnd
-        }
-
-        updateDigest(digest, it, bufferSize)
+        digest.reset()
+        updateDigest(digest, it, bufferSize, start, length)
         return digest.digest()
     }
 }
@@ -394,65 +521,79 @@ private fun hash(file: File, startPosition: Long = 0L, endPosition: Long = file.
 /**
  * gets the SHA1 hash of the file
  */
-fun File.sha1(): ByteArray = hash(this, 0, length(), 4096, Hash.digest1.get())
+fun File.sha1(start: Int = 0, length: Long = this.length(), bufferSize: Int = 4096): ByteArray =
+    hash(this, start.toLong(), length, bufferSize, Hash.digest1.get())
 /**
  * gets the SHA256 hash of the file
  */
-fun File.sha256(): ByteArray = hash(this, 0, length(), 4096, Hash.digest256.get())
+fun File.sha256(start: Int = 0, length: Long = this.length(), bufferSize: Int = 4096): ByteArray =
+    hash(this, start.toLong(), length, bufferSize, Hash.digest256.get())
 /**
  * gets the SHA384 hash of the file
  */
-fun File.sha384(): ByteArray = hash(this, 0, length(), 4096, Hash.digest384.get())
+fun File.sha384(start: Int = 0, length: Long = this.length(), bufferSize: Int = 4096): ByteArray =
+    hash(this, start.toLong(), length, bufferSize, Hash.digest384.get())
 /**
  * gets the SHA512 hash of the file
  */
-fun File.sha512(): ByteArray = hash(this, 0, length(), 4096, Hash.digest512.get())
+fun File.sha512(start: Int = 0, length: Long = this.length(), bufferSize: Int = 4096): ByteArray =
+    hash(this, start.toLong(), length, bufferSize, Hash.digest512.get())
 /**
  * gets the SHA3_256 hash of the file
  */
-fun File.sha3_256(): ByteArray = hash(this, 0, length(), 4096, Hash.digest3_256.get())
+fun File.sha3_256(start: Int = 0, length: Long = this.length(), bufferSize: Int = 4096): ByteArray =
+    hash(this, start.toLong(), length, bufferSize, Hash.digest3_256.get())
 /**
  * gets the SHA3_384 hash of the file
  */
-fun File.sha3_384(): ByteArray = hash(this, 0, length(), 4096, Hash.digest3_384.get())
+fun File.sha3_384(start: Int = 0, length: Long = this.length(), bufferSize: Int = 4096): ByteArray =
+    hash(this, start.toLong(), length, bufferSize, Hash.digest3_384.get())
 /**
  * gets the SHA3_512 hash of the file
  */
-fun File.sha3_512(): ByteArray = hash(this, 0, length(), 4096, Hash.digest3_512.get())
+fun File.sha3_512(start: Int = 0, length: Long = this.length(), bufferSize: Int = 4096): ByteArray =
+    hash(this, start.toLong(), length, bufferSize, Hash.digest3_512.get())
 
 /**
- * Return the xxhash of the file as or IllegalArgumentExceptions if there are problems with the file
+ * Return the xxhash32 of the file as or IllegalArgumentExceptions if there are problems with the file
  *
  * @param seed used to initialize the hash value (for the xxhash seed), use whatever value you want, but always the same
  */
-fun File.xxHash(startPosition: Long = 0L, endPosition: Long = this.length(), bufferSize: Int = 4096, seed: Int = -0x31bf6a3c): Int {
-    val state: org.lwjgl.util.xxhash.XXH32State = org.lwjgl.util.xxhash.XXHash.XXH32_createState()!!
-    org.lwjgl.util.xxhash.XXHash.XXH32_reset(state, seed)
+fun File.xxHash32(start: Long = 0L, length: Long = this.length(), bufferSize: Int = 4096, seed: Int = -0x31bf6a3c): Int {
+    val xxHash = Hash.xxHashFactory.get()
+    val hash32 = xxHash.newStreamingHash32(seed)!!
 
-    if (!this.isFile) {
-        throw IllegalArgumentException("Unable open as file: ${this.absolutePath}")
-    }
-    if (!this.canRead()) {
-        throw IllegalArgumentException("Unable to read file: ${this.absolutePath}")
-    }
+    require(this.isFile) { "Unable open as file: ${this.absolutePath}" }
+    require(this.canRead()) { "Unable to read file: ${this.absolutePath}" }
+
+    require(start >= 0) { "Start ($start) must be >= 0" }
+    require(length >= 0) { "Length ($length) must be >= 0" }
+    require(start < length()) { "Start ($start) position must be smaller than the size of the file" }
 
     this.inputStream().use {
-        val skipped = it.skip(startPosition)
-        if (skipped != startPosition) {
-            throw IllegalArgumentException("Unable to skip $startPosition bytes. Only able to skip $skipped bytes instead")
-        }
-
-        var size = this.length() - startPosition
-        val lengthFromEnd = size - endPosition
-        if (lengthFromEnd in 1 until size) {
-            size -= lengthFromEnd
-        }
-
-        updateDigest(state, it, bufferSize)
-        return org.lwjgl.util.xxhash.XXHash.XXH32_digest(state)
+        updateDigest32(hash32, it, bufferSize, start, length)
+        return hash32.value
     }
 }
 
+/**
+ * Return the xxhash64 of the file as or IllegalArgumentExceptions if there are problems with the file
+ *
+ * @param seed used to initialize the hash value (for the xxhash seed), use whatever value you want, but always the same
+ */
+fun File.xxHash64(start: Long = 0L, length: Long = this.length(), bufferSize: Int = 4096, seed: Long = -0x31bf6a3c): Long {
+    val xxHash = Hash.xxHashFactory.get()
+    val hash64 = xxHash.newStreamingHash64(seed)!!
 
+    require(this.isFile) { "Unable open as file: ${this.absolutePath}" }
+    require(this.canRead()) { "Unable to read file: ${this.absolutePath}" }
 
+    require(start >= 0) { "Start ($start) must be >= 0" }
+    require(length >= 0) { "Length ($length) must be >= 0" }
+    require(start < length()) { "Start ($start) position must be smaller than the size of the file" }
 
+    this.inputStream().use {
+        updateDigest64(hash64, it, bufferSize, start, length)
+        return hash64.value
+    }
+}
