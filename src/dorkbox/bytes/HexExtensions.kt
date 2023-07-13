@@ -51,8 +51,9 @@ object Hex {
     /**
      * Represents all the chars used for nibble
      */
-    private const val CHARS = "0123456789abcdef"
-    private const val CHARS_UPPER = "0123456789ABCDEF"
+    private val HEX_CHARS = charArrayOf('0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'a', 'b', 'c', 'd', 'e', 'f')
+    private val UPPER_HEX_CHARS = charArrayOf('0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'A', 'B', 'C', 'D', 'E', 'F')
+
 
     internal val HEX_REGEX = Regex("(0[xX])?[0-9a-fA-F]*")
 
@@ -60,14 +61,24 @@ object Hex {
      * Encodes the given byte value as a hexadecimal character.
      */
     fun encode(value: Byte): String {
-        return CHARS[value.toInt().shr(4) and 0x0f].toString() + CHARS[value.toInt().and(0x0f)].toString()
+        val hexString = CharArray(2)
+        val toInt = value.toInt()
+        hexString[0] = HEX_CHARS[toInt and 0xF0 shr 4]
+        hexString[1] = HEX_CHARS[toInt and 0x0F]
+
+        return String(hexString)
     }
 
     /**
      * Encodes the given byte value as a hexadecimal character.
      */
     fun encodeUpper(value: Byte): String {
-        return CHARS_UPPER[value.toInt().shr(4) and 0x0f].toString() + CHARS_UPPER[value.toInt().and(0x0f)].toString()
+        val hexString = CharArray(2)
+        val toInt = value.toInt()
+        hexString[0] = UPPER_HEX_CHARS[toInt and 0xF0 shr 4]
+        hexString[1] = UPPER_HEX_CHARS[toInt and 0x0F]
+
+        return String(hexString)
     }
 
     /**
@@ -76,16 +87,40 @@ object Hex {
      * Note that by default the 0x prefix is prepended to the result of the conversion.
      * If you want to have the representation without the 0x prefix, pass to this method an empty prefix.
      */
-    fun encode(value: ByteArray, prefix: String = "0x", limit: Int = value.size, toUpperCase: Boolean = false): String {
-        return if (toUpperCase) {
-            prefix + value.joinToString(separator = "", limit = limit, truncated = "") { encodeUpper(it) }
-        } else {
-            prefix + value.joinToString(separator = "", limit = limit, truncated = "") { encode(it) }
+    fun encode(bytes: ByteArray, prefix: String = "0x", start: Int = 0, length: Int = bytes.size, toUpperCase: Boolean = false): String {
+        require(start >= 0) { "Start ($start) must be >= 0" }
+        require(length >= 0) { "Limit ($length) must be >= 0" }
+        require(bytes.isEmpty() || start < bytes.size) { "Start ($start) position must be smaller than the size of the byte array" }
+
+        @Suppress("NAME_SHADOWING")
+        val length = if (length < bytes.size) length else bytes.size
+
+        val hexString = CharArray(prefix.length + ((2 * (length - start) )))
+        if (prefix.isNotEmpty()) {
+            prefix.toCharArray().copyInto(hexString)
         }
+
+        var j = prefix.length
+
+        if (toUpperCase) {
+            for (i in start until length) {
+                val toInt = bytes[i].toInt()
+                hexString[j++] = UPPER_HEX_CHARS[toInt and 0xF0 shr 4]
+                hexString[j++] = UPPER_HEX_CHARS[toInt and 0x0F]
+            }
+        } else {
+            for (i in start until length) {
+                val toInt = bytes[i].toInt()
+                hexString[j++] = HEX_CHARS[toInt and 0xF0 shr 4]
+                hexString[j++] = HEX_CHARS[toInt and 0x0F]
+            }
+        }
+
+        return String(hexString)
     }
 
     /**
-     * Converts the given ch into its integer representation considering it as an hexadecimal character.
+     * Converts the given ch into its integer representation considering it as a hexadecimal character.
      */
     private fun hexToBin(ch: Char): Int = when (ch) {
         in '0'..'9' -> ch - '0'
@@ -107,8 +142,8 @@ object Hex {
             throw IllegalArgumentException("hex-string must have an even number of digits (nibbles)")
         }
 
-        // Remove the 0x prefix if it is set
-        val cleanInput = if (value.startsWith("0x")) value.substring(2) else value
+        // Remove the 0x or 0X prefix if it is set
+        val cleanInput = if (value.startsWith("0x") || value.startsWith("0X")) value.substring(2) else value
 
         return ByteArray(cleanInput.length / 2).apply {
             var i = 0
@@ -127,12 +162,12 @@ object Hex {
  * If you want to have the representation without the 0x prefix, use the [toNoPrefixHexString] method or
  * pass to this method an empty [prefix].
  */
-fun ByteArray.toHexString(prefix: String = "0x", limit: Int = this.size, toUpperCase: Boolean = false): String = Hex.encode(this, prefix, limit, toUpperCase)
+fun ByteArray.toHexString(prefix: String = "0x", start: Int = 0, length: Int = this.size, toUpperCase: Boolean = false): String = Hex.encode(this, prefix, start, length, toUpperCase)
 
 /**
  * Converts [this] [ByteArray] into its hexadecimal representation without prepending any prefix to it.
  */
-fun ByteArray.toNoPrefixHexString(limit: Int = this.size, toUpperCase: Boolean = false): String = Hex.encode(this, "", limit, toUpperCase)
+fun ByteArray.toNoPrefixHexString(start: Int = 0, length: Int = this.size, toUpperCase: Boolean = false): String = Hex.encode(this, "", start, length, toUpperCase)
 
 
 /**
@@ -142,12 +177,12 @@ fun ByteArray.toNoPrefixHexString(limit: Int = this.size, toUpperCase: Boolean =
  * If you want to have the representation without the 0x prefix, use the [toNoPrefixHexString] method or
  * pass to this method an empty [prefix].
  */
-fun Collection<Byte>.toHexString(prefix: String = "0x", limit: Int = this.size): String = Hex.encode(this.toByteArray(), prefix, limit)
+fun Collection<Byte>.toHexString(prefix: String = "0x", length: Int = this.size): String = Hex.encode(this.toByteArray(), prefix, length)
 
 /**
  * Converts [this] [Collection] of bytes into its hexadecimal representation without prepending any prefix to it.
  */
-fun Collection<Byte>.toNoPrefixHexString(limit: Int = this.size): String = Hex.encode(this.toByteArray(), "", limit)
+fun Collection<Byte>.toNoPrefixHexString(length: Int = this.size): String = Hex.encode(this.toByteArray(), "", length)
 
 
 /**

@@ -54,17 +54,27 @@ class TestHex {
 
     @Test
     fun byteArrayLimitWorks() {
-        assertEquals("0x", Hex.encode(Hex.decode("00"), limit = 0))
-        assertEquals("0x00", Hex.encode(Hex.decode("00"), limit = 1))
-        assertEquals("0x", Hex.encode(Hex.decode("ff"), limit = 0))
-        assertEquals("0xff", Hex.encode(Hex.decode("ff"), limit = 1))
-        assertEquals("0x", Hex.encode(Hex.decode("abcdef"), limit = 0))
-        assertEquals("0xab", Hex.encode(Hex.decode("abcdef"), limit = 1))
-        assertEquals("0xabcd", Hex.encode(Hex.decode("abcdef"), limit = 2))
-        assertEquals("0xabcdef", Hex.encode(Hex.decode("abcdef"), limit = 3))
-        assertEquals("0xabcdef", Hex.encode(Hex.decode("abcdef"), limit = 32))
-        assertEquals("0xaa12456789bb", Hex.encode(Hex.decode("0xaa12456789bb"), limit = 6))
-        assertEquals("0xaa12456789bb", Hex.encode(Hex.decode("0xaa12456789bb"), limit = 9))
+        assertEquals("0x", Hex.encode(Hex.decode("00"), length = 0))
+        assertEquals("0x00", Hex.encode(Hex.decode("00"), length = 1))
+        assertEquals("0x", Hex.encode(Hex.decode("ff"), length = 0))
+        assertEquals("0xff", Hex.encode(Hex.decode("ff"), length = 1))
+        assertEquals("0x", Hex.encode(Hex.decode("abcdef"), length = 0))
+        assertEquals("0xab", Hex.encode(Hex.decode("abcdef"), length = 1))
+        assertEquals("0xabcd", Hex.encode(Hex.decode("abcdef"), length = 2))
+        assertEquals("0xabcdef", Hex.encode(Hex.decode("abcdef"), length = 3))
+        assertEquals("0xabcdef", Hex.encode(Hex.decode("abcdef"), length = 32))
+        assertEquals("0xaa12456789bb", Hex.encode(Hex.decode("0xaa12456789bb"), length = 6))
+        assertEquals("0xaa12456789bb", Hex.encode(Hex.decode("0xaa12456789bb"), length = 9))
+    }
+
+    @Test
+    fun byteArrayStartWorks() {
+        assertEquals("0x", Hex.encode(Hex.decode("abcdef"), start = 1, length = 1))
+        assertEquals("0xcd", Hex.encode(Hex.decode("abcdef"), start = 1, length = 2))
+        assertEquals("0xcdef", Hex.encode(Hex.decode("abcdef"), start = 1, length = 3))
+        assertEquals("0xcdef", Hex.encode(Hex.decode("abcdef"), start = 1, length = 32))
+        assertEquals("0x6789bb", Hex.encode(Hex.decode("0xaa12456789bb"), start = 3, length = 6))
+        assertEquals("0x456789bb", Hex.encode(Hex.decode("0xaa12456789bb"), start = 2, length = 9))
     }
 
     @Test
