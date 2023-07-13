@@ -15,10 +15,12 @@
  */
 package dorkbox.bytes
 
+import com.sun.xml.internal.ws.streaming.XMLStreamReaderUtil.close
 import net.jpountz.xxhash.StreamingXXHash32
 import net.jpountz.xxhash.StreamingXXHash64
 import net.jpountz.xxhash.XXHashFactory
 import java.io.File
+import java.io.IOException
 import java.io.InputStream
 import java.security.MessageDigest
 import java.security.NoSuchAlgorithmException
@@ -236,6 +238,44 @@ private fun hash(byteArray: ByteArray, start: Int, length: Int, digest: MessageD
     return digest.digest()
 }
 
+private fun hash(string: String, start: Int, length: Int, digest: MessageDigest): ByteArray {
+    val charToBytes = string.toBytes16(start, length)
+    digest.reset()
+    digest.update(charToBytes, 0, charToBytes.size)
+    return digest.digest()
+}
+
+private fun hash(inputStream: InputStream, bufferSize: Int = 4096, digest: MessageDigest): ByteArray {
+    val buffer = ByteArray(bufferSize)
+    var read: Int
+
+    digest.reset()
+
+    inputStream.use {
+        while (it.read(buffer).also { read = it } > 0) {
+            digest.update(buffer, 0, read)
+        }
+    }
+
+    return digest.digest()
+}
+
+private fun hash(file: File, start: Long, length: Long, bufferSize: Int, digest: MessageDigest): ByteArray {
+    require(file.isFile) { "Unable open as file: ${file.absolutePath}" }
+    require(file.canRead()) { "Unable to read file: ${file.absolutePath}" }
+
+    require(start >= 0) { "Start ($start) must be >= 0" }
+    require(length >= 0) { "Length ($length) must be >= 0" }
+    require(start < file.length()) { "Start ($start) position must be smaller than the size of the file" }
+
+    file.inputStream().use {
+        digest.reset()
+        updateDigest(digest, it, bufferSize, start, length)
+        return digest.digest()
+    }
+}
+
+
 @Deprecated("Do not use this, it is insecure and prone to attack!")
 fun ByteArray.md5(start: Int = 0, length: Int = this.size): ByteArray = hash(this, start, length, Hash.digestMd5.get())
 fun ByteArray.sha1(start: Int = 0, length: Int = this.size): ByteArray = hash(this, start, length, Hash.digest1.get())
@@ -245,6 +285,7 @@ fun ByteArray.sha512(start: Int = 0, length: Int = this.size): ByteArray = hash(
 fun ByteArray.sha3_256(start: Int = 0, length: Int = this.size): ByteArray = hash(this, start, length, Hash.digest3_256.get())
 fun ByteArray.sha3_384(start: Int = 0, length: Int = this.size): ByteArray = hash(this, start, length, Hash.digest3_384.get())
 fun ByteArray.sha3_512(start: Int = 0, length: Int = this.size): ByteArray = hash(this, start, length, Hash.digest3_512.get())
+
 /**
  * @param seed used to initialize the hash value (for the xxhash seed), use whatever value you want, but always the same
  */
@@ -255,6 +296,7 @@ fun ByteArray.xxHash32(seed: Int = -0x31bf6a3c, start: Int = 0, length: Int = th
     hash32.update(this, start, length)
     return hash32.value
 }
+
 /**
  * @param seed used to initialize the hash value (for the xxhash seed), use whatever value you want, but always the same
  */
@@ -266,13 +308,6 @@ fun ByteArray.xxHash64(seed: Long = -0x31bf6a3c, start: Int = 0, length: Int = t
     return hash64.value
 }
 
-
-private fun hash(string: String, start: Int, length: Int, digest: MessageDigest): ByteArray {
-    val charToBytes = string.toCharArray().toBytes16(start, length)
-    digest.reset()
-    digest.update(charToBytes, 0, charToBytes.size)
-    return digest.digest()
-}
 
 /**
  * gets the MD5 hash of the specified string, as UTF-16
@@ -307,6 +342,7 @@ fun String.sha3_384(start: Int = 0, length: Int = this.length): ByteArray = hash
  * gets the SHA3_512 hash of the specified string, as UTF-16
  */
 fun String.sha3_512(start: Int = 0, length: Int = this.length): ByteArray = hash(this, start, length, Hash.digest3_512.get())
+
 /**
  * gets the xxHash32 of the string, as UTF-16
  *
@@ -320,6 +356,7 @@ fun String.xxHash32(seed: Int = -0x31bf6a3c, start: Int = 0, length: Int = this.
     hash32.update(charToBytes, 0, charToBytes.size)
     return hash32.value
 }
+
 /**
  * gets the xxHash64 of the string, as UTF-16
  *
@@ -384,6 +421,7 @@ fun String.sha3_384WithSalt(saltBytes: ByteArray, start: Int = 0, length: Int = 
  */
 fun String.sha3_512WithSalt(saltBytes: ByteArray, start: Int = 0, length: Int = this.length + saltBytes.size): ByteArray =
     hashWithSalt(this, saltBytes, start, length, Hash.digest3_512.get())
+
 /**
  * gets the xxHash32 + SALT of the string, as UTF-16
  *
@@ -403,6 +441,7 @@ fun String.xxHash32WithSalt(saltBytes: ByteArray, seed: Int = -0x31bf6a3c, start
     hash32.update(saltBytes, 0, saltBytes.size)
     return hash32.value
 }
+
 /**
  * gets the xxHash64 + SALT of the string, as UTF-16
  *
@@ -471,6 +510,7 @@ fun ByteArray.sha3_384WithSalt(saltBytes: ByteArray, start: Int = 0, length: Int
  */
 fun ByteArray.sha3_512WithSalt(saltBytes: ByteArray, start: Int = 0, length: Int = this.size + saltBytes.size): ByteArray =
     hashWithSalt(this, saltBytes, start, length, Hash.digest3_512.get())
+
 /**
  * gets the xxHash32 + SALT of the byte array
  *
@@ -484,6 +524,7 @@ fun ByteArray.xxHash32WithSalt(saltBytes: ByteArray, seed: Int = -0x31bf6a3c, st
     hash32.update(saltBytes, 0, saltBytes.size)
     return hash32.value
 }
+
 /**
  * gets the xxHash64 + SALT of the byte array
  *
@@ -497,25 +538,6 @@ fun ByteArray.xxHash64WithSalt(saltBytes: ByteArray, seed: Long = -0x31bf6a3c, s
     hash64.update(saltBytes, 0, saltBytes.size)
     return hash64.value
 }
-
-
-
-
-private fun hash(file: File, start: Long, length: Long, bufferSize: Int, digest: MessageDigest): ByteArray {
-    require(file.isFile) { "Unable open as file: ${file.absolutePath}" }
-    require(file.canRead()) { "Unable to read file: ${file.absolutePath}" }
-
-    require(start >= 0) { "Start ($start) must be >= 0" }
-    require(length >= 0) { "Length ($length) must be >= 0" }
-    require(start < file.length()) { "Start ($start) position must be smaller than the size of the file" }
-
-    file.inputStream().use {
-        digest.reset()
-        updateDigest(digest, it, bufferSize, start, length)
-        return digest.digest()
-    }
-}
-
 
 
 /**
@@ -596,4 +618,78 @@ fun File.xxHash64(start: Long = 0L, length: Long = this.length(), bufferSize: In
         updateDigest64(hash64, it, bufferSize, start, length)
         return hash64.value
     }
+}
+
+
+
+
+/**
+ * gets the SHA1 hash of the input stream
+ */
+fun InputStream.sha1(bufferSize: Int = 4096): ByteArray = hash(this, bufferSize, Hash.digest1.get())
+/**
+ * gets the SHA256 hash of the file
+ */
+fun InputStream.sha256(bufferSize: Int = 4096): ByteArray = hash(this, bufferSize, Hash.digest256.get())
+/**
+ * gets the SHA384 hash of the file
+ */
+fun InputStream.sha384(bufferSize: Int = 4096): ByteArray = hash(this, bufferSize, Hash.digest384.get())
+/**
+ * gets the SHA512 hash of the file
+ */
+fun InputStream.sha512(bufferSize: Int = 4096): ByteArray = hash(this, bufferSize, Hash.digest512.get())
+/**
+ * gets the SHA3_256 hash of the file
+ */
+fun InputStream.sha3_256(bufferSize: Int = 4096): ByteArray = hash(this, bufferSize, Hash.digest3_256.get())
+/**
+ * gets the SHA3_384 hash of the file
+ */
+fun InputStream.sha3_384(bufferSize: Int = 4096): ByteArray = hash(this, bufferSize, Hash.digest3_384.get())
+/**
+ * gets the SHA3_512 hash of the file
+ */
+fun InputStream.sha3_512(bufferSize: Int = 4096): ByteArray = hash(this, bufferSize, Hash.digest3_512.get())
+
+/**
+ * Return the xxhash32 of the InputStream
+ *
+ * @param seed used to initialize the hash value (for the xxhash seed), use whatever value you want, but always the same
+ */
+fun InputStream.xxHash32(bufferSize: Int = 4096, seed: Int = -0x31bf6a3c): Int {
+    val xxHash = Hash.xxHashFactory.get()
+    val hash32 = xxHash.newStreamingHash32(seed)!!
+
+    val buffer = ByteArray(bufferSize)
+    var read: Int
+
+    this.use {
+        while (it.read(buffer).also { read = it } > 0) {
+            hash32.update(buffer, 0, read)
+        }
+    }
+
+    return hash32.value
+}
+
+/**
+ * Return the xxhash64 of the InputStream
+ *
+ * @param seed used to initialize the hash value (for the xxhash seed), use whatever value you want, but always the same
+ */
+fun InputStream.xxHash64(bufferSize: Int = 4096, seed: Long = -0x31bf6a3c): Long {
+    val xxHash = Hash.xxHashFactory.get()
+    val hash64 = xxHash.newStreamingHash64(seed)!!
+
+    val buffer = ByteArray(bufferSize)
+    var read: Int
+
+    this.use {
+        while (it.read(buffer).also { read = it } > 0) {
+            hash64.update(buffer, 0, read)
+        }
+    }
+
+    return hash64.value
 }
