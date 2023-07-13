@@ -36,7 +36,7 @@ object Extras {
     // set for the project
     const val description = "Byte manipulation and SHA/xxHash utilities"
     const val group = "com.dorkbox"
-    const val version = "1.10"
+    const val version = "1.11"
 
     // set as project.ext
     const val name = "ByteUtilities"
@@ -105,10 +105,12 @@ dependencies {
     compileOnly("io.netty:netty-buffer:4.1.93.Final")
     compileOnly("com.esotericsoftware:kryo:5.5.0")
 
-    compileOnly("org.lwjgl:lwjgl-xxhash:3.3.2")
+    // https://github.com/lz4/lz4-java
+    api("org.lz4:lz4-java:1.8.0")
 
     testImplementation("io.netty:netty-buffer:4.1.93.Final")
     testImplementation("com.esotericsoftware:kryo:5.5.0")
+//    testImplementation("org.lz4:lz4-java:1.8.0")
     testImplementation("junit:junit:4.13.2")
 }
 
