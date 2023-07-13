@@ -15,12 +15,10 @@
  */
 package dorkbox.bytes
 
-import com.sun.xml.internal.ws.streaming.XMLStreamReaderUtil.close
 import net.jpountz.xxhash.StreamingXXHash32
 import net.jpountz.xxhash.StreamingXXHash64
 import net.jpountz.xxhash.XXHashFactory
 import java.io.File
-import java.io.IOException
 import java.io.InputStream
 import java.security.MessageDigest
 import java.security.NoSuchAlgorithmException
