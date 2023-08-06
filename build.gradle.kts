@@ -108,6 +108,8 @@ dependencies {
     // https://github.com/lz4/lz4-java
     compileOnly("org.lz4:lz4-java:1.8.0")  // for xxHash, optional
 
+    compileOnly("org.tukaani:xz:1.9") // LZMA support, optional
+
     testImplementation("io.netty:netty-buffer:4.1.96.Final")
     testImplementation("com.esotericsoftware:kryo:5.5.0")
     testImplementation("org.lz4:lz4-java:1.8.0")
