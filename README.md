@@ -11,19 +11,19 @@ Maven Info
     <dependency>
       <groupId>com.dorkbox</groupId>
       <artifactId>ByteUtilities</artifactId>
-      <version>1.12</version>
+      <version>1.13</version>
     </dependency>
 </dependencies>
 ```
 
 Gradle Info
 ---------
-````
+```
 dependencies {
     ...
-    compile "com.dorkbox:ByteUtilities:1.11"
+    implementation("com.dorkbox:ByteUtilities:1.13")
 }
-````
+```
 
 
 License

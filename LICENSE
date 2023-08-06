@@ -63,6 +63,13 @@
            https://github.com/EsotericSoftware/minlog
              Nathan Sweet
 
+     - LZ4 and xxHash - LZ4 compression for Java, based on Yann Collet's work
+       [The Apache Software License, Version 2.0]
+       https://github.com/lz4/lz4
+       Copyright 2023
+         Yann Collet
+         Adrien Grand
+
      - Updates - Software Update Management
        [The Apache Software License, Version 2.0]
        https://git.dorkbox.com/dorkbox/Updates

@@ -19,10 +19,10 @@ object BytesInfo {
     /**
      * Gets the version number.
      */
-    const val version = "1.12"
+    const val version = "1.13"
 
     init {
         // Add this project to the updates system, which verifies this class + UUID + version information
-        dorkbox.updates.Updates.add(Hex::class.java, "f176cecea06e48e1a96d59c08a6e98c3", version)
+        dorkbox.updates.Updates.add(BytesInfo::class.java, "f176cecea06e48e1a96d59c08a6e98c3", version)
     }
 }
