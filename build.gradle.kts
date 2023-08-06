@@ -25,7 +25,7 @@ gradle.startParameter.showStacktrace = ShowStacktrace.ALWAYS   // always show th
 
 plugins {
     id("com.dorkbox.GradleUtils") version "3.17"
-    id("com.dorkbox.Licensing") version "2.22"
+    id("com.dorkbox.Licensing") version "2.25"
     id("com.dorkbox.VersionUpdate") version "2.8"
     id("com.dorkbox.GradlePublish") version "1.18"
 
@@ -102,15 +102,15 @@ dependencies {
     api("com.dorkbox:Updates:1.1")
 
     // listed as compileOnly, since we will be using netty bytebuf utils if we ALREADY are using netty byte buffs. **We don't want a hard dependency.**
-    compileOnly("io.netty:netty-buffer:4.1.93.Final")
+    compileOnly("io.netty:netty-buffer:4.1.96.Final")
     compileOnly("com.esotericsoftware:kryo:5.5.0")
 
     // https://github.com/lz4/lz4-java
-    api("org.lz4:lz4-java:1.8.0")
+    compileOnly("org.lz4:lz4-java:1.8.0")  // for xxHash, optional
 
-    testImplementation("io.netty:netty-buffer:4.1.93.Final")
+    testImplementation("io.netty:netty-buffer:4.1.96.Final")
     testImplementation("com.esotericsoftware:kryo:5.5.0")
-//    testImplementation("org.lz4:lz4-java:1.8.0")
+    testImplementation("org.lz4:lz4-java:1.8.0")
     testImplementation("junit:junit:4.13.2")
 }
 

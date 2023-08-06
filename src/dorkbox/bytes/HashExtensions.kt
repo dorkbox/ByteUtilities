@@ -15,9 +15,6 @@
  */
 package dorkbox.bytes
 
-import net.jpountz.xxhash.StreamingXXHash32
-import net.jpountz.xxhash.StreamingXXHash64
-import net.jpountz.xxhash.XXHashFactory
 import java.io.File
 import java.io.InputStream
 import java.security.MessageDigest
@@ -126,15 +123,7 @@ object Hash {
             }
         }
     }
-    internal val xxHashFactory: ThreadLocal<XXHashFactory> by lazy {
-        ThreadLocal.withInitial {
-            try {
-                return@withInitial XXHashFactory.fastestInstance()
-            } catch (e: NoSuchAlgorithmException) {
-                throw RuntimeException("Unable to initialize xxHash algorithm. xxHash doesn't exist?!?")
-            }
-        }
-    }
+
 
     @Deprecated("Do not use this, it is insecure and prone to attack!")
     val md5 get() = digest1.get()
@@ -176,59 +165,7 @@ private fun updateDigest(digest: MessageDigest, data: InputStream, bufferSize: I
     }
 }
 
-/**
- * Reads an InputStream and updates the digest for the data
- */
-private fun updateDigest32(hash32: StreamingXXHash32, data: InputStream, bufferSize: Int, start: Long, length: Long) {
-    val skipped = data.skip(start)
-    if (skipped != start) {
-        throw IllegalArgumentException("Unable to skip $start bytes. Only able to skip $skipped bytes instead")
-    }
 
-    var readLength = length
-    val adjustedBufferSize = if (bufferSize > readLength) {
-        readLength.toInt()
-    } else {
-        bufferSize
-    }
-
-    val buffer = ByteArray(adjustedBufferSize)
-    var read = 1
-    while (read > 0 && readLength > 0) {
-        read = if (adjustedBufferSize > readLength) {
-            data.read(buffer, 0, readLength.toInt())
-        } else {
-            data.read(buffer, 0, adjustedBufferSize)
-        }
-        hash32.update(buffer, 0, read)
-        readLength -= read
-    }
-}
-private fun updateDigest64(hash64: StreamingXXHash64, data: InputStream, bufferSize: Int, start: Long, length: Long) {
-    val skipped = data.skip(start)
-    if (skipped != start) {
-        throw IllegalArgumentException("Unable to skip $start bytes. Only able to skip $skipped bytes instead")
-    }
-
-    var readLength = length
-    val adjustedBufferSize = if (bufferSize > readLength) {
-        readLength.toInt()
-    } else {
-        bufferSize
-    }
-
-    val buffer = ByteArray(adjustedBufferSize)
-    var read = 1
-    while (read > 0 && readLength > 0) {
-        read = if (adjustedBufferSize > readLength) {
-            data.read(buffer, 0, readLength.toInt())
-        } else {
-            data.read(buffer, 0, adjustedBufferSize)
-        }
-        hash64.update(buffer, 0, read)
-        readLength -= read
-    }
-}
 
 private fun hash(byteArray: ByteArray, start: Int, length: Int, digest: MessageDigest): ByteArray {
     digest.reset()
@@ -287,23 +224,15 @@ fun ByteArray.sha3_512(start: Int = 0, length: Int = this.size): ByteArray = has
 /**
  * @param seed used to initialize the hash value (for the xxhash seed), use whatever value you want, but always the same
  */
-fun ByteArray.xxHash32(seed: Int = -0x31bf6a3c, start: Int = 0, length: Int = this.size): Int {
-    val xxHash = Hash.xxHashFactory.get()
-    val hash32 = xxHash.newStreamingHash32(seed)!!
-
-    hash32.update(this, start, length)
-    return hash32.value
+fun ByteArray.xxHash32(start: Int = 0, length: Int = this.size, seed: Int = -0x31bf6a3c): Int {
+    return LZ4Util.xxHash32(this, start, length, seed)
 }
 
 /**
  * @param seed used to initialize the hash value (for the xxhash seed), use whatever value you want, but always the same
  */
-fun ByteArray.xxHash64(seed: Long = -0x31bf6a3c, start: Int = 0, length: Int = this.size): Long {
-    val xxHash = Hash.xxHashFactory.get()
-    val hash64 = xxHash.newStreamingHash64(seed)!!
-
-    hash64.update(this, start, length)
-    return hash64.value
+fun ByteArray.xxHash64(start: Int = 0, length: Int = this.size, seed: Long = -0x31bf6a3c): Long {
+    return LZ4Util.xxHash64(this, start, length, seed)
 }
 
 
@@ -346,13 +275,8 @@ fun String.sha3_512(start: Int = 0, length: Int = this.length): ByteArray = hash
  *
  * @param seed used to initialize the hash value (for the xxhash seed), use whatever value you want, but always the same
  */
-fun String.xxHash32(seed: Int = -0x31bf6a3c, start: Int = 0, length: Int = this.length): Int {
-    val xxHash = Hash.xxHashFactory.get()
-    val hash32 = xxHash.newStreamingHash32(seed)!!
-
-    val charToBytes = this.toCharArray().toBytes16(start, length)
-    hash32.update(charToBytes, 0, charToBytes.size)
-    return hash32.value
+fun String.xxHash32(start: Int = 0, length: Int = this.length, seed: Int = -0x31bf6a3c): Int {
+    return LZ4Util.xxHash32(this, start, length, seed)
 }
 
 /**
@@ -361,12 +285,7 @@ fun String.xxHash32(seed: Int = -0x31bf6a3c, start: Int = 0, length: Int = this.
  * @param seed used to initialize the hash value (for the xxhash seed), use whatever value you want, but always the same
  */
 fun String.xxHash64(seed: Long = -0x31bf6a3c, start: Int = 0, length: Int = this.length): Long {
-    val xxHash = Hash.xxHashFactory.get()
-    val hash64 = xxHash.newStreamingHash64(seed)!!
-
-    val charToBytes = this.toCharArray().toBytes16(start, length)
-    hash64.update(charToBytes, 0, charToBytes.size)
-    return hash64.value
+    return LZ4Util.xxHash64(this, start, length, seed)
 }
 
 /**
@@ -425,19 +344,12 @@ fun String.sha3_512WithSalt(saltBytes: ByteArray, start: Int = 0, length: Int = 
  *
  * @param seed used to initialize the hash value (for the xxhash seed), use whatever value you want, but always the same
  */
-fun String.xxHash32WithSalt(saltBytes: ByteArray, seed: Int = -0x31bf6a3c, start: Int = 0, length: Int = this.length + saltBytes.size): Int {
+fun String.xxHash32WithSalt(saltBytes: ByteArray, start: Int = 0, length: Int = this.length + saltBytes.size, seed: Int = -0x31bf6a3c): Int {
+
     require(start >= 0) { "Start ($start) must be >= 0" }
     require(length >= 0) { "Length ($length) must be >= 0" }
     require(start < length) { "Start ($start) position must be smaller than the size of the String" }
-
-    val xxHash = Hash.xxHashFactory.get()
-    val hash32 = xxHash.newStreamingHash32(seed)!!
-
-    val charToBytes = this.toCharArray().toBytes16(start, length)
-
-    hash32.update(charToBytes, 0, charToBytes.size)
-    hash32.update(saltBytes, 0, saltBytes.size)
-    return hash32.value
+    return LZ4Util.xxHash32WithSalt(this, saltBytes, start, length, seed)
 }
 
 /**
@@ -445,19 +357,12 @@ fun String.xxHash32WithSalt(saltBytes: ByteArray, seed: Int = -0x31bf6a3c, start
  *
  * @param seed used to initialize the hash value (for the xxhash seed), use whatever value you want, but always the same
  */
-fun String.xxHash64WithSalt(saltBytes: ByteArray, seed: Long = -0x31bf6a3c, start: Int = 0, length: Int = this.length + saltBytes.size): Long {
+fun String.xxHash64WithSalt(saltBytes: ByteArray, start: Int = 0, length: Int = this.length + saltBytes.size, seed: Long = -0x31bf6a3c): Long {
     require(start >= 0) { "Start ($start) must be >= 0" }
     require(length >= 0) { "Length ($length) must be >= 0" }
     require(start < length) { "Start ($start) position must be smaller than the size of the String" }
 
-    val xxHash = Hash.xxHashFactory.get()
-    val hash64 = xxHash.newStreamingHash64(seed)!!
-
-    val charToBytes = this.toCharArray().toBytes16(start, length)
-
-    hash64.update(charToBytes, 0, charToBytes.size)
-    hash64.update(saltBytes, 0, saltBytes.size)
-    return hash64.value
+    return LZ4Util.xxHash64WithSalt(this, saltBytes, start, length, seed)
 }
 
 
@@ -514,13 +419,8 @@ fun ByteArray.sha3_512WithSalt(saltBytes: ByteArray, start: Int = 0, length: Int
  *
  * @param seed used to initialize the hash value (for the xxhash seed), use whatever value you want, but always the same
  */
-fun ByteArray.xxHash32WithSalt(saltBytes: ByteArray, seed: Int = -0x31bf6a3c, start: Int = 0, length: Int = this.size + saltBytes.size): Int {
-    val xxHash = Hash.xxHashFactory.get()
-    val hash32 = xxHash.newStreamingHash32(seed)!!
-
-    hash32.update(this, start, length)
-    hash32.update(saltBytes, 0, saltBytes.size)
-    return hash32.value
+fun ByteArray.xxHash32WithSalt(saltBytes: ByteArray, start: Int = 0, length: Int = this.size + saltBytes.size, seed: Int = -0x31bf6a3c): Int {
+    return LZ4Util.xxHash32WithSalt(this, saltBytes, start, length, seed)
 }
 
 /**
@@ -528,13 +428,8 @@ fun ByteArray.xxHash32WithSalt(saltBytes: ByteArray, seed: Int = -0x31bf6a3c, st
  *
  * @param seed used to initialize the hash value (for the xxhash seed), use whatever value you want, but always the same
  */
-fun ByteArray.xxHash64WithSalt(saltBytes: ByteArray, seed: Long = -0x31bf6a3c, start: Int = 0, length: Int = this.size + saltBytes.size): Long {
-    val xxHash = Hash.xxHashFactory.get()
-    val hash64 = xxHash.newStreamingHash64(seed)!!
-
-    hash64.update(this, start, length)
-    hash64.update(saltBytes, 0, saltBytes.size)
-    return hash64.value
+fun ByteArray.xxHash64WithSalt(saltBytes: ByteArray, start: Int = 0, length: Int = this.size + saltBytes.size, seed: Long = -0x31bf6a3c): Long {
+    return LZ4Util.xxHash64WithSalt(this, saltBytes, start, length, seed)
 }
 
 
@@ -580,20 +475,15 @@ fun File.sha3_512(start: Int = 0, length: Long = this.length(), bufferSize: Int 
  * @param seed used to initialize the hash value (for the xxhash seed), use whatever value you want, but always the same
  */
 fun File.xxHash32(start: Long = 0L, length: Long = this.length(), bufferSize: Int = 4096, seed: Int = -0x31bf6a3c): Int {
-    val xxHash = Hash.xxHashFactory.get()
-    val hash32 = xxHash.newStreamingHash32(seed)!!
-
     require(this.isFile) { "Unable open as file: ${this.absolutePath}" }
     require(this.canRead()) { "Unable to read file: ${this.absolutePath}" }
 
     require(start >= 0) { "Start ($start) must be >= 0" }
     require(length >= 0) { "Length ($length) must be >= 0" }
-    require(start < length()) { "Start ($start) position must be smaller than the size of the file" }
+    require(start < this.length()) { "Start ($start) position must be smaller than the size of the file" }
 
-    this.inputStream().use {
-        updateDigest32(hash32, it, bufferSize, start, length)
-        return hash32.value
-    }
+
+    return LZ4Util.xxHash32(this, start, length, bufferSize,  seed)
 }
 
 /**
@@ -602,23 +492,15 @@ fun File.xxHash32(start: Long = 0L, length: Long = this.length(), bufferSize: In
  * @param seed used to initialize the hash value (for the xxhash seed), use whatever value you want, but always the same
  */
 fun File.xxHash64(start: Long = 0L, length: Long = this.length(), bufferSize: Int = 4096, seed: Long = -0x31bf6a3c): Long {
-    val xxHash = Hash.xxHashFactory.get()
-    val hash64 = xxHash.newStreamingHash64(seed)!!
-
     require(this.isFile) { "Unable open as file: ${this.absolutePath}" }
     require(this.canRead()) { "Unable to read file: ${this.absolutePath}" }
 
     require(start >= 0) { "Start ($start) must be >= 0" }
     require(length >= 0) { "Length ($length) must be >= 0" }
-    require(start < length()) { "Start ($start) position must be smaller than the size of the file" }
+    require(start < this.length()) { "Start ($start) position must be smaller than the size of the file" }
 
-    this.inputStream().use {
-        updateDigest64(hash64, it, bufferSize, start, length)
-        return hash64.value
-    }
+    return LZ4Util.xxHash64(this, start, length, bufferSize,  seed)
 }
-
-
 
 
 /**
@@ -656,19 +538,7 @@ fun InputStream.sha3_512(bufferSize: Int = 4096): ByteArray = hash(this, bufferS
  * @param seed used to initialize the hash value (for the xxhash seed), use whatever value you want, but always the same
  */
 fun InputStream.xxHash32(bufferSize: Int = 4096, seed: Int = -0x31bf6a3c): Int {
-    val xxHash = Hash.xxHashFactory.get()
-    val hash32 = xxHash.newStreamingHash32(seed)!!
-
-    val buffer = ByteArray(bufferSize)
-    var read: Int
-
-    this.use {
-        while (it.read(buffer).also { read = it } > 0) {
-            hash32.update(buffer, 0, read)
-        }
-    }
-
-    return hash32.value
+    return LZ4Util.xxHash32(this, bufferSize,  seed)
 }
 
 /**
@@ -677,17 +547,5 @@ fun InputStream.xxHash32(bufferSize: Int = 4096, seed: Int = -0x31bf6a3c): Int {
  * @param seed used to initialize the hash value (for the xxhash seed), use whatever value you want, but always the same
  */
 fun InputStream.xxHash64(bufferSize: Int = 4096, seed: Long = -0x31bf6a3c): Long {
-    val xxHash = Hash.xxHashFactory.get()
-    val hash64 = xxHash.newStreamingHash64(seed)!!
-
-    val buffer = ByteArray(bufferSize)
-    var read: Int
-
-    this.use {
-        while (it.read(buffer).also { read = it } > 0) {
-            hash64.update(buffer, 0, read)
-        }
-    }
-
-    return hash64.value
+    return LZ4Util.xxHash64(this, bufferSize, seed)
 }
