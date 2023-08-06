@@ -93,7 +93,7 @@ fun IntArray.toBytes(start: Int = 0, length: Int = this.size): ByteArray {
     for (i in start until endPosition) {
         val intValue = this[i]
         if (intValue < 0 || intValue > 255) {
-            throw IllegalArgumentException("Int at index $i($intValue) was not a valid byte value (0-255)")
+            throw Exception("Int at index $i($intValue) was not a valid byte value (0-255)")
         }
         bytes[j++] = intValue.toByte()
     }
