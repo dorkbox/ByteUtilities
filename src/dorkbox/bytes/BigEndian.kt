@@ -259,7 +259,7 @@ object BigEndian {
      /**
       * UNSIGNED INT to and from bytes
       */
-    object Uint_ {
+    object UInt_ {
          fun from(bytes: ByteArray, offset: Int, bytenum: Int): UInt {
              var number = 0
              when (bytenum) {
