@@ -36,7 +36,7 @@ object Extras {
     // set for the project
     const val description = "Byte manipulation and SHA/xxHash utilities"
     const val group = "com.dorkbox"
-    const val version = "1.15"
+    const val version = "2.0"
 
     // set as project.ext
     const val name = "ByteUtilities"
