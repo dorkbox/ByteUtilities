@@ -43,15 +43,15 @@ object LittleEndian {
      * SHORT to and from bytes
      */
     object Short_ {
-        fun from(bytes: ByteArray, offset: Int, bytenum: Int): Short {
+        fun from(bytes: ByteArray, offset: Int, byteNumber: Int): Short {
             var number: Short = 0
-            when (bytenum) {
+            when (byteNumber) {
                 2 -> {
                     number = (number.toInt() or (bytes[offset + 1].toInt() and 0xFF shl 8)).toShort()
                     number = (number.toInt() or (bytes[offset + 0].toInt() and 0xFF shl 0)).toShort()
                 }
 
-                1 -> number = (number.toInt() or (bytes[offset + 0].toInt() and 0xFF shl 0)).toShort()
+                else -> number = (number.toInt() or (bytes[offset + 0].toInt() and 0xFF shl 0)).toShort()
             }
             return number
         }
@@ -64,17 +64,14 @@ object LittleEndian {
                     number = (number.toInt() or (bytes[0].toInt() and 0xFF shl 0)).toShort()
                 }
 
-                1 -> number = (number.toInt() or (bytes[0].toInt() and 0xFF shl 0)).toShort()
-                else -> {
-                    number = (number.toInt() or (bytes[1].toInt() and 0xFF shl 8)).toShort()
-                    number = (number.toInt() or (bytes[0].toInt() and 0xFF shl 0)).toShort()
-                }
+                else -> number = (number.toInt() or (bytes[0].toInt() and 0xFF shl 0)).toShort()
             }
             return number
         }
 
         fun from(b0: Byte, b1: Byte): Short {
-            return (b1.toInt() and 0xFF shl 8 or (b0.toInt() and 0xFF shl 0)).toShort()
+            return ((b1.toInt() and 0xFF shl 8) or
+                    (b0.toInt() and 0xFF shl 0)).toShort()
         }
 
         fun from(buff: ByteBuffer): Short {
@@ -113,7 +110,7 @@ object LittleEndian {
                      number = (number.toInt() or (bytes[offset + 0].toInt() and 0xFF shl 0)).toShort()
                  }
 
-                 1 -> number = (number.toInt() or (bytes[offset + 0].toInt() and 0xFF shl 0)).toShort()
+                 else -> number = (number.toInt() or (bytes[offset + 0].toInt() and 0xFF shl 0)).toShort()
              }
              return number.toUShort()
          }
@@ -126,17 +123,14 @@ object LittleEndian {
                      number = (number.toInt() or (bytes[0].toInt() and 0xFF shl 0)).toShort()
                  }
 
-                 1 -> number = (number.toInt() or (bytes[0].toInt() and 0xFF shl 0)).toShort()
-                 else -> {
-                     number = (number.toInt() or (bytes[1].toInt() and 0xFF shl 8)).toShort()
-                     number = (number.toInt() or (bytes[0].toInt() and 0xFF shl 0)).toShort()
-                 }
+                 else -> number = (number.toInt() or (bytes[0].toInt() and 0xFF shl 0)).toShort()
              }
              return number.toUShort()
          }
 
          fun from(b0: Byte, b1: Byte): UShort {
-             return (b1.toInt() and 0xFF shl 8 or (b0.toInt() and 0xFF shl 0)).toUShort()
+             return ((b1.toInt() and 0xFF shl 8) or 
+                     (b0.toInt() and 0xFF shl 0)).toUShort()
          }
 
          fun from(buff: ByteBuffer): UShort {
@@ -167,9 +161,9 @@ object LittleEndian {
      * INT to and from bytes
      */
     object Int_ {
-        fun from(bytes: ByteArray, offset: Int, bytenum: Int): Int {
+        fun from(bytes: ByteArray, offset: Int, byteNumber: Int): Int {
             var number = 0
-            when (bytenum) {
+            when (byteNumber) {
                 4 -> {
                     number = number or (bytes[offset + 3].toInt() and 0xFF shl 24)
                     number = number or (bytes[offset + 2].toInt() and 0xFF shl 16)
@@ -188,7 +182,7 @@ object LittleEndian {
                     number = number or (bytes[offset + 0].toInt() and 0xFF shl 0)
                 }
 
-                1 -> number = number or (bytes[offset + 0].toInt() and 0xFF shl 0)
+                else -> number = number or (bytes[offset + 0].toInt() and 0xFF shl 0)
             }
             return number
         }
@@ -214,19 +208,16 @@ object LittleEndian {
                     number = number or (bytes[0].toInt() and 0xFF shl 0)
                 }
 
-                1 -> number = number or (bytes[0].toInt() and 0xFF shl 0)
-                else -> {
-                    number = number or (bytes[3].toInt() and 0xFF shl 24)
-                    number = number or (bytes[2].toInt() and 0xFF shl 16)
-                    number = number or (bytes[1].toInt() and 0xFF shl 8)
-                    number = number or (bytes[0].toInt() and 0xFF shl 0)
-                }
+                else -> number = number or (bytes[0].toInt() and 0xFF shl 0)
             }
             return number
         }
 
         fun from(b0: Byte, b1: Byte, b2: Byte, b3: Byte): Int {
-            return b3.toInt() and 0xFF shl 24 or (b2.toInt() and 0xFF shl 16) or (b1.toInt() and 0xFF shl 8) or (b0.toInt() and 0xFF shl 0)
+            return (b3.toInt() and 0xFF shl 24) or
+                   (b2.toInt() and 0xFF shl 16) or
+                   (b1.toInt() and 0xFF shl 8) or
+                   (b0.toInt() and 0xFF shl 0)
         }
 
         fun from(buff: ByteBuffer): Int {
@@ -261,9 +252,9 @@ object LittleEndian {
       * UNSIGNED INT to and from bytes
       */
     object UInt_ {
-         fun from(bytes: ByteArray, offset: Int, bytenum: Int): UInt {
+         fun from(bytes: ByteArray, offset: Int, byteNumber: Int): UInt {
              var number = 0
-             when (bytenum) {
+             when (byteNumber) {
                  4 -> {
                      number = number or (bytes[offset + 3].toInt() and 0xFF shl 24)
                      number = number or (bytes[offset + 2].toInt() and 0xFF shl 16)
@@ -282,7 +273,7 @@ object LittleEndian {
                      number = number or (bytes[offset + 0].toInt() and 0xFF shl 0)
                  }
 
-                 1 -> number = number or (bytes[offset + 0].toInt() and 0xFF shl 0)
+                 else -> number = number or (bytes[offset + 0].toInt() and 0xFF shl 0)
              }
              return number.toUInt()
          }
@@ -308,19 +299,16 @@ object LittleEndian {
                      number = number or (bytes[0].toInt() and 0xFF shl 0)
                  }
 
-                 1 -> number = number or (bytes[0].toInt() and 0xFF shl 0)
-                 else -> {
-                     number = number or (bytes[3].toInt() and 0xFF shl 24)
-                     number = number or (bytes[2].toInt() and 0xFF shl 16)
-                     number = number or (bytes[1].toInt() and 0xFF shl 8)
-                     number = number or (bytes[0].toInt() and 0xFF shl 0)
-                 }
+                 else -> number = number or (bytes[0].toInt() and 0xFF shl 0)
              }
              return number.toUInt()
          }
 
          fun from(b0: Byte, b1: Byte, b2: Byte, b3: Byte): UInt {
-             return (b3.toInt() and 0xFF shl 24 or (b2.toInt() and 0xFF shl 16) or (b1.toInt() and 0xFF shl 8) or (b0.toInt() and 0xFF shl 0)).toUInt()
+             return ((b3.toInt() and 0xFF shl 24) or
+                     (b2.toInt() and 0xFF shl 16) or
+                     (b1.toInt() and 0xFF shl 8) or
+                     (b0.toInt() and 0xFF shl 0)).toUInt()
          }
 
          fun from(buff: ByteBuffer): UInt {
@@ -355,9 +343,9 @@ object LittleEndian {
      * LONG to and from bytes
      */
     object Long_ {
-        fun from(bytes: ByteArray, offset: Int, bytenum: Int): Long {
+        fun from(bytes: ByteArray, offset: Int, byteNumber: Int): Long {
             var number: Long = 0
-            when (bytenum) {
+            when (byteNumber) {
                 8 -> {
                     number = number or ((bytes[offset + 7].toInt() and 0xFF).toLong() shl 56)
                     number = number or ((bytes[offset + 6].toInt() and 0xFF).toLong() shl 48)
@@ -414,7 +402,7 @@ object LittleEndian {
                     number = number or ((bytes[offset + 0].toInt() and 0xFF).toLong() shl 0)
                 }
 
-                1 -> number = number or ((bytes[offset + 0].toInt() and 0xFF).toLong() shl 0)
+                else -> number = number or ((bytes[offset + 0].toInt() and 0xFF).toLong() shl 0)
             }
             return number
         }
@@ -478,23 +466,20 @@ object LittleEndian {
                     number = number or ((bytes[0].toInt() and 0xFF).toLong() shl 0)
                 }
 
-                1 -> number = number or ((bytes[0].toInt() and 0xFF).toLong() shl 0)
-                else -> {
-                    number = number or ((bytes[7].toInt() and 0xFF).toLong() shl 56)
-                    number = number or ((bytes[6].toInt() and 0xFF).toLong() shl 48)
-                    number = number or ((bytes[5].toInt() and 0xFF).toLong() shl 40)
-                    number = number or ((bytes[4].toInt() and 0xFF).toLong() shl 32)
-                    number = number or ((bytes[3].toInt() and 0xFF).toLong() shl 24)
-                    number = number or ((bytes[2].toInt() and 0xFF).toLong() shl 16)
-                    number = number or ((bytes[1].toInt() and 0xFF).toLong() shl 8)
-                    number = number or ((bytes[0].toInt() and 0xFF).toLong() shl 0)
-                }
+                else -> number = number or ((bytes[0].toInt() and 0xFF).toLong() shl 0)
             }
             return number
         }
 
         fun from(b0: Byte, b1: Byte, b2: Byte, b3: Byte, b4: Byte, b5: Byte, b6: Byte, b7: Byte): Long {
-            return (b7.toInt() and 0xFF).toLong() shl 56 or ((b6.toInt() and 0xFF).toLong() shl 48) or ((b5.toInt() and 0xFF).toLong() shl 40) or ((b4.toInt() and 0xFF).toLong() shl 32) or ((b3.toInt() and 0xFF).toLong() shl 24) or ((b2.toInt() and 0xFF).toLong() shl 16) or ((b1.toInt() and 0xFF).toLong() shl 8) or ((b0.toInt() and 0xFF).toLong() shl 0)
+            return ((b7.toInt() and 0xFF).toLong() shl 56) or
+                    ((b6.toInt() and 0xFF).toLong() shl 48) or
+                    ((b5.toInt() and 0xFF).toLong() shl 40) or
+                    ((b4.toInt() and 0xFF).toLong() shl 32) or
+                    ((b3.toInt() and 0xFF).toLong() shl 24) or
+                    ((b2.toInt() and 0xFF).toLong() shl 16) or
+                    ((b1.toInt() and 0xFF).toLong() shl 8) or
+                    ((b0.toInt() and 0xFF).toLong() shl 0)
         }
 
         fun from(buff: ByteBuffer): Long {
@@ -555,9 +540,9 @@ object LittleEndian {
       * UNSIGNED LONG to and from bytes
       */
     object ULong_ {
-         fun from(bytes: ByteArray, offset: Int, bytenum: Int): ULong {
+         fun from(bytes: ByteArray, offset: Int, byteNumber: Int): ULong {
              var number: Long = 0
-             when (bytenum) {
+             when (byteNumber) {
                  8 -> {
                      number = number or ((bytes[offset + 7].toInt() and 0xFF).toLong() shl 56)
                      number = number or ((bytes[offset + 6].toInt() and 0xFF).toLong() shl 48)
@@ -614,7 +599,7 @@ object LittleEndian {
                      number = number or ((bytes[offset + 0].toInt() and 0xFF).toLong() shl 0)
                  }
 
-                 1 -> number = number or ((bytes[offset + 0].toInt() and 0xFF).toLong() shl 0)
+                 else -> number = number or ((bytes[offset + 0].toInt() and 0xFF).toLong() shl 0)
              }
              return number.toULong()
          }
@@ -678,23 +663,20 @@ object LittleEndian {
                      number = number or ((bytes[0].toInt() and 0xFF).toLong() shl 0)
                  }
 
-                 1 -> number = number or ((bytes[0].toInt() and 0xFF).toLong() shl 0)
-                 else -> {
-                     number = number or ((bytes[7].toInt() and 0xFF).toLong() shl 56)
-                     number = number or ((bytes[6].toInt() and 0xFF).toLong() shl 48)
-                     number = number or ((bytes[5].toInt() and 0xFF).toLong() shl 40)
-                     number = number or ((bytes[4].toInt() and 0xFF).toLong() shl 32)
-                     number = number or ((bytes[3].toInt() and 0xFF).toLong() shl 24)
-                     number = number or ((bytes[2].toInt() and 0xFF).toLong() shl 16)
-                     number = number or ((bytes[1].toInt() and 0xFF).toLong() shl 8)
-                     number = number or ((bytes[0].toInt() and 0xFF).toLong() shl 0)
-                 }
+                 else -> number = number or ((bytes[0].toInt() and 0xFF).toLong() shl 0)
              }
              return number.toULong()
          }
 
          fun from(b0: Byte, b1: Byte, b2: Byte, b3: Byte, b4: Byte, b5: Byte, b6: Byte, b7: Byte): ULong {
-             return ((b7.toInt() and 0xFF).toLong() shl 56 or ((b6.toInt() and 0xFF).toLong() shl 48) or ((b5.toInt() and 0xFF).toLong() shl 40) or ((b4.toInt() and 0xFF).toLong() shl 32) or ((b3.toInt() and 0xFF).toLong() shl 24) or ((b2.toInt() and 0xFF).toLong() shl 16) or ((b1.toInt() and 0xFF).toLong() shl 8) or ((b0.toInt() and 0xFF).toLong() shl 0)).toULong()
+             return (((b7.toInt() and 0xFF).toLong() shl 56) or
+                     ((b6.toInt() and 0xFF).toLong() shl 48) or
+                     ((b5.toInt() and 0xFF).toLong() shl 40) or
+                     ((b4.toInt() and 0xFF).toLong() shl 32) or
+                     ((b3.toInt() and 0xFF).toLong() shl 24) or
+                     ((b2.toInt() and 0xFF).toLong() shl 16) or
+                     ((b1.toInt() and 0xFF).toLong() shl 8) or
+                     ((b0.toInt() and 0xFF).toLong() shl 0)).toULong()
          }
 
          fun from(buff: ByteBuffer): ULong {
@@ -750,113 +732,4 @@ object LittleEndian {
              bytes[0] = (x shr 0).toByte()
          }
     }
-    // public static final
-    // class ULong_ {
-    //     @SuppressWarnings("fallthrough")
-    //     public static
-    //     ULong from(final byte[] bytes, final int offset, final int bytenum) {
-    //         long number = 0;
-    //
-    //         switch (bytenum) {
-    //             case 8:
-    //                 number |= (long) (bytes[offset + 7] & 0xFF) << 56;
-    //             case 7:
-    //                 number |= (long) (bytes[offset + 6] & 0xFF) << 48;
-    //             case 6:
-    //                 number |= (long) (bytes[offset + 5] & 0xFF) << 40;
-    //             case 5:
-    //                 number |= (long) (bytes[offset + 4] & 0xFF) << 32;
-    //             case 4:
-    //                 number |= (long) (bytes[offset + 3] & 0xFF) << 24;
-    //             case 3:
-    //                 number |= (long) (bytes[offset + 2] & 0xFF) << 16;
-    //             case 2:
-    //                 number |= (long) (bytes[offset + 1] & 0xFF) << 8;
-    //             case 1:
-    //                 number |= (long) (bytes[offset + 0] & 0xFF) << 0;
-    //         }
-    //
-    //         return ULong.valueOf(number);
-    //     }
-    //
-    //     public static
-    //     ULong from(final byte[] bytes) {
-    //         BigInteger ulong = new BigInteger(1, bytes);
-    //         return ULong.valueOf(ulong);
-    //     }
-    //
-    //     public static
-    //     ULong from(final byte b0, final byte b1, final byte b2, final byte b3, final byte b4, final byte b5, final byte b6, final byte b7) {
-    //         byte[] bytes = new byte[] {b7, b6, b5, b4, b3, b2, b1, b0};
-    //         BigInteger ulong = new BigInteger(1, bytes);
-    //         return ULong.valueOf(ulong);
-    //     }
-    //
-    //     public static
-    //     ULong from(final ByteBuffer buff) {
-    //         return from(buff.get(), buff.get(), buff.get(), buff.get(), buff.get(), buff.get(), buff.get(), buff.get());
-    //     }
-    //
-    //     public static
-    //     ULong from(final InputStream inputStream) throws IOException {
-    //         return from((byte) inputStream.read(),
-    //                     (byte) inputStream.read(),
-    //                     (byte) inputStream.read(),
-    //                     (byte) inputStream.read(),
-    //                     (byte) inputStream.read(),
-    //                     (byte) inputStream.read(),
-    //                     (byte) inputStream.read(),
-    //                     (byte) inputStream.read());
-    //     }
-    //
-    //     public static
-    //     byte[] toBytes(final ULong x) {
-    //         byte[] bytes = new byte[8];
-    //         int offset = 0;
-    //
-    //         byte temp_byte[] = x.toBigInteger()
-    //                             .toByteArray();
-    //         int array_count = temp_byte.length - 1;
-    //
-    //         for (int i = 7; i >= 0; i--) {
-    //             if (array_count >= 0) {
-    //                 bytes[offset] = temp_byte[array_count];
-    //             }
-    //             else {
-    //                 bytes[offset] = (byte) 00;
-    //             }
-    //
-    //             offset++;
-    //             array_count--;
-    //         }
-    //
-    //         return bytes;
-    //     }
-    //
-    //     public static
-    //     void toBytes(final ULong x, final byte[] bytes, final int offset) {
-    //         final byte[] bytes1 = toBytes(x);
-    //         int length = bytes.length;
-    //         int pos = 8;
-    //
-    //         while (length > 0) {
-    //             bytes[pos--] = bytes1[offset + length--];
-    //         }
-    //     }
-    //
-    //     public static
-    //     void toBytes(final ULong x, final byte[] bytes) {
-    //         final byte[] bytes1 = toBytes(x);
-    //         int length = bytes.length;
-    //         int pos = 8;
-    //
-    //         while (length > 0) {
-    //             bytes[pos--] = bytes1[length--];
-    //         }
-    //     }
-    //
-    //     private
-    //     ULong_() {
-    //     }
-    // }
 }
