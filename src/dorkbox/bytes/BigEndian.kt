@@ -50,7 +50,7 @@ object BigEndian {
                     number = (number.toInt() or (bytes[offset + 1].toInt() and 0xFF shl 0)).toShort()
                 }
 
-                1 -> number = (number.toInt() or (bytes[offset + 1].toInt() and 0xFF shl 0)).toShort()
+                else -> number = (number.toInt() or (bytes[offset + 0].toInt() and 0xFF shl 0)).toShort()
             }
             return number
         }
@@ -63,17 +63,14 @@ object BigEndian {
                     number = (number.toInt() or (bytes[1].toInt() and 0xFF shl 0)).toShort()
                 }
 
-                1 -> number = (number.toInt() or (bytes[1].toInt() and 0xFF shl 0)).toShort()
-                else -> {
-                    number = (number.toInt() or (bytes[0].toInt() and 0xFF shl 8)).toShort()
-                    number = (number.toInt() or (bytes[1].toInt() and 0xFF shl 0)).toShort()
-                }
+                else -> number = (number.toInt() or (bytes[0].toInt() and 0xFF shl 0)).toShort()
             }
             return number
         }
 
         fun from(b0: Byte, b1: Byte): Short {
-            return (b0.toInt() and 0xFF shl 8 or (b1.toInt() and 0xFF shl 0)).toShort()
+            return ((b0.toInt() and 0xFF shl 8) or
+                    (b1.toInt() and 0xFF shl 0)).toShort()
         }
 
         fun from(buff: ByteBuffer): Short {
@@ -104,15 +101,15 @@ object BigEndian {
       * UNSIGNED SHORT to and from bytes
       */
     object UShort_ {
-         fun from(bytes: ByteArray, offset: Int, bytenum: Int): UShort {
+         fun from(bytes: ByteArray, offset: Int, byteNumber: Int): UShort {
              var number: Short = 0
-             when (bytenum) {
+             when (byteNumber) {
                  2 -> {
                      number = (number.toInt() or (bytes[offset + 0].toInt() and 0xFF shl 8)).toShort()
                      number = (number.toInt() or (bytes[offset + 1].toInt() and 0xFF shl 0)).toShort()
                  }
 
-                 1 -> number = (number.toInt() or (bytes[offset + 1].toInt() and 0xFF shl 0)).toShort()
+                 else -> number = (number.toInt() or (bytes[offset + 0].toInt() and 0xFF shl 0)).toShort()
              }
              return number.toUShort()
          }
@@ -125,17 +122,14 @@ object BigEndian {
                      number = (number.toInt() or (bytes[1].toInt() and 0xFF shl 0)).toShort()
                  }
 
-                 1 -> number = (number.toInt() or (bytes[1].toInt() and 0xFF shl 0)).toShort()
-                 else -> {
-                     number = (number.toInt() or (bytes[0].toInt() and 0xFF shl 8)).toShort()
-                     number = (number.toInt() or (bytes[1].toInt() and 0xFF shl 0)).toShort()
-                 }
+                 else -> number = (number.toInt() or (bytes[0].toInt() and 0xFF shl 0)).toShort()
              }
              return number.toUShort()
          }
 
          fun from(b0: Byte, b1: Byte): UShort {
-             return (b0.toInt() and 0xFF shl 8 or (b1.toInt() and 0xFF shl 0)).toUShort()
+             return ((b0.toInt() and 0xFF shl 8) or
+                     (b1.toInt() and 0xFF shl 0)).toUShort()
          }
 
          fun from(buff: ByteBuffer): UShort {
@@ -166,9 +160,9 @@ object BigEndian {
      * INT to and from bytes
      */
     object Int_ {
-        fun from(bytes: ByteArray, offset: Int, bytenum: Int): Int {
+        fun from(bytes: ByteArray, offset: Int, byteNumber: Int): Int {
             var number = 0
-            when (bytenum) {
+            when (byteNumber) {
                 4 -> {
                     number = number or (bytes[offset + 0].toInt() and 0xFF shl 24)
                     number = number or (bytes[offset + 1].toInt() and 0xFF shl 16)
@@ -177,17 +171,17 @@ object BigEndian {
                 }
 
                 3 -> {
-                    number = number or (bytes[offset + 1].toInt() and 0xFF shl 16)
-                    number = number or (bytes[offset + 2].toInt() and 0xFF shl 8)
-                    number = number or (bytes[offset + 3].toInt() and 0xFF shl 0)
+                    number = number or (bytes[offset + 0].toInt() and 0xFF shl 16)
+                    number = number or (bytes[offset + 1].toInt() and 0xFF shl 8)
+                    number = number or (bytes[offset + 2].toInt() and 0xFF shl 0)
                 }
 
                 2 -> {
-                    number = number or (bytes[offset + 2].toInt() and 0xFF shl 8)
-                    number = number or (bytes[offset + 3].toInt() and 0xFF shl 0)
+                    number = number or (bytes[offset + 0].toInt() and 0xFF shl 8)
+                    number = number or (bytes[offset + 1].toInt() and 0xFF shl 0)
                 }
 
-                1 -> number = number or (bytes[offset + 3].toInt() and 0xFF shl 0)
+                else -> number = number or (bytes[offset + 0].toInt() and 0xFF shl 0)
             }
             return number
         }
@@ -203,29 +197,26 @@ object BigEndian {
                 }
 
                 3 -> {
-                    number = number or (bytes[1].toInt() and 0xFF shl 16)
-                    number = number or (bytes[2].toInt() and 0xFF shl 8)
-                    number = number or (bytes[3].toInt() and 0xFF shl 0)
+                    number = number or (bytes[0].toInt() and 0xFF shl 16)
+                    number = number or (bytes[1].toInt() and 0xFF shl 8)
+                    number = number or (bytes[2].toInt() and 0xFF shl 0)
                 }
 
                 2 -> {
-                    number = number or (bytes[2].toInt() and 0xFF shl 8)
-                    number = number or (bytes[3].toInt() and 0xFF shl 0)
+                    number = number or (bytes[0].toInt() and 0xFF shl 8)
+                    number = number or (bytes[1].toInt() and 0xFF shl 0)
                 }
 
-                1 -> number = number or (bytes[3].toInt() and 0xFF shl 0)
-                else -> {
-                    number = number or (bytes[0].toInt() and 0xFF shl 24)
-                    number = number or (bytes[1].toInt() and 0xFF shl 16)
-                    number = number or (bytes[2].toInt() and 0xFF shl 8)
-                    number = number or (bytes[3].toInt() and 0xFF shl 0)
-                }
+                else -> number = number or (bytes[0].toInt() and 0xFF shl 0)
             }
             return number
         }
 
         fun from(b0: Byte, b1: Byte, b2: Byte, b3: Byte): Int {
-            return b0.toInt() and 0xFF shl 24 or (b1.toInt() and 0xFF shl 16) or (b2.toInt() and 0xFF shl 8) or (b3.toInt() and 0xFF shl 0)
+            return (b0.toInt() and 0xFF shl 24) or
+                   (b1.toInt() and 0xFF shl 16) or
+                   (b2.toInt() and 0xFF shl 8) or
+                   (b3.toInt() and 0xFF shl 0)
         }
 
         fun from(buff: ByteBuffer): Int {
@@ -260,9 +251,9 @@ object BigEndian {
       * UNSIGNED INT to and from bytes
       */
     object UInt_ {
-         fun from(bytes: ByteArray, offset: Int, bytenum: Int): UInt {
+         fun from(bytes: ByteArray, offset: Int, byteNumber: Int): UInt {
              var number = 0
-             when (bytenum) {
+             when (byteNumber) {
                  4 -> {
                      number = number or (bytes[offset + 0].toInt() and 0xFF shl 24)
                      number = number or (bytes[offset + 1].toInt() and 0xFF shl 16)
@@ -271,17 +262,17 @@ object BigEndian {
                  }
 
                  3 -> {
-                     number = number or (bytes[offset + 1].toInt() and 0xFF shl 16)
-                     number = number or (bytes[offset + 2].toInt() and 0xFF shl 8)
-                     number = number or (bytes[offset + 3].toInt() and 0xFF shl 0)
+                     number = number or (bytes[offset + 0].toInt() and 0xFF shl 16)
+                     number = number or (bytes[offset + 1].toInt() and 0xFF shl 8)
+                     number = number or (bytes[offset + 2].toInt() and 0xFF shl 0)
                  }
 
                  2 -> {
-                     number = number or (bytes[offset + 2].toInt() and 0xFF shl 8)
-                     number = number or (bytes[offset + 3].toInt() and 0xFF shl 0)
+                     number = number or (bytes[offset + 0].toInt() and 0xFF shl 8)
+                     number = number or (bytes[offset + 1].toInt() and 0xFF shl 0)
                  }
 
-                 1 -> number = number or (bytes[offset + 3].toInt() and 0xFF shl 0)
+                 else -> number = number or (bytes[offset + 0].toInt() and 0xFF shl 0)
              }
              return number.toUInt()
          }
@@ -297,29 +288,26 @@ object BigEndian {
                  }
 
                  3 -> {
-                     number = number or (bytes[1].toInt() and 0xFF shl 16)
-                     number = number or (bytes[2].toInt() and 0xFF shl 8)
-                     number = number or (bytes[3].toInt() and 0xFF shl 0)
+                     number = number or (bytes[0].toInt() and 0xFF shl 16)
+                     number = number or (bytes[1].toInt() and 0xFF shl 8)
+                     number = number or (bytes[2].toInt() and 0xFF shl 0)
                  }
 
                  2 -> {
-                     number = number or (bytes[2].toInt() and 0xFF shl 8)
-                     number = number or (bytes[3].toInt() and 0xFF shl 0)
+                     number = number or (bytes[0].toInt() and 0xFF shl 8)
+                     number = number or (bytes[1].toInt() and 0xFF shl 0)
                  }
 
-                 1 -> number = number or (bytes[3].toInt() and 0xFF shl 0)
-                 else -> {
-                     number = number or (bytes[0].toInt() and 0xFF shl 24)
-                     number = number or (bytes[1].toInt() and 0xFF shl 16)
-                     number = number or (bytes[2].toInt() and 0xFF shl 8)
-                     number = number or (bytes[3].toInt() and 0xFF shl 0)
-                 }
+                 else -> number = number or (bytes[0].toInt() and 0xFF shl 0)
              }
              return number.toUInt()
          }
 
          fun from(b0: Byte, b1: Byte, b2: Byte, b3: Byte): UInt {
-             return (b0.toInt() and 0xFF shl 24 or (b1.toInt() and 0xFF shl 16) or (b2.toInt() and 0xFF shl 8) or (b3.toInt() and 0xFF shl 0)).toUInt()
+             return ((b0.toInt() and 0xFF shl 24) or
+                     (b1.toInt() and 0xFF shl 16) or
+                     (b2.toInt() and 0xFF shl 8) or
+                     (b3.toInt() and 0xFF shl 0)).toUInt()
          }
 
          fun from(buff: ByteBuffer): UInt {
@@ -354,9 +342,9 @@ object BigEndian {
      * LONG to and from bytes
      */
     object Long_ {
-        fun from(bytes: ByteArray, offset: Int, bytenum: Int): Long {
+        fun from(bytes: ByteArray, offset: Int, byteNumber: Int): Long {
             var number: Long = 0
-            when (bytenum) {
+            when (byteNumber) {
                 8 -> {
                     number = number or ((bytes[offset + 0].toInt() and 0xFF).toLong() shl 56)
                     number = number or ((bytes[offset + 1].toInt() and 0xFF).toLong() shl 48)
@@ -369,51 +357,51 @@ object BigEndian {
                 }
 
                 7 -> {
-                    number = number or ((bytes[offset + 1].toInt() and 0xFF).toLong() shl 48)
-                    number = number or ((bytes[offset + 2].toInt() and 0xFF).toLong() shl 40)
-                    number = number or ((bytes[offset + 3].toInt() and 0xFF).toLong() shl 32)
-                    number = number or ((bytes[offset + 4].toInt() and 0xFF).toLong() shl 24)
-                    number = number or ((bytes[offset + 5].toInt() and 0xFF).toLong() shl 16)
-                    number = number or ((bytes[offset + 6].toInt() and 0xFF).toLong() shl 8)
-                    number = number or ((bytes[offset + 7].toInt() and 0xFF).toLong() shl 0)
+                    number = number or ((bytes[offset + 0].toInt() and 0xFF).toLong() shl 48)
+                    number = number or ((bytes[offset + 1].toInt() and 0xFF).toLong() shl 40)
+                    number = number or ((bytes[offset + 2].toInt() and 0xFF).toLong() shl 32)
+                    number = number or ((bytes[offset + 3].toInt() and 0xFF).toLong() shl 24)
+                    number = number or ((bytes[offset + 4].toInt() and 0xFF).toLong() shl 16)
+                    number = number or ((bytes[offset + 5].toInt() and 0xFF).toLong() shl 8)
+                    number = number or ((bytes[offset + 6].toInt() and 0xFF).toLong() shl 0)
                 }
 
                 6 -> {
-                    number = number or ((bytes[offset + 2].toInt() and 0xFF).toLong() shl 40)
-                    number = number or ((bytes[offset + 3].toInt() and 0xFF).toLong() shl 32)
-                    number = number or ((bytes[offset + 4].toInt() and 0xFF).toLong() shl 24)
-                    number = number or ((bytes[offset + 5].toInt() and 0xFF).toLong() shl 16)
-                    number = number or ((bytes[offset + 6].toInt() and 0xFF).toLong() shl 8)
-                    number = number or ((bytes[offset + 7].toInt() and 0xFF).toLong() shl 0)
+                    number = number or ((bytes[offset + 0].toInt() and 0xFF).toLong() shl 40)
+                    number = number or ((bytes[offset + 1].toInt() and 0xFF).toLong() shl 32)
+                    number = number or ((bytes[offset + 2].toInt() and 0xFF).toLong() shl 24)
+                    number = number or ((bytes[offset + 3].toInt() and 0xFF).toLong() shl 16)
+                    number = number or ((bytes[offset + 4].toInt() and 0xFF).toLong() shl 8)
+                    number = number or ((bytes[offset + 5].toInt() and 0xFF).toLong() shl 0)
                 }
 
                 5 -> {
-                    number = number or ((bytes[offset + 3].toInt() and 0xFF).toLong() shl 32)
-                    number = number or ((bytes[offset + 4].toInt() and 0xFF).toLong() shl 24)
-                    number = number or ((bytes[offset + 5].toInt() and 0xFF).toLong() shl 16)
-                    number = number or ((bytes[offset + 6].toInt() and 0xFF).toLong() shl 8)
-                    number = number or ((bytes[offset + 7].toInt() and 0xFF).toLong() shl 0)
+                    number = number or ((bytes[offset + 0].toInt() and 0xFF).toLong() shl 32)
+                    number = number or ((bytes[offset + 1].toInt() and 0xFF).toLong() shl 24)
+                    number = number or ((bytes[offset + 2].toInt() and 0xFF).toLong() shl 16)
+                    number = number or ((bytes[offset + 3].toInt() and 0xFF).toLong() shl 8)
+                    number = number or ((bytes[offset + 4].toInt() and 0xFF).toLong() shl 0)
                 }
 
                 4 -> {
-                    number = number or ((bytes[offset + 4].toInt() and 0xFF).toLong() shl 24)
-                    number = number or ((bytes[offset + 5].toInt() and 0xFF).toLong() shl 16)
-                    number = number or ((bytes[offset + 6].toInt() and 0xFF).toLong() shl 8)
-                    number = number or ((bytes[offset + 7].toInt() and 0xFF).toLong() shl 0)
+                    number = number or ((bytes[offset + 0].toInt() and 0xFF).toLong() shl 24)
+                    number = number or ((bytes[offset + 1].toInt() and 0xFF).toLong() shl 16)
+                    number = number or ((bytes[offset + 2].toInt() and 0xFF).toLong() shl 8)
+                    number = number or ((bytes[offset + 3].toInt() and 0xFF).toLong() shl 0)
                 }
 
                 3 -> {
-                    number = number or ((bytes[offset + 5].toInt() and 0xFF).toLong() shl 16)
-                    number = number or ((bytes[offset + 6].toInt() and 0xFF).toLong() shl 8)
-                    number = number or ((bytes[offset + 7].toInt() and 0xFF).toLong() shl 0)
+                    number = number or ((bytes[offset + 0].toInt() and 0xFF).toLong() shl 16)
+                    number = number or ((bytes[offset + 1].toInt() and 0xFF).toLong() shl 8)
+                    number = number or ((bytes[offset + 2].toInt() and 0xFF).toLong() shl 0)
                 }
 
                 2 -> {
-                    number = number or ((bytes[offset + 6].toInt() and 0xFF).toLong() shl 8)
-                    number = number or ((bytes[offset + 7].toInt() and 0xFF).toLong() shl 0)
+                    number = number or ((bytes[offset + 0].toInt() and 0xFF).toLong() shl 8)
+                    number = number or ((bytes[offset + 1].toInt() and 0xFF).toLong() shl 0)
                 }
 
-                1 -> number = number or ((bytes[offset + 7].toInt() and 0xFF).toLong() shl 0)
+                else -> number = number or ((bytes[offset + 0].toInt() and 0xFF).toLong() shl 0)
             }
             return number
         }
@@ -433,67 +421,64 @@ object BigEndian {
                 }
 
                 7 -> {
-                    number = number or ((bytes[1].toInt() and 0xFF).toLong() shl 48)
-                    number = number or ((bytes[2].toInt() and 0xFF).toLong() shl 40)
-                    number = number or ((bytes[3].toInt() and 0xFF).toLong() shl 32)
-                    number = number or ((bytes[4].toInt() and 0xFF).toLong() shl 24)
-                    number = number or ((bytes[5].toInt() and 0xFF).toLong() shl 16)
-                    number = number or ((bytes[6].toInt() and 0xFF).toLong() shl 8)
-                    number = number or ((bytes[7].toInt() and 0xFF).toLong() shl 0)
+                    number = number or ((bytes[0].toInt() and 0xFF).toLong() shl 48)
+                    number = number or ((bytes[1].toInt() and 0xFF).toLong() shl 40)
+                    number = number or ((bytes[2].toInt() and 0xFF).toLong() shl 32)
+                    number = number or ((bytes[3].toInt() and 0xFF).toLong() shl 24)
+                    number = number or ((bytes[4].toInt() and 0xFF).toLong() shl 16)
+                    number = number or ((bytes[5].toInt() and 0xFF).toLong() shl 8)
+                    number = number or ((bytes[6].toInt() and 0xFF).toLong() shl 0)
                 }
 
                 6 -> {
-                    number = number or ((bytes[2].toInt() and 0xFF).toLong() shl 40)
-                    number = number or ((bytes[3].toInt() and 0xFF).toLong() shl 32)
-                    number = number or ((bytes[4].toInt() and 0xFF).toLong() shl 24)
-                    number = number or ((bytes[5].toInt() and 0xFF).toLong() shl 16)
-                    number = number or ((bytes[6].toInt() and 0xFF).toLong() shl 8)
-                    number = number or ((bytes[7].toInt() and 0xFF).toLong() shl 0)
+                    number = number or ((bytes[0].toInt() and 0xFF).toLong() shl 40)
+                    number = number or ((bytes[1].toInt() and 0xFF).toLong() shl 32)
+                    number = number or ((bytes[2].toInt() and 0xFF).toLong() shl 24)
+                    number = number or ((bytes[3].toInt() and 0xFF).toLong() shl 16)
+                    number = number or ((bytes[4].toInt() and 0xFF).toLong() shl 8)
+                    number = number or ((bytes[5].toInt() and 0xFF).toLong() shl 0)
                 }
 
                 5 -> {
-                    number = number or ((bytes[3].toInt() and 0xFF).toLong() shl 32)
-                    number = number or ((bytes[4].toInt() and 0xFF).toLong() shl 24)
-                    number = number or ((bytes[5].toInt() and 0xFF).toLong() shl 16)
-                    number = number or ((bytes[6].toInt() and 0xFF).toLong() shl 8)
-                    number = number or ((bytes[7].toInt() and 0xFF).toLong() shl 0)
+                    number = number or ((bytes[0].toInt() and 0xFF).toLong() shl 32)
+                    number = number or ((bytes[1].toInt() and 0xFF).toLong() shl 24)
+                    number = number or ((bytes[2].toInt() and 0xFF).toLong() shl 16)
+                    number = number or ((bytes[3].toInt() and 0xFF).toLong() shl 8)
+                    number = number or ((bytes[4].toInt() and 0xFF).toLong() shl 0)
                 }
 
                 4 -> {
-                    number = number or ((bytes[4].toInt() and 0xFF).toLong() shl 24)
-                    number = number or ((bytes[5].toInt() and 0xFF).toLong() shl 16)
-                    number = number or ((bytes[6].toInt() and 0xFF).toLong() shl 8)
-                    number = number or ((bytes[7].toInt() and 0xFF).toLong() shl 0)
+                    number = number or ((bytes[0].toInt() and 0xFF).toLong() shl 24)
+                    number = number or ((bytes[1].toInt() and 0xFF).toLong() shl 16)
+                    number = number or ((bytes[2].toInt() and 0xFF).toLong() shl 8)
+                    number = number or ((bytes[3].toInt() and 0xFF).toLong() shl 0)
                 }
 
                 3 -> {
-                    number = number or ((bytes[5].toInt() and 0xFF).toLong() shl 16)
-                    number = number or ((bytes[6].toInt() and 0xFF).toLong() shl 8)
-                    number = number or ((bytes[7].toInt() and 0xFF).toLong() shl 0)
+                    number = number or ((bytes[0].toInt() and 0xFF).toLong() shl 16)
+                    number = number or ((bytes[1].toInt() and 0xFF).toLong() shl 8)
+                    number = number or ((bytes[2].toInt() and 0xFF).toLong() shl 0)
                 }
 
                 2 -> {
-                    number = number or ((bytes[6].toInt() and 0xFF).toLong() shl 8)
-                    number = number or ((bytes[7].toInt() and 0xFF).toLong() shl 0)
+                    number = number or ((bytes[0].toInt() and 0xFF).toLong() shl 8)
+                    number = number or ((bytes[1].toInt() and 0xFF).toLong() shl 0)
                 }
 
-                1 -> number = number or ((bytes[7].toInt() and 0xFF).toLong() shl 0)
-                else -> {
-                    number = number or ((bytes[0].toInt() and 0xFF).toLong() shl 56)
-                    number = number or ((bytes[1].toInt() and 0xFF).toLong() shl 48)
-                    number = number or ((bytes[2].toInt() and 0xFF).toLong() shl 40)
-                    number = number or ((bytes[3].toInt() and 0xFF).toLong() shl 32)
-                    number = number or ((bytes[4].toInt() and 0xFF).toLong() shl 24)
-                    number = number or ((bytes[5].toInt() and 0xFF).toLong() shl 16)
-                    number = number or ((bytes[6].toInt() and 0xFF).toLong() shl 8)
-                    number = number or ((bytes[7].toInt() and 0xFF).toLong() shl 0)
-                }
+                else -> number = number or ((bytes[0].toInt() and 0xFF).toLong() shl 0)
             }
             return number
         }
 
         fun from(b0: Byte, b1: Byte, b2: Byte, b3: Byte, b4: Byte, b5: Byte, b6: Byte, b7: Byte): Long {
-            return (b0.toInt() and 0xFF).toLong() shl 56 or ((b1.toInt() and 0xFF).toLong() shl 48) or ((b2.toInt() and 0xFF).toLong() shl 40) or ((b3.toInt() and 0xFF).toLong() shl 32) or ((b4.toInt() and 0xFF).toLong() shl 24) or ((b5.toInt() and 0xFF).toLong() shl 16) or ((b6.toInt() and 0xFF).toLong() shl 8) or ((b7.toInt() and 0xFF).toLong() shl 0)
+            return  ((b0.toInt() and 0xFF).toLong() shl 56) or
+                    ((b1.toInt() and 0xFF).toLong() shl 48) or
+                    ((b2.toInt() and 0xFF).toLong() shl 40) or
+                    ((b3.toInt() and 0xFF).toLong() shl 32) or
+                    ((b4.toInt() and 0xFF).toLong() shl 24) or
+                    ((b5.toInt() and 0xFF).toLong() shl 16) or
+                    ((b6.toInt() and 0xFF).toLong() shl 8) or
+                    ((b7.toInt() and 0xFF).toLong() shl 0)
         }
 
         fun from(buff: ByteBuffer): Long {
@@ -554,9 +539,9 @@ object BigEndian {
       * UNSIGNED LONG to and from bytes
       */
     object ULong_ {
-         fun from(bytes: ByteArray, offset: Int, bytenum: Int): ULong {
+         fun from(bytes: ByteArray, offset: Int, byteNumber: Int): ULong {
              var number: Long = 0
-             when (bytenum) {
+             when (byteNumber) {
                  8 -> {
                      number = number or ((bytes[offset + 0].toInt() and 0xFF).toLong() shl 56)
                      number = number or ((bytes[offset + 1].toInt() and 0xFF).toLong() shl 48)
@@ -569,51 +554,51 @@ object BigEndian {
                  }
 
                  7 -> {
-                     number = number or ((bytes[offset + 1].toInt() and 0xFF).toLong() shl 48)
-                     number = number or ((bytes[offset + 2].toInt() and 0xFF).toLong() shl 40)
-                     number = number or ((bytes[offset + 3].toInt() and 0xFF).toLong() shl 32)
-                     number = number or ((bytes[offset + 4].toInt() and 0xFF).toLong() shl 24)
-                     number = number or ((bytes[offset + 5].toInt() and 0xFF).toLong() shl 16)
-                     number = number or ((bytes[offset + 6].toInt() and 0xFF).toLong() shl 8)
-                     number = number or ((bytes[offset + 7].toInt() and 0xFF).toLong() shl 0)
+                     number = number or ((bytes[offset + 0].toInt() and 0xFF).toLong() shl 48)
+                     number = number or ((bytes[offset + 1].toInt() and 0xFF).toLong() shl 40)
+                     number = number or ((bytes[offset + 2].toInt() and 0xFF).toLong() shl 32)
+                     number = number or ((bytes[offset + 3].toInt() and 0xFF).toLong() shl 24)
+                     number = number or ((bytes[offset + 4].toInt() and 0xFF).toLong() shl 16)
+                     number = number or ((bytes[offset + 5].toInt() and 0xFF).toLong() shl 8)
+                     number = number or ((bytes[offset + 6].toInt() and 0xFF).toLong() shl 0)
                  }
 
                  6 -> {
-                     number = number or ((bytes[offset + 2].toInt() and 0xFF).toLong() shl 40)
-                     number = number or ((bytes[offset + 3].toInt() and 0xFF).toLong() shl 32)
-                     number = number or ((bytes[offset + 4].toInt() and 0xFF).toLong() shl 24)
-                     number = number or ((bytes[offset + 5].toInt() and 0xFF).toLong() shl 16)
-                     number = number or ((bytes[offset + 6].toInt() and 0xFF).toLong() shl 8)
-                     number = number or ((bytes[offset + 7].toInt() and 0xFF).toLong() shl 0)
+                     number = number or ((bytes[offset + 0].toInt() and 0xFF).toLong() shl 40)
+                     number = number or ((bytes[offset + 1].toInt() and 0xFF).toLong() shl 32)
+                     number = number or ((bytes[offset + 2].toInt() and 0xFF).toLong() shl 24)
+                     number = number or ((bytes[offset + 3].toInt() and 0xFF).toLong() shl 16)
+                     number = number or ((bytes[offset + 4].toInt() and 0xFF).toLong() shl 8)
+                     number = number or ((bytes[offset + 5].toInt() and 0xFF).toLong() shl 0)
                  }
 
                  5 -> {
-                     number = number or ((bytes[offset + 3].toInt() and 0xFF).toLong() shl 32)
-                     number = number or ((bytes[offset + 4].toInt() and 0xFF).toLong() shl 24)
-                     number = number or ((bytes[offset + 5].toInt() and 0xFF).toLong() shl 16)
-                     number = number or ((bytes[offset + 6].toInt() and 0xFF).toLong() shl 8)
-                     number = number or ((bytes[offset + 7].toInt() and 0xFF).toLong() shl 0)
+                     number = number or ((bytes[offset + 0].toInt() and 0xFF).toLong() shl 32)
+                     number = number or ((bytes[offset + 1].toInt() and 0xFF).toLong() shl 24)
+                     number = number or ((bytes[offset + 2].toInt() and 0xFF).toLong() shl 16)
+                     number = number or ((bytes[offset + 3].toInt() and 0xFF).toLong() shl 8)
+                     number = number or ((bytes[offset + 4].toInt() and 0xFF).toLong() shl 0)
                  }
 
                  4 -> {
-                     number = number or ((bytes[offset + 4].toInt() and 0xFF).toLong() shl 24)
-                     number = number or ((bytes[offset + 5].toInt() and 0xFF).toLong() shl 16)
-                     number = number or ((bytes[offset + 6].toInt() and 0xFF).toLong() shl 8)
-                     number = number or ((bytes[offset + 7].toInt() and 0xFF).toLong() shl 0)
+                     number = number or ((bytes[offset + 0].toInt() and 0xFF).toLong() shl 24)
+                     number = number or ((bytes[offset + 1].toInt() and 0xFF).toLong() shl 16)
+                     number = number or ((bytes[offset + 2].toInt() and 0xFF).toLong() shl 8)
+                     number = number or ((bytes[offset + 3].toInt() and 0xFF).toLong() shl 0)
                  }
 
                  3 -> {
-                     number = number or ((bytes[offset + 5].toInt() and 0xFF).toLong() shl 16)
-                     number = number or ((bytes[offset + 6].toInt() and 0xFF).toLong() shl 8)
-                     number = number or ((bytes[offset + 7].toInt() and 0xFF).toLong() shl 0)
+                     number = number or ((bytes[offset + 0].toInt() and 0xFF).toLong() shl 16)
+                     number = number or ((bytes[offset + 1].toInt() and 0xFF).toLong() shl 8)
+                     number = number or ((bytes[offset + 2].toInt() and 0xFF).toLong() shl 0)
                  }
 
                  2 -> {
-                     number = number or ((bytes[offset + 6].toInt() and 0xFF).toLong() shl 8)
-                     number = number or ((bytes[offset + 7].toInt() and 0xFF).toLong() shl 0)
+                     number = number or ((bytes[offset + 0].toInt() and 0xFF).toLong() shl 8)
+                     number = number or ((bytes[offset + 1].toInt() and 0xFF).toLong() shl 0)
                  }
 
-                 1 -> number = number or ((bytes[offset + 7].toInt() and 0xFF).toLong() shl 0)
+                 else -> number = number or ((bytes[offset + 0].toInt() and 0xFF).toLong() shl 0)
              }
              return number.toULong()
          }
@@ -633,67 +618,64 @@ object BigEndian {
                  }
 
                  7 -> {
-                     number = number or ((bytes[1].toInt() and 0xFF).toLong() shl 48)
-                     number = number or ((bytes[2].toInt() and 0xFF).toLong() shl 40)
-                     number = number or ((bytes[3].toInt() and 0xFF).toLong() shl 32)
-                     number = number or ((bytes[4].toInt() and 0xFF).toLong() shl 24)
-                     number = number or ((bytes[5].toInt() and 0xFF).toLong() shl 16)
-                     number = number or ((bytes[6].toInt() and 0xFF).toLong() shl 8)
-                     number = number or ((bytes[7].toInt() and 0xFF).toLong() shl 0)
+                     number = number or ((bytes[0].toInt() and 0xFF).toLong() shl 48)
+                     number = number or ((bytes[1].toInt() and 0xFF).toLong() shl 40)
+                     number = number or ((bytes[2].toInt() and 0xFF).toLong() shl 32)
+                     number = number or ((bytes[3].toInt() and 0xFF).toLong() shl 24)
+                     number = number or ((bytes[4].toInt() and 0xFF).toLong() shl 16)
+                     number = number or ((bytes[5].toInt() and 0xFF).toLong() shl 8)
+                     number = number or ((bytes[6].toInt() and 0xFF).toLong() shl 0)
                  }
 
                  6 -> {
-                     number = number or ((bytes[2].toInt() and 0xFF).toLong() shl 40)
-                     number = number or ((bytes[3].toInt() and 0xFF).toLong() shl 32)
-                     number = number or ((bytes[4].toInt() and 0xFF).toLong() shl 24)
-                     number = number or ((bytes[5].toInt() and 0xFF).toLong() shl 16)
-                     number = number or ((bytes[6].toInt() and 0xFF).toLong() shl 8)
-                     number = number or ((bytes[7].toInt() and 0xFF).toLong() shl 0)
+                     number = number or ((bytes[0].toInt() and 0xFF).toLong() shl 40)
+                     number = number or ((bytes[1].toInt() and 0xFF).toLong() shl 32)
+                     number = number or ((bytes[2].toInt() and 0xFF).toLong() shl 24)
+                     number = number or ((bytes[3].toInt() and 0xFF).toLong() shl 16)
+                     number = number or ((bytes[4].toInt() and 0xFF).toLong() shl 8)
+                     number = number or ((bytes[5].toInt() and 0xFF).toLong() shl 0)
                  }
 
                  5 -> {
-                     number = number or ((bytes[3].toInt() and 0xFF).toLong() shl 32)
-                     number = number or ((bytes[4].toInt() and 0xFF).toLong() shl 24)
-                     number = number or ((bytes[5].toInt() and 0xFF).toLong() shl 16)
-                     number = number or ((bytes[6].toInt() and 0xFF).toLong() shl 8)
-                     number = number or ((bytes[7].toInt() and 0xFF).toLong() shl 0)
+                     number = number or ((bytes[0].toInt() and 0xFF).toLong() shl 32)
+                     number = number or ((bytes[1].toInt() and 0xFF).toLong() shl 24)
+                     number = number or ((bytes[2].toInt() and 0xFF).toLong() shl 16)
+                     number = number or ((bytes[3].toInt() and 0xFF).toLong() shl 8)
+                     number = number or ((bytes[4].toInt() and 0xFF).toLong() shl 0)
                  }
 
                  4 -> {
-                     number = number or ((bytes[4].toInt() and 0xFF).toLong() shl 24)
-                     number = number or ((bytes[5].toInt() and 0xFF).toLong() shl 16)
-                     number = number or ((bytes[6].toInt() and 0xFF).toLong() shl 8)
-                     number = number or ((bytes[7].toInt() and 0xFF).toLong() shl 0)
+                     number = number or ((bytes[0].toInt() and 0xFF).toLong() shl 24)
+                     number = number or ((bytes[1].toInt() and 0xFF).toLong() shl 16)
+                     number = number or ((bytes[2].toInt() and 0xFF).toLong() shl 8)
+                     number = number or ((bytes[3].toInt() and 0xFF).toLong() shl 0)
                  }
 
                  3 -> {
-                     number = number or ((bytes[5].toInt() and 0xFF).toLong() shl 16)
-                     number = number or ((bytes[6].toInt() and 0xFF).toLong() shl 8)
-                     number = number or ((bytes[7].toInt() and 0xFF).toLong() shl 0)
+                     number = number or ((bytes[0].toInt() and 0xFF).toLong() shl 16)
+                     number = number or ((bytes[1].toInt() and 0xFF).toLong() shl 8)
+                     number = number or ((bytes[2].toInt() and 0xFF).toLong() shl 0)
                  }
 
                  2 -> {
-                     number = number or ((bytes[6].toInt() and 0xFF).toLong() shl 8)
-                     number = number or ((bytes[7].toInt() and 0xFF).toLong() shl 0)
+                     number = number or ((bytes[0].toInt() and 0xFF).toLong() shl 8)
+                     number = number or ((bytes[1].toInt() and 0xFF).toLong() shl 0)
                  }
 
-                 1 -> number = number or ((bytes[7].toInt() and 0xFF).toLong() shl 0)
-                 else -> {
-                     number = number or ((bytes[0].toInt() and 0xFF).toLong() shl 56)
-                     number = number or ((bytes[1].toInt() and 0xFF).toLong() shl 48)
-                     number = number or ((bytes[2].toInt() and 0xFF).toLong() shl 40)
-                     number = number or ((bytes[3].toInt() and 0xFF).toLong() shl 32)
-                     number = number or ((bytes[4].toInt() and 0xFF).toLong() shl 24)
-                     number = number or ((bytes[5].toInt() and 0xFF).toLong() shl 16)
-                     number = number or ((bytes[6].toInt() and 0xFF).toLong() shl 8)
-                     number = number or ((bytes[7].toInt() and 0xFF).toLong() shl 0)
-                 }
+                 else -> number = number or ((bytes[0].toInt() and 0xFF).toLong() shl 0)
              }
              return number.toULong()
          }
 
          fun from(b0: Byte, b1: Byte, b2: Byte, b3: Byte, b4: Byte, b5: Byte, b6: Byte, b7: Byte): ULong {
-             return ((b0.toInt() and 0xFF).toLong() shl 56 or ((b1.toInt() and 0xFF).toLong() shl 48) or ((b2.toInt() and 0xFF).toLong() shl 40) or ((b3.toInt() and 0xFF).toLong() shl 32) or ((b4.toInt() and 0xFF).toLong() shl 24) or ((b5.toInt() and 0xFF).toLong() shl 16) or ((b6.toInt() and 0xFF).toLong() shl 8) or ((b7.toInt() and 0xFF).toLong() shl 0)).toULong()
+             return (((b0.toInt() and 0xFF).toLong() shl 56) or
+                     ((b1.toInt() and 0xFF).toLong() shl 48) or
+                     ((b2.toInt() and 0xFF).toLong() shl 40) or
+                     ((b3.toInt() and 0xFF).toLong() shl 32) or
+                     ((b4.toInt() and 0xFF).toLong() shl 24) or
+                     ((b5.toInt() and 0xFF).toLong() shl 16) or
+                     ((b6.toInt() and 0xFF).toLong() shl 8) or
+                     ((b7.toInt() and 0xFF).toLong() shl 0)).toULong()
          }
 
          fun from(buff: ByteBuffer): ULong {
