@@ -104,6 +104,7 @@ dependencies {
 
     compileOnly("org.tukaani:xz:1.9") // LZMA support, optional
 
+    testImplementation("com.dorkbox:HexUtilities:1.0") // watch-out for circular deps!
     testImplementation("io.netty:netty-buffer:4.1.96.Final")
     testImplementation("com.esotericsoftware:kryo:5.5.0")
     testImplementation("org.lz4:lz4-java:1.8.0")

@@ -15,6 +15,7 @@
  */
 package dorkbox.bytes
 
+import dorkbox.hex.toHexString
 import org.junit.Assert.*
 import org.junit.Test
 import java.io.File
@@ -61,7 +62,7 @@ class TestHashing {
         // https://stackoverflow.com/questions/54247407/why-utf-8-bom-bytes-efbbbf-can-be-replaced-by-ufeff
 
         // FEFF is the BOM for UTF_16 (required by RFC 2781 for charsets)
-        assertEquals("feff" + ("123123123123".toBytes16().toNoPrefixHexString()), "123123123123".toByteArray(Charsets.UTF_16).toNoPrefixHexString())
+        assertEquals("feff" + ("123123123123".toBytes16().toHexString(false)), "123123123123".toByteArray(Charsets.UTF_16).toHexString(false))
 
 
         assertArrayEquals("23".toCharArray().toBytes16(), "23".toBytes16() )
