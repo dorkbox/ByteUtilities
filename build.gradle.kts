@@ -66,12 +66,6 @@ licensing {
             url("https://github.com/EsotericSoftware/kryo")
         }
 
-        extra("Kotlin Hex", License.MIT) {
-            copyright(2017)
-            author("ligi")
-            url("https://github.com/komputing/KHex")
-        }
-
         extra("Base58", License.APACHE_2) {
             copyright(2018)
             author("Google Inc")
