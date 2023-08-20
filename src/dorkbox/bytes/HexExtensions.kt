@@ -40,7 +40,7 @@
 package dorkbox.bytes
 
 @JvmInline
-public value class HexString(val string: String)
+value class HexString(val string: String)
 
 object Hex {
     /**
@@ -238,10 +238,68 @@ fun    String.isValidHex(): Boolean = Hex.HEX_REGEX.matches(this)
 /**
  * Returns a HexString if a given string is a valid hex-string - either with or without 0x prefix
  */
-fun String.toHex(): HexString  {
+fun String.asHex(): HexString  {
     if (!this.isValidHex()) {
         throw IllegalArgumentException("String is not hex")
     }
 
     return HexString(this)
+}
+
+
+fun Byte.toHexString(prefix: String = "0x", toUpperCase: Boolean = false): String {
+    return if (toUpperCase) {
+        prefix + Hex.encodeUpper(this)
+    } else {
+        prefix + Hex.encode(this)
+    }
+}
+fun UByte.toHexString(prefix: String = "0x", toUpperCase: Boolean = false): String {
+    return if (toUpperCase) {
+        prefix + this.toString(16).uppercase()
+    } else {
+        prefix + this.toString(16)
+    }
+}
+fun Short.toHexString(prefix: String = "0x", toUpperCase: Boolean = false): String {
+    return if (toUpperCase) {
+        prefix + this.toString(16).uppercase()
+    } else {
+        prefix + this.toString(16)
+    }
+}
+fun UShort.toHexString(prefix: String = "0x", toUpperCase: Boolean = false): String  {
+    return if (toUpperCase) {
+        prefix + this.toString(16).uppercase()
+    } else {
+        prefix + this.toString(16)
+    }
+}
+fun Int.toHexString(prefix: String = "0x", toUpperCase: Boolean = false): String {
+    return if (toUpperCase) {
+        prefix + this.toString(16).uppercase()
+    } else {
+        prefix + this.toString(16)
+    }
+}
+fun UInt.toHexString(prefix: String = "0x", toUpperCase: Boolean = false): String {
+    return if (toUpperCase) {
+        prefix + this.toString(16).uppercase()
+    } else {
+        prefix + this.toString(16)
+    }
+}
+fun Long.toHexString(prefix: String = "0x", toUpperCase: Boolean = false): String {
+    return if (toUpperCase) {
+        prefix + this.toString(16).uppercase()
+    } else {
+        prefix + this.toString(16)
+    }
+}
+fun ULong.toHexString(prefix: String = "0x", toUpperCase: Boolean = false): String {
+    return if (toUpperCase) {
+        prefix + this.toString(16).uppercase()
+    } else {
+        prefix + this.toString(16)
+    }
 }

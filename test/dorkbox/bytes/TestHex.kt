@@ -41,6 +41,19 @@ class TestHex {
     }
 
     @Test
+    fun testPrimatives() {
+        assertEquals("0x0", 0.toHexString())
+        assertEquals("0x1", 1.toHexString())
+        assertEquals("0xa", 10.toHexString())
+        assertEquals("0xf", 15.toHexString())
+        assertEquals("0x10", 16.toHexString())
+        assertEquals("0x11", 17.toHexString())
+        assertEquals("0xff", 255.toHexString())
+        assertEquals("0x100", 256.toHexString())
+        assertEquals("0x4e9", 1257.toHexString())
+    }
+
+    @Test
     fun sizesAreOk() {
         assertEquals(0, Hex.decode("0x").size)
         assertEquals(1, Hex.decode("ff").size)
