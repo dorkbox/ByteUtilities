@@ -17,6 +17,7 @@ package dorkbox.bytes
 
 import java.io.IOException
 import java.io.InputStream
+import java.io.RandomAccessFile
 import java.nio.ByteBuffer
 
 /**
@@ -79,8 +80,37 @@ object LittleEndian {
         }
 
         @Throws(IOException::class)
-        fun from(inputStream: InputStream): Short {
-            return from(inputStream.read().toByte(), inputStream.read().toByte())
+        fun from(inputStream: InputStream, length: Int = 2): Short {
+            var number: Short = 0
+            when (length) {
+                2 -> {
+                    val b0 = inputStream.read()
+                    val b1 = inputStream.read()
+
+                    number = (number.toInt() or (b1 and 0xFF shl 8)).toShort()
+                    number = (number.toInt() or (b0 and 0xFF shl 0)).toShort()
+                }
+
+                else -> number = (number.toInt() or (inputStream.read() and 0xFF shl 0)).toShort()
+            }
+            return number
+        }
+
+        @Throws(IOException::class)
+        fun from(raf: RandomAccessFile, length: Int = 2): Short {
+            var number: Short = 0
+            when (length) {
+                2 -> {
+                    val b0 = raf.read()
+                    val b1 = raf.read()
+
+                    number = (number.toInt() or (b1 and 0xFF shl 8)).toShort()
+                    number = (number.toInt() or (b0 and 0xFF shl 0)).toShort()
+                }
+
+                else -> number = (number.toInt() or (raf.read() and 0xFF shl 0)).toShort()
+            }
+            return number
         }
 
         fun toBytes(x: Short): ByteArray {
@@ -138,8 +168,37 @@ object LittleEndian {
          }
 
          @Throws(IOException::class)
-         fun from(inputStream: InputStream): UShort {
-             return from(inputStream.read().toByte(), inputStream.read().toByte())
+         fun from(inputStream: InputStream, length: Int = 2): UShort {
+             var number: Short = 0
+             when (length) {
+                 2 -> {
+                     val b0 = inputStream.read()
+                     val b1 = inputStream.read()
+
+                     number = (number.toInt() or (b1 and 0xFF shl 8)).toShort()
+                     number = (number.toInt() or (b0 and 0xFF shl 0)).toShort()
+                 }
+
+                 else -> number = (number.toInt() or (inputStream.read() and 0xFF shl 0)).toShort()
+             }
+             return number.toUShort()
+         }
+
+         @Throws(IOException::class)
+         fun from(raf: RandomAccessFile, length: Int = 2): UShort {
+             var number: Short = 0
+             when (length) {
+                 2 -> {
+                     val b0 = raf.read()
+                     val b1 = raf.read()
+
+                     number = (number.toInt() or (b1 and 0xFF shl 8)).toShort()
+                     number = (number.toInt() or (b0 and 0xFF shl 0)).toShort()
+                 }
+
+                 else -> number = (number.toInt() or (raf.read() and 0xFF shl 0)).toShort()
+             }
+             return number.toUShort()
          }
 
          fun toBytes(x: UShort): ByteArray {
@@ -225,8 +284,81 @@ object LittleEndian {
         }
 
         @Throws(IOException::class)
-        fun from(inputStream: InputStream): Int {
-            return from(inputStream.read().toByte(), inputStream.read().toByte(), inputStream.read().toByte(), inputStream.read().toByte())
+        fun from(inputStream: InputStream, length: Int = 4): Int {
+            var number = 0
+            when (length) {
+                4 -> {
+                    val b0 = inputStream.read()
+                    val b1 = inputStream.read()
+                    val b2 = inputStream.read()
+                    val b3 = inputStream.read()
+
+                    number = number or (b3 and 0xFF shl 24)
+                    number = number or (b2 and 0xFF shl 16)
+                    number = number or (b1 and 0xFF shl 8)
+                    number = number or (b0 and 0xFF shl 0)
+                }
+
+                3 -> {
+                    val b0 = inputStream.read()
+                    val b1 = inputStream.read()
+                    val b2 = inputStream.read()
+
+                    number = number or (b2 and 0xFF shl 16)
+                    number = number or (b1 and 0xFF shl 8)
+                    number = number or (b0 and 0xFF shl 0)
+                }
+
+                2 -> {
+                    val b0 = inputStream.read()
+                    val b1 = inputStream.read()
+
+                    number = number or (b1 and 0xFF shl 8)
+                    number = number or (b0 and 0xFF shl 0)
+                }
+
+                else -> number = number or (inputStream.read() and 0xFF shl 0)
+            }
+            return number
+        }
+
+        @Throws(IOException::class)
+        fun from(raf: RandomAccessFile, length: Int = 4): Int {
+            var number = 0
+            when (length) {
+                4 -> {
+                    val b0 = raf.read()
+                    val b1 = raf.read()
+                    val b2 = raf.read()
+                    val b3 = raf.read()
+
+                    number = number or (b3 and 0xFF shl 24)
+                    number = number or (b2 and 0xFF shl 16)
+                    number = number or (b1 and 0xFF shl 8)
+                    number = number or (b0 and 0xFF shl 0)
+                }
+
+                3 -> {
+                    val b0 = raf.read()
+                    val b1 = raf.read()
+                    val b2 = raf.read()
+
+                    number = number or (b2 and 0xFF shl 16)
+                    number = number or (b1 and 0xFF shl 8)
+                    number = number or (b0 and 0xFF shl 0)
+                }
+
+                2 -> {
+                    val b0 = raf.read()
+                    val b1 = raf.read()
+
+                    number = number or (b1 and 0xFF shl 8)
+                    number = number or (b0 and 0xFF shl 0)
+                }
+
+                else -> number = number or (raf.read() and 0xFF shl 0)
+            }
+            return number
         }
 
         fun toBytes(x: Int): ByteArray {
@@ -316,8 +448,81 @@ object LittleEndian {
          }
 
          @Throws(IOException::class)
-         fun from(inputStream: InputStream): UInt {
-             return from(inputStream.read().toByte(), inputStream.read().toByte(), inputStream.read().toByte(), inputStream.read().toByte())
+         fun from(inputStream: InputStream, length: Int = 4): UInt {
+             var number = 0
+             when (length) {
+                 4 -> {
+                     val b0 = inputStream.read()
+                     val b1 = inputStream.read()
+                     val b2 = inputStream.read()
+                     val b3 = inputStream.read()
+
+                     number = number or (b3 and 0xFF shl 24)
+                     number = number or (b2 and 0xFF shl 16)
+                     number = number or (b1 and 0xFF shl 8)
+                     number = number or (b0 and 0xFF shl 0)
+                 }
+
+                 3 -> {
+                     val b0 = inputStream.read()
+                     val b1 = inputStream.read()
+                     val b2 = inputStream.read()
+
+                     number = number or (b2 and 0xFF shl 16)
+                     number = number or (b1 and 0xFF shl 8)
+                     number = number or (b0 and 0xFF shl 0)
+                 }
+
+                 2 -> {
+                     val b0 = inputStream.read()
+                     val b1 = inputStream.read()
+
+                     number = number or (b1 and 0xFF shl 8)
+                     number = number or (b0 and 0xFF shl 0)
+                 }
+
+                 else -> number = number or (inputStream.read() and 0xFF shl 0)
+             }
+             return number.toUInt()
+         }
+
+         @Throws(IOException::class)
+         fun from(raf: RandomAccessFile, length: Int = 4): UInt {
+             var number = 0
+             when (length) {
+                 4 -> {
+                     val b0 = raf.read()
+                     val b1 = raf.read()
+                     val b2 = raf.read()
+                     val b3 = raf.read()
+
+                     number = number or (b3 and 0xFF shl 24)
+                     number = number or (b2 and 0xFF shl 16)
+                     number = number or (b1 and 0xFF shl 8)
+                     number = number or (b0 and 0xFF shl 0)
+                 }
+
+                 3 -> {
+                     val b0 = raf.read()
+                     val b1 = raf.read()
+                     val b2 = raf.read()
+
+                     number = number or (b2 and 0xFF shl 16)
+                     number = number or (b1 and 0xFF shl 8)
+                     number = number or (b0 and 0xFF shl 0)
+                 }
+
+                 2 -> {
+                     val b0 = raf.read()
+                     val b1 = raf.read()
+
+                     number = number or (b1 and 0xFF shl 8)
+                     number = number or (b0 and 0xFF shl 0)
+                 }
+
+                 else -> number = number or (raf.read() and 0xFF shl 0)
+             }
+             return number.toUInt()
          }
 
          fun toBytes(x: UInt): ByteArray {
@@ -487,17 +692,218 @@ object LittleEndian {
         }
 
         @Throws(IOException::class)
-        fun from(inputStream: InputStream): Long {
-            return from(
-                inputStream.read().toByte(),
-                inputStream.read().toByte(),
-                inputStream.read().toByte(),
-                inputStream.read().toByte(),
-                inputStream.read().toByte(),
-                inputStream.read().toByte(),
-                inputStream.read().toByte(),
-                inputStream.read().toByte()
-            )
+        fun from(inputStream: InputStream, length: Int = 8): Long {
+            var number = 0L
+            when (length) {
+                8 -> {
+                    val b0 = inputStream.read()
+                    val b1 = inputStream.read()
+                    val b2 = inputStream.read()
+                    val b3 = inputStream.read()
+                    val b4 = inputStream.read()
+                    val b5 = inputStream.read()
+                    val b6 = inputStream.read()
+                    val b7 = inputStream.read()
+
+                    number = number or ((b7 and 0xFF).toLong() shl 56)
+                    number = number or ((b6 and 0xFF).toLong() shl 48)
+                    number = number or ((b5 and 0xFF).toLong() shl 40)
+                    number = number or ((b4 and 0xFF).toLong() shl 32)
+                    number = number or ((b3 and 0xFF).toLong() shl 24)
+                    number = number or ((b2 and 0xFF).toLong() shl 16)
+                    number = number or ((b1 and 0xFF).toLong() shl 8)
+                    number = number or ((b0 and 0xFF).toLong() shl 0)
+                }
+
+                7 -> {
+                    val b0 = inputStream.read()
+                    val b1 = inputStream.read()
+                    val b2 = inputStream.read()
+                    val b3 = inputStream.read()
+                    val b4 = inputStream.read()
+                    val b5 = inputStream.read()
+                    val b6 = inputStream.read()
+
+                    number = number or ((b6 and 0xFF).toLong() shl 48)
+                    number = number or ((b5 and 0xFF).toLong() shl 40)
+                    number = number or ((b4 and 0xFF).toLong() shl 32)
+                    number = number or ((b3 and 0xFF).toLong() shl 24)
+                    number = number or ((b2 and 0xFF).toLong() shl 16)
+                    number = number or ((b1 and 0xFF).toLong() shl 8)
+                    number = number or ((b0 and 0xFF).toLong() shl 0)
+                }
+
+                6 -> {
+                    val b0 = inputStream.read()
+                    val b1 = inputStream.read()
+                    val b2 = inputStream.read()
+                    val b3 = inputStream.read()
+                    val b4 = inputStream.read()
+                    val b5 = inputStream.read()
+
+                    number = number or ((b0 and 0xFF).toLong() shl 40)
+                    number = number or ((b1 and 0xFF).toLong() shl 32)
+                    number = number or ((b2 and 0xFF).toLong() shl 24)
+                    number = number or ((b3 and 0xFF).toLong() shl 16)
+                    number = number or ((b4 and 0xFF).toLong() shl 8)
+                    number = number or ((b5 and 0xFF).toLong() shl 0)
+                }
+
+                5 -> {
+                    val b0 = inputStream.read()
+                    val b1 = inputStream.read()
+                    val b2 = inputStream.read()
+                    val b3 = inputStream.read()
+                    val b4 = inputStream.read()
+
+                    number = number or ((b4 and 0xFF).toLong() shl 32)
+                    number = number or ((b3 and 0xFF).toLong() shl 24)
+                    number = number or ((b2 and 0xFF).toLong() shl 16)
+                    number = number or ((b1 and 0xFF).toLong() shl 8)
+                    number = number or ((b0 and 0xFF).toLong() shl 0)
+                }
+
+                4 -> {
+                    val b0 = inputStream.read()
+                    val b1 = inputStream.read()
+                    val b2 = inputStream.read()
+                    val b3 = inputStream.read()
+
+                    number = number or ((b3 and 0xFF).toLong() shl 24)
+                    number = number or ((b2 and 0xFF).toLong() shl 16)
+                    number = number or ((b1 and 0xFF).toLong() shl 8)
+                    number = number or ((b0 and 0xFF).toLong() shl 0)
+                }
+
+                3 -> {
+                    val b0 = inputStream.read()
+                    val b1 = inputStream.read()
+                    val b2 = inputStream.read()
+
+                    number = number or ((b2 and 0xFF).toLong() shl 16)
+                    number = number or ((b1 and 0xFF).toLong() shl 8)
+                    number = number or ((b0 and 0xFF).toLong() shl 0)
+                }
+
+                2 -> {
+                    val b0 = inputStream.read()
+                    val b1 = inputStream.read()
+
+                    number = number or ((b1 and 0xFF).toLong() shl 8)
+                    number = number or ((b0 and 0xFF).toLong() shl 0)
+                }
+
+                else -> number = number or ((inputStream.read() and 0xFF).toLong() shl 0)
+            }
+            return number
+        }
+
+
+        @Throws(IOException::class)
+        fun from(raf: RandomAccessFile, length: Int = 8): Long {
+            var number = 0L
+            when (length) {
+                8 -> {
+                    val b0 = raf.read()
+                    val b1 = raf.read()
+                    val b2 = raf.read()
+                    val b3 = raf.read()
+                    val b4 = raf.read()
+                    val b5 = raf.read()
+                    val b6 = raf.read()
+                    val b7 = raf.read()
+
+                    number = number or ((b7 and 0xFF).toLong() shl 56)
+                    number = number or ((b6 and 0xFF).toLong() shl 48)
+                    number = number or ((b5 and 0xFF).toLong() shl 40)
+                    number = number or ((b4 and 0xFF).toLong() shl 32)
+                    number = number or ((b3 and 0xFF).toLong() shl 24)
+                    number = number or ((b2 and 0xFF).toLong() shl 16)
+                    number = number or ((b1 and 0xFF).toLong() shl 8)
+                    number = number or ((b0 and 0xFF).toLong() shl 0)
+                }
+
+                7 -> {
+                    val b0 = raf.read()
+                    val b1 = raf.read()
+                    val b2 = raf.read()
+                    val b3 = raf.read()
+                    val b4 = raf.read()
+                    val b5 = raf.read()
+                    val b6 = raf.read()
+
+                    number = number or ((b6 and 0xFF).toLong() shl 48)
+                    number = number or ((b5 and 0xFF).toLong() shl 40)
+                    number = number or ((b4 and 0xFF).toLong() shl 32)
+                    number = number or ((b3 and 0xFF).toLong() shl 24)
+                    number = number or ((b2 and 0xFF).toLong() shl 16)
+                    number = number or ((b1 and 0xFF).toLong() shl 8)
+                    number = number or ((b0 and 0xFF).toLong() shl 0)
+                }
+
+                6 -> {
+                    val b0 = raf.read()
+                    val b1 = raf.read()
+                    val b2 = raf.read()
+                    val b3 = raf.read()
+                    val b4 = raf.read()
+                    val b5 = raf.read()
+
+                    number = number or ((b0 and 0xFF).toLong() shl 40)
+                    number = number or ((b1 and 0xFF).toLong() shl 32)
+                    number = number or ((b2 and 0xFF).toLong() shl 24)
+                    number = number or ((b3 and 0xFF).toLong() shl 16)
+                    number = number or ((b4 and 0xFF).toLong() shl 8)
+                    number = number or ((b5 and 0xFF).toLong() shl 0)
+                }
+
+                5 -> {
+                    val b0 = raf.read()
+                    val b1 = raf.read()
+                    val b2 = raf.read()
+                    val b3 = raf.read()
+                    val b4 = raf.read()
+
+                    number = number or ((b4 and 0xFF).toLong() shl 32)
+                    number = number or ((b3 and 0xFF).toLong() shl 24)
+                    number = number or ((b2 and 0xFF).toLong() shl 16)
+                    number = number or ((b1 and 0xFF).toLong() shl 8)
+                    number = number or ((b0 and 0xFF).toLong() shl 0)
+                }
+
+                4 -> {
+                    val b0 = raf.read()
+                    val b1 = raf.read()
+                    val b2 = raf.read()
+                    val b3 = raf.read()
+
+                    number = number or ((b3 and 0xFF).toLong() shl 24)
+                    number = number or ((b2 and 0xFF).toLong() shl 16)
+                    number = number or ((b1 and 0xFF).toLong() shl 8)
+                    number = number or ((b0 and 0xFF).toLong() shl 0)
+                }
+
+                3 -> {
+                    val b0 = raf.read()
+                    val b1 = raf.read()
+                    val b2 = raf.read()
+
+                    number = number or ((b2 and 0xFF).toLong() shl 16)
+                    number = number or ((b1 and 0xFF).toLong() shl 8)
+                    number = number or ((b0 and 0xFF).toLong() shl 0)
+                }
+
+                2 -> {
+                    val b0 = raf.read()
+                    val b1 = raf.read()
+
+                    number = number or ((b1 and 0xFF).toLong() shl 8)
+                    number = number or ((b0 and 0xFF).toLong() shl 0)
+                }
+
+                else -> number = number or ((raf.read() and 0xFF).toLong() shl 0)
+            }
+            return number
         }
 
         fun toBytes(x: Long): ByteArray {
@@ -684,17 +1090,217 @@ object LittleEndian {
          }
 
          @Throws(IOException::class)
-         fun from(inputStream: InputStream): ULong {
-             return from(
-                 inputStream.read().toByte(),
-                 inputStream.read().toByte(),
-                 inputStream.read().toByte(),
-                 inputStream.read().toByte(),
-                 inputStream.read().toByte(),
-                 inputStream.read().toByte(),
-                 inputStream.read().toByte(),
-                 inputStream.read().toByte()
-             )
+         fun from(inputStream: InputStream, length: Int = 8): ULong {
+             var number = 0L
+             when (length) {
+                 8 -> {
+                     val b0 = inputStream.read()
+                     val b1 = inputStream.read()
+                     val b2 = inputStream.read()
+                     val b3 = inputStream.read()
+                     val b4 = inputStream.read()
+                     val b5 = inputStream.read()
+                     val b6 = inputStream.read()
+                     val b7 = inputStream.read()
+
+                     number = number or ((b7 and 0xFF).toLong() shl 56)
+                     number = number or ((b6 and 0xFF).toLong() shl 48)
+                     number = number or ((b5 and 0xFF).toLong() shl 40)
+                     number = number or ((b4 and 0xFF).toLong() shl 32)
+                     number = number or ((b3 and 0xFF).toLong() shl 24)
+                     number = number or ((b2 and 0xFF).toLong() shl 16)
+                     number = number or ((b1 and 0xFF).toLong() shl 8)
+                     number = number or ((b0 and 0xFF).toLong() shl 0)
+                 }
+
+                 7 -> {
+                     val b0 = inputStream.read()
+                     val b1 = inputStream.read()
+                     val b2 = inputStream.read()
+                     val b3 = inputStream.read()
+                     val b4 = inputStream.read()
+                     val b5 = inputStream.read()
+                     val b6 = inputStream.read()
+
+                     number = number or ((b0 and 0xFF).toLong() shl 48)
+                     number = number or ((b1 and 0xFF).toLong() shl 40)
+                     number = number or ((b2 and 0xFF).toLong() shl 32)
+                     number = number or ((b3 and 0xFF).toLong() shl 24)
+                     number = number or ((b4 and 0xFF).toLong() shl 16)
+                     number = number or ((b5 and 0xFF).toLong() shl 8)
+                     number = number or ((b6 and 0xFF).toLong() shl 0)
+                 }
+
+                 6 -> {
+                     val b0 = inputStream.read()
+                     val b1 = inputStream.read()
+                     val b2 = inputStream.read()
+                     val b3 = inputStream.read()
+                     val b4 = inputStream.read()
+                     val b5 = inputStream.read()
+
+                     number = number or ((b5 and 0xFF).toLong() shl 40)
+                     number = number or ((b4 and 0xFF).toLong() shl 32)
+                     number = number or ((b3 and 0xFF).toLong() shl 24)
+                     number = number or ((b2 and 0xFF).toLong() shl 16)
+                     number = number or ((b1 and 0xFF).toLong() shl 8)
+                     number = number or ((b0 and 0xFF).toLong() shl 0)
+                 }
+
+                 5 -> {
+                     val b0 = inputStream.read()
+                     val b1 = inputStream.read()
+                     val b2 = inputStream.read()
+                     val b3 = inputStream.read()
+                     val b4 = inputStream.read()
+
+                     number = number or ((b4 and 0xFF).toLong() shl 32)
+                     number = number or ((b3 and 0xFF).toLong() shl 24)
+                     number = number or ((b2 and 0xFF).toLong() shl 16)
+                     number = number or ((b1 and 0xFF).toLong() shl 8)
+                     number = number or ((b0 and 0xFF).toLong() shl 0)
+                 }
+
+                 4 -> {
+                     val b0 = inputStream.read()
+                     val b1 = inputStream.read()
+                     val b2 = inputStream.read()
+                     val b3 = inputStream.read()
+
+                     number = number or ((b3 and 0xFF).toLong() shl 24)
+                     number = number or ((b2 and 0xFF).toLong() shl 16)
+                     number = number or ((b1 and 0xFF).toLong() shl 8)
+                     number = number or ((b0 and 0xFF).toLong() shl 0)
+                 }
+
+                 3 -> {
+                     val b0 = inputStream.read()
+                     val b1 = inputStream.read()
+                     val b2 = inputStream.read()
+
+                     number = number or ((b2 and 0xFF).toLong() shl 16)
+                     number = number or ((b1 and 0xFF).toLong() shl 8)
+                     number = number or ((b0 and 0xFF).toLong() shl 0)
+                 }
+
+                 2 -> {
+                     val b0 = inputStream.read()
+                     val b1 = inputStream.read()
+
+                     number = number or ((b1 and 0xFF).toLong() shl 8)
+                     number = number or ((b0 and 0xFF).toLong() shl 0)
+                 }
+
+                 else -> number = number or ((inputStream.read() and 0xFF).toLong() shl 0)
+             }
+             return number.toULong()
+         }
+
+         @Throws(IOException::class)
+         fun from(raf: RandomAccessFile, length: Int = 8): ULong {
+             var number = 0L
+             when (length) {
+                 8 -> {
+                     val b0 = raf.read()
+                     val b1 = raf.read()
+                     val b2 = raf.read()
+                     val b3 = raf.read()
+                     val b4 = raf.read()
+                     val b5 = raf.read()
+                     val b6 = raf.read()
+                     val b7 = raf.read()
+
+                     number = number or ((b7 and 0xFF).toLong() shl 56)
+                     number = number or ((b6 and 0xFF).toLong() shl 48)
+                     number = number or ((b5 and 0xFF).toLong() shl 40)
+                     number = number or ((b4 and 0xFF).toLong() shl 32)
+                     number = number or ((b3 and 0xFF).toLong() shl 24)
+                     number = number or ((b2 and 0xFF).toLong() shl 16)
+                     number = number or ((b1 and 0xFF).toLong() shl 8)
+                     number = number or ((b0 and 0xFF).toLong() shl 0)
+                 }
+
+                 7 -> {
+                     val b0 = raf.read()
+                     val b1 = raf.read()
+                     val b2 = raf.read()
+                     val b3 = raf.read()
+                     val b4 = raf.read()
+                     val b5 = raf.read()
+                     val b6 = raf.read()
+
+                     number = number or ((b0 and 0xFF).toLong() shl 48)
+                     number = number or ((b1 and 0xFF).toLong() shl 40)
+                     number = number or ((b2 and 0xFF).toLong() shl 32)
+                     number = number or ((b3 and 0xFF).toLong() shl 24)
+                     number = number or ((b4 and 0xFF).toLong() shl 16)
+                     number = number or ((b5 and 0xFF).toLong() shl 8)
+                     number = number or ((b6 and 0xFF).toLong() shl 0)
+                 }
+
+                 6 -> {
+                     val b0 = raf.read()
+                     val b1 = raf.read()
+                     val b2 = raf.read()
+                     val b3 = raf.read()
+                     val b4 = raf.read()
+                     val b5 = raf.read()
+
+                     number = number or ((b5 and 0xFF).toLong() shl 40)
+                     number = number or ((b4 and 0xFF).toLong() shl 32)
+                     number = number or ((b3 and 0xFF).toLong() shl 24)
+                     number = number or ((b2 and 0xFF).toLong() shl 16)
+                     number = number or ((b1 and 0xFF).toLong() shl 8)
+                     number = number or ((b0 and 0xFF).toLong() shl 0)
+                 }
+
+                 5 -> {
+                     val b0 = raf.read()
+                     val b1 = raf.read()
+                     val b2 = raf.read()
+                     val b3 = raf.read()
+                     val b4 = raf.read()
+
+                     number = number or ((b4 and 0xFF).toLong() shl 32)
+                     number = number or ((b3 and 0xFF).toLong() shl 24)
+                     number = number or ((b2 and 0xFF).toLong() shl 16)
+                     number = number or ((b1 and 0xFF).toLong() shl 8)
+                     number = number or ((b0 and 0xFF).toLong() shl 0)
+                 }
+
+                 4 -> {
+                     val b0 = raf.read()
+                     val b1 = raf.read()
+                     val b2 = raf.read()
+                     val b3 = raf.read()
+
+                     number = number or ((b3 and 0xFF).toLong() shl 24)
+                     number = number or ((b2 and 0xFF).toLong() shl 16)
+                     number = number or ((b1 and 0xFF).toLong() shl 8)
+                     number = number or ((b0 and 0xFF).toLong() shl 0)
+                 }
+
+                 3 -> {
+                     val b0 = raf.read()
+                     val b1 = raf.read()
+                     val b2 = raf.read()
+
+                     number = number or ((b2 and 0xFF).toLong() shl 16)
+                     number = number or ((b1 and 0xFF).toLong() shl 8)
+                     number = number or ((b0 and 0xFF).toLong() shl 0)
+                 }
+
+                 2 -> {
+                     val b0 = raf.read()
+                     val b1 = raf.read()
+
+                     number = number or ((b1 and 0xFF).toLong() shl 8)
+                     number = number or ((b0 and 0xFF).toLong() shl 0)
+                 }
+
+                 else -> number = number or ((raf.read() and 0xFF).toLong() shl 0)
+             }
+             return number.toULong()
          }
 
          fun toBytes(x: ULong): ByteArray {
