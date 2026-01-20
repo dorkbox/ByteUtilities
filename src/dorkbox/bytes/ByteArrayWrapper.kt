@@ -1,5 +1,5 @@
 /*
- * Copyright 2023 dorkbox, llc
+ * Copyright 2026 dorkbox, llc
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,7 +16,7 @@
 package dorkbox.bytes
 
 /**
- * Necessary to provide equals and hashcode methods on a byte arrays, if they are to be used as keys in a map/set/etc
+ * Necessary to provide equals and hashcode methods on byte arrays, if they are to be used as keys in a map/set/etc
  */
 class ByteArrayWrapper(
     data: ByteArray,

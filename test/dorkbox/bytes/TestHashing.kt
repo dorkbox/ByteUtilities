@@ -1,5 +1,5 @@
 /*
- * Copyright 2023 dorkbox, llc
+ * Copyright 2026 dorkbox, llc
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,8 +15,9 @@
  */
 package dorkbox.bytes
 
-import dorkbox.hex.toHexString
-import org.junit.Assert.*
+import dorkbox.bytes.ByteArrayBufferTest.Companion.assertArrayEquals
+import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Test
 import java.io.File
 
@@ -44,8 +45,8 @@ class TestHashing {
     fun shaHashFile() {
         val file = File("LICENSE.Apachev2")
 
-        assertEquals("0x1b64c725684886157776ac3189536fb826a5ee3614321a589580243d92c2458e", file.sha256().toHexString())
-        assertEquals("0xc615bc169ede733444ae128fdac4824aa3c4e0ab04d228b302f8227e0cf1b49d", file.sha512().toHexString())
+        assertEquals("1b64c725684886157776ac3189536fb826a5ee3614321a589580243d92c2458e", file.sha256().toHexString())
+        assertEquals("c615bc169ede733444ae128fdac4824aa3c4e0ab04d228b302f8227e0cf1b49d", file.sha512().toHexString())
 
         assertArrayEquals(file.readBytes().sha256(), file.sha256())
         assertArrayEquals(file.readBytes().sha256(start = 10, length = 400), file.sha256(start = 10, length = 400))
@@ -53,8 +54,8 @@ class TestHashing {
 
     @Test
     fun shaHash() {
-        assertEquals("0xf11aea6605c934e435964041bc4b376f256aaf994c70c5458a133fc157096d46", "123123123123".sha256().toHexString())
-        assertEquals("0x13b3f95860b8a2da4ee89c610ba674d45269004180a924716cc60c0358b5af08", "123123123123".sha512().toHexString())
+        assertEquals("f11aea6605c934e435964041bc4b376f256aaf994c70c5458a133fc157096d46", "123123123123".sha256().toHexString())
+        assertEquals("13b3f95860b8a2da4ee89c610ba674d45269004180a924716cc60c0358b5af08", "123123123123".sha512().toHexString())
 
         assertArrayEquals("123123123123".sha256(), "123123123123".toBytes16().sha256())
 
@@ -62,7 +63,7 @@ class TestHashing {
         // https://stackoverflow.com/questions/54247407/why-utf-8-bom-bytes-efbbbf-can-be-replaced-by-ufeff
 
         // FEFF is the BOM for UTF_16 (required by RFC 2781 for charsets)
-        assertEquals("feff" + ("123123123123".toBytes16().toHexString(false)), "123123123123".toByteArray(Charsets.UTF_16).toHexString(false))
+        assertArrayEquals(("\uFEFF" + "1234567890").toBytes16(), "1234567890".toByteArray(Charsets.UTF_16))
 
 
         assertArrayEquals("23".toCharArray().toBytes16(), "23".toBytes16() )

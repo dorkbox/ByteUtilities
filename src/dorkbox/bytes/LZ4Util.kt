@@ -1,5 +1,5 @@
 /*
- * Copyright 2023 dorkbox, llc
+ * Copyright 2026 dorkbox, llc
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -32,7 +32,6 @@ object LZ4Util {
             System.err.println("Please add the LZMA library to your classpath, for example: implementation(\"org.lz4:lz4-java:1.8.0\")")
             throw e
         }
-
     }
 
     private val xxHashFactory: ThreadLocal<XXHashFactory> by lazy {
@@ -99,7 +98,7 @@ object LZ4Util {
         }
     }
 
-    fun xxHash32(file: File, start: Long, length: Long, bufferSize: Int, seed: Int): Int {
+    internal fun xxHash32(file: File, start: Long, length: Long, bufferSize: Int, seed: Int): Int {
         val xxHash = xxHashFactory.get()
         val hash32 = xxHash.newStreamingHash32(seed)!!
 
@@ -109,7 +108,7 @@ object LZ4Util {
         }
     }
 
-    fun xxHash64(file: File, start: Long, length: Long, bufferSize: Int, seed: Long): Long {
+    internal fun xxHash64(file: File, start: Long, length: Long, bufferSize: Int, seed: Long): Long {
         val xxHash = xxHashFactory.get()
         val hash64 = xxHash.newStreamingHash64(seed)!!
 
@@ -119,7 +118,7 @@ object LZ4Util {
         }
     }
 
-    fun xxHash32(byteArray: ByteArray, start: Int, length: Int, seed: Int): Int {
+    internal fun xxHash32(byteArray: ByteArray, start: Int, length: Int, seed: Int): Int {
         val xxHash = xxHashFactory.get()
         val hash32 = xxHash.newStreamingHash32(seed)!!
 
@@ -127,7 +126,7 @@ object LZ4Util {
         return hash32.value
     }
 
-    fun xxHash64(byteArray: ByteArray, start: Int, length: Int, seed: Long): Long {
+    internal fun xxHash64(byteArray: ByteArray, start: Int, length: Int, seed: Long): Long {
         val xxHash = xxHashFactory.get()
         val hash64 = xxHash.newStreamingHash64(seed)!!
 
@@ -135,7 +134,7 @@ object LZ4Util {
         return hash64.value
     }
 
-    fun xxHash32(string: String, start: Int, length: Int, seed: Int): Int {
+    internal fun xxHash32(string: String, start: Int, length: Int, seed: Int): Int {
         val xxHash = xxHashFactory.get()
         val hash32 = xxHash.newStreamingHash32(seed)!!
 
@@ -144,7 +143,7 @@ object LZ4Util {
         return hash32.value
     }
 
-    fun xxHash64(string: String, start: Int, length: Int, seed: Long): Long {
+    internal fun xxHash64(string: String, start: Int, length: Int, seed: Long): Long {
         val xxHash = xxHashFactory.get()
         val hash64 = xxHash.newStreamingHash64(seed)!!
 
@@ -153,7 +152,7 @@ object LZ4Util {
         return hash64.value
     }
 
-    fun xxHash32WithSalt(string: String, saltBytes: ByteArray, start: Int, length: Int, seed: Int): Int {
+    internal fun xxHash32WithSalt(string: String, saltBytes: ByteArray, start: Int, length: Int, seed: Int): Int {
         val xxHash = xxHashFactory.get()
         val hash32 = xxHash.newStreamingHash32(seed)!!
 
@@ -164,7 +163,7 @@ object LZ4Util {
         return hash32.value
     }
 
-    fun xxHash64WithSalt(string: String, saltBytes: ByteArray, start: Int, length: Int, seed: Long): Long {
+    internal fun xxHash64WithSalt(string: String, saltBytes: ByteArray, start: Int, length: Int, seed: Long): Long {
         val xxHash = xxHashFactory.get()
         val hash64 = xxHash.newStreamingHash64(seed)!!
 
@@ -175,7 +174,7 @@ object LZ4Util {
         return hash64.value
     }
 
-    fun xxHash32WithSalt(string: ByteArray, saltBytes: ByteArray, start: Int, length: Int, seed: Int): Int {
+    internal fun xxHash32WithSalt(string: ByteArray, saltBytes: ByteArray, start: Int, length: Int, seed: Int): Int {
         val xxHash = xxHashFactory.get()
         val hash32 = xxHash.newStreamingHash32(seed)!!
 
@@ -184,7 +183,7 @@ object LZ4Util {
         return hash32.value
     }
 
-    fun xxHash64WithSalt(string: ByteArray, saltBytes: ByteArray, start: Int, length: Int, seed: Long): Long {
+    internal fun xxHash64WithSalt(string: ByteArray, saltBytes: ByteArray, start: Int, length: Int, seed: Long): Long {
         val xxHash = xxHashFactory.get()
         val hash64 = xxHash.newStreamingHash64(seed)!!
 
@@ -193,7 +192,7 @@ object LZ4Util {
         return hash64.value
     }
 
-    fun xxHash32(inputStream: InputStream, bufferSize: Int, seed: Int): Int {
+    internal fun xxHash32(inputStream: InputStream, bufferSize: Int, seed: Int): Int {
         val xxHash = xxHashFactory.get()
         val hash32 = xxHash.newStreamingHash32(seed)!!
 
@@ -209,7 +208,7 @@ object LZ4Util {
         return hash32.value
     }
 
-    fun xxHash64(inputStream: InputStream, bufferSize: Int, seed: Long): Long {
+    internal fun xxHash64(inputStream: InputStream, bufferSize: Int, seed: Long): Long {
         val xxHash = xxHashFactory.get()
         val hash64 = xxHash.newStreamingHash64(seed)!!
 

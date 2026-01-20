@@ -1,5 +1,5 @@
 /*
- * Copyright 2023 dorkbox, llc
+ * Copyright 2026 dorkbox, llc
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -49,6 +49,8 @@ class ByteBufInput : Input {
          * Gets the version number.
          */
         const val version = BytesInfo.version
+
+        fun InputStream.toByteBufInput(bufferSize: Int = 4096): ByteBufInput = ByteBufInput(this, bufferSize)
     }
 
     lateinit var byteBuf: ByteBuf
@@ -85,16 +87,9 @@ class ByteBufInput : Input {
     }
 
     /**
-     * @see Input.Input
+     * @see Input
      */
-    constructor(inputStream: InputStream) : this(4096) {
-        this.inputStream = inputStream
-    }
-
-    /**
-     * @see Input.Input
-     */
-    constructor(inputStream: InputStream, bufferSize: Int) : this(bufferSize) {
+    constructor(inputStream: InputStream, bufferSize: Int = 4096) : this(bufferSize) {
         this.inputStream = inputStream
     }
 

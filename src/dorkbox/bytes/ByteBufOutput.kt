@@ -1,5 +1,5 @@
 /*
- * Copyright 2023 dorkbox, llc
+ * Copyright 2026 dorkbox, llc
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -53,7 +53,7 @@ import java.io.OutputStream
  * the write operation.
  *
  *
- * This stream implements [DataOutput] for your convenience.
+ * This stream implements [Output] for your convenience.
  * The endianness of the stream is not always big endian but depends on
  * the endianness of the underlying buffer.
  *
@@ -63,13 +63,15 @@ import java.io.OutputStream
  *
  * Modified from KRYO to use ByteBuf.
  */
-@Suppress("MemberVisibilityCanBePrivate", "NAME_SHADOWING")
+@Suppress("MemberVisibilityCanBePrivate", "NAME_SHADOWING", "unused")
 class ByteBufOutput : Output {
     companion object {
         /**
          * Gets the version number.
          */
         const val version = BytesInfo.version
+
+        fun OutputStream.toByteBufOutput(bufferSize: Int = 4096): ByteBufOutput = ByteBufOutput(this, bufferSize)
     }
 
     /**
@@ -120,16 +122,9 @@ class ByteBufOutput : Output {
     }
 
     /**
-     * @see Output.Output
+     * @see Output
      */
-    constructor(outputStream: OutputStream) : this(4096, 4096) {
-        this.outputStream = outputStream
-    }
-
-    /**
-     * @see Output.Output
-     */
-    constructor(outputStream: OutputStream, bufferSize: Int) : this(bufferSize, bufferSize) {
+    constructor(outputStream: OutputStream, bufferSize: Int = 4096) : this(bufferSize, bufferSize) {
         this.outputStream = outputStream
     }
 
@@ -654,6 +649,7 @@ class ByteBufOutput : Output {
             }
         }
         position = byteBuf.writerIndex()
+        @Suppress("KotlinConstantConditions")
         if (charIndex < charCount) writeUtf8_slow(value, charCount, charIndex)
     }
 

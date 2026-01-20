@@ -1,5 +1,5 @@
 /*
- * Copyright 2023 dorkbox, llc
+ * Copyright 2026 dorkbox, llc
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,14 +13,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+@file:Suppress("unused")
+
 package dorkbox.bytes
 
 import java.io.File
 import java.io.InputStream
 import java.security.MessageDigest
 import java.security.NoSuchAlgorithmException
-
-
 
 object Hash {
     /**
@@ -212,7 +212,7 @@ private fun hash(file: File, start: Long, length: Long, bufferSize: Int, digest:
 
 
 @Deprecated("Do not use this, it is insecure and prone to attack!")
-fun ByteArray.md5(start: Int = 0, length: Int = this.size): ByteArray = hash(this, start, length, Hash.digestMd5.get())
+fun ByteArray.md5(start: Int = 0, length: Int = this.size): ByteArray = hash(this, start, length, @Suppress("DEPRECATION") Hash.digestMd5.get())
 fun ByteArray.sha1(start: Int = 0, length: Int = this.size): ByteArray = hash(this, start, length, Hash.digest1.get())
 fun ByteArray.sha256(start: Int = 0, length: Int = this.size): ByteArray = hash(this, start, length, Hash.digest256.get())
 fun ByteArray.sha384(start: Int = 0, length: Int = this.size): ByteArray = hash(this, start, length, Hash.digest384.get())
@@ -239,8 +239,9 @@ fun ByteArray.xxHash64(start: Int = 0, length: Int = this.size, seed: Long = -0x
 /**
  * gets the MD5 hash of the specified string, as UTF-16
  */
+
 @Deprecated("Do not use this, it is insecure and prone to attack!")
-fun String.md5(start: Int = 0, length: Int = this.length): ByteArray = hash(this, start, length, Hash.digestMd5.get())
+fun String.md5(start: Int = 0, length: Int = this.length): ByteArray = hash(this, start, length, @Suppress("DEPRECATION") Hash.digestMd5.get())
 /**
  * gets the SHA1 hash of the specified string, as UTF-16
  */
@@ -481,7 +482,6 @@ fun File.xxHash32(start: Long = 0L, length: Long = this.length(), bufferSize: In
     require(start >= 0) { "Start ($start) must be >= 0" }
     require(length >= 0) { "Length ($length) must be >= 0" }
     require(start < this.length()) { "Start ($start) position must be smaller than the size of the file" }
-
 
     return LZ4Util.xxHash32(this, start, length, bufferSize,  seed)
 }
