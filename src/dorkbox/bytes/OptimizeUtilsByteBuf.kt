@@ -1,5 +1,5 @@
 /*
- * Copyright 2023 dorkbox, llc
+ * Copyright 2026 dorkbox, llc
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -199,7 +199,6 @@ object OptimizeUtilsByteBuf {
      * If true, small positive numbers will be more efficient (1 byte) and small negative numbers will be inefficient (9
      * bytes). This ultimately means that it will use fewer bytes for positive numbers.
      */
-    @JvmStatic
     fun longLength(value: Long, optimizePositive: Boolean): Int {
         var value = value
         if (!optimizePositive) {

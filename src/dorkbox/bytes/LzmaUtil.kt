@@ -27,7 +27,7 @@ object LzmaUtil {
             Class.forName("org.tukaani.xz.LZMAOutputStream")
         }
         catch (e: Exception) {
-            System.err.println("Please add the LZMA library to your classpath, for example: implementation(\"org.tukaani:xz:1.9\")")
+            println("Please add the LZMA library to your classpath, for example: implementation(\"org.tukaani:xz:1.9\")")
             throw e
         }
     }

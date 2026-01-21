@@ -29,7 +29,7 @@ object LZ4Util {
             Class.forName("net.jpountz.xxhash.XXHashFactory")
         }
         catch (e: Exception) {
-            System.err.println("Please add the LZMA library to your classpath, for example: implementation(\"org.lz4:lz4-java:1.8.0\")")
+            println("Please add the LZMA library to your classpath, for example: implementation(\"org.lz4:lz4-java:1.8.0\")")
             throw e
         }
     }
