@@ -33,7 +33,7 @@ GradleUtils.load {
 
     description = "Byte manipulation and SHA/xxHash utilities"
     name = "ByteUtilities"
-    version = "2.2"
+    version = "2.3"
 
     vendor = "Dorkbox LLC"
     vendorUrl = "https://dorkbox.com"
