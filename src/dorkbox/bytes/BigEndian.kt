@@ -1,5 +1,5 @@
 /*
- * Copyright 2023 dorkbox, llc
+ * Copyright 2026 dorkbox, llc
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,6 +19,85 @@ import java.io.IOException
 import java.io.InputStream
 import java.io.RandomAccessFile
 import java.nio.ByteBuffer
+
+
+// NOTE: CHAR and SHORT are the exact same.
+fun Char.toBytesBE() = BigEndian.Char_.toBytes(this)
+fun Char.toBytesBE(bytes: ByteArray, offset: Int) = BigEndian.Char_.toBytes(this, bytes, offset)
+fun Char.toBytesBE(bytes: ByteArray) = BigEndian.Char_.toBytes(this, bytes)
+
+fun ByteArray.toCharBE(offset: Int, byteNumber: Int) = BigEndian.Char_.from(this, offset, byteNumber)
+fun ByteArray.toCharBE() = BigEndian.Char_.from(this)
+fun ByteBuffer.toCharBE() = BigEndian.Char_.from(this)
+fun InputStream.toCharBE(length: Int = 2) = BigEndian.Char_.from(this, length)
+fun RandomAccessFile.toCharBE(length: Int = 2) = BigEndian.Char_.from(this, length)
+
+
+fun Short.toBytesBE() = BigEndian.Short_.toBytes(this)
+fun Short.toBytesBE(bytes: ByteArray, offset: Int) = BigEndian.Short_.toBytes(this, bytes, offset)
+fun Short.toBytesBE(bytes: ByteArray) = BigEndian.Short_.toBytes(this, bytes)
+
+fun ByteArray.toShortBE(offset: Int, byteNumber: Int) = BigEndian.Short_.from(this, offset, byteNumber)
+fun ByteArray.toShortBE() = BigEndian.Short_.from(this)
+fun ByteBuffer.toShortBE() = BigEndian.Short_.from(this)
+fun InputStream.toShortBE(length: Int = 2) = BigEndian.Short_.from(this, length)
+fun RandomAccessFile.toShortBE(length: Int = 2) = BigEndian.Short_.from(this, length)
+
+
+fun UShort.toBytesBE() = BigEndian.UShort_.toBytes(this)
+fun UShort.toBytesBE(bytes: ByteArray, offset: Int) = BigEndian.UShort_.toBytes(this, bytes, offset)
+fun UShort.toBytesBE(bytes: ByteArray) = BigEndian.UShort_.toBytes(this, bytes)
+
+fun ByteArray.toUShortBE(offset: Int, byteNumber: Int) = BigEndian.UShort_.from(this, offset, byteNumber)
+fun ByteArray.toUShortBE() = BigEndian.UShort_.from(this)
+fun ByteBuffer.toUShortBE() = BigEndian.UShort_.from(this)
+fun InputStream.toUShortBE(length: Int = 2) = BigEndian.UShort_.from(this, length)
+fun RandomAccessFile.toUShortBE(length: Int = 2) = BigEndian.UShort_.from(this, length)
+
+
+fun Int.toBytesBE() = BigEndian.Int_.toBytes(this)
+fun Int.toBytesBE(bytes: ByteArray, offset: Int) = BigEndian.Int_.toBytes(this, bytes, offset)
+fun Int.toBytesBE(bytes: ByteArray) = BigEndian.Int_.toBytes(this, bytes)
+
+fun ByteArray.toIntBE(offset: Int, byteNumber: Int) = BigEndian.Int_.from(this, offset, byteNumber)
+fun ByteArray.toIntBE() = BigEndian.Int_.from(this)
+fun ByteBuffer.toIntBE() = BigEndian.Int_.from(this)
+fun InputStream.toIntBE(length: Int = 4) = BigEndian.Int_.from(this, length)
+fun RandomAccessFile.toIntBE(length: Int = 4) = BigEndian.Int_.from(this, length)
+
+
+fun UInt.toBytesBE() = BigEndian.UInt_.toBytes(this)
+fun UInt.toBytesBE(bytes: ByteArray, offset: Int) = BigEndian.UInt_.toBytes(this, bytes, offset)
+fun UInt.toBytesBE(bytes: ByteArray) = BigEndian.UInt_.toBytes(this, bytes)
+
+fun ByteArray.toUIntBE(offset: Int, byteNumber: Int) = BigEndian.UInt_.from(this, offset, byteNumber)
+fun ByteArray.toUIntBE() = BigEndian.UInt_.from(this)
+fun ByteBuffer.toUIntBE() = BigEndian.UInt_.from(this)
+fun InputStream.toUIntBE(length: Int = 4) = BigEndian.UInt_.from(this, length)
+fun RandomAccessFile.toUIntBE(length: Int = 4) = BigEndian.UInt_.from(this, length)
+
+
+fun Long.toBytesBE() = BigEndian.Long_.toBytes(this)
+fun Long.toBytesBE(bytes: ByteArray, offset: Int) = BigEndian.Long_.toBytes(this, bytes, offset)
+fun Long.toBytesBE(bytes: ByteArray) = BigEndian.Long_.toBytes(this, bytes)
+
+fun ByteArray.toLongBE(offset: Int, byteNumber: Int) = BigEndian.Long_.from(this, offset, byteNumber)
+fun ByteArray.toLongBE() = BigEndian.Long_.from(this)
+fun ByteBuffer.toLongBE() = BigEndian.Long_.from(this)
+fun InputStream.toLongBE(length: Int = 8) = BigEndian.Long_.from(this, length)
+fun RandomAccessFile.toLongBE(length: Int = 8) = BigEndian.Long_.from(this, length)
+
+
+fun ULong.toBytesBE() = BigEndian.ULong_.toBytes(this)
+fun ULong.toBytesBE(bytes: ByteArray, offset: Int) = BigEndian.ULong_.toBytes(this, bytes, offset)
+fun ULong.toBytesBE(bytes: ByteArray) = BigEndian.ULong_.toBytes(this, bytes)
+
+fun ByteArray.toULongBE(offset: Int, byteNumber: Int) = BigEndian.ULong_.from(this, offset, byteNumber)
+fun ByteArray.toULongBE() = BigEndian.ULong_.from(this)
+fun ByteBuffer.toULongBE() = BigEndian.ULong_.from(this)
+fun InputStream.toULongBE(length: Int = 8) = BigEndian.ULong_.from(this, length)
+fun RandomAccessFile.toULongBE(length: Int = 8) = BigEndian.ULong_.from(this, length)
+
 
 /**
  * This is "motorola endian", or commonly as "network byte order".
@@ -40,12 +119,97 @@ object BigEndian {
     // NOTE: CHAR and SHORT are the exact same.
 
     /**
+     * CHAR to and from bytes
+     */
+    object Char_ {
+        fun from(bytes: ByteArray, offset: Int, byteNumber: Int): Char {
+            var number: Short = 0
+            when (byteNumber) {
+                2 -> {
+                    number = (number.toInt() or (bytes[offset + 0].toInt() and 0xFF shl 8)).toShort()
+                    number = (number.toInt() or (bytes[offset + 1].toInt() and 0xFF shl 0)).toShort()
+                }
+
+                else -> number = (number.toInt() or (bytes[offset + 0].toInt() and 0xFF shl 0)).toShort()
+            }
+            return number.toInt().toChar()
+        }
+
+        fun from(bytes: ByteArray): Char {
+            var number: Short = 0
+            when (bytes.size) {
+                2 -> {
+                    number = (number.toInt() or (bytes[0].toInt() and 0xFF shl 8)).toShort()
+                    number = (number.toInt() or (bytes[1].toInt() and 0xFF shl 0)).toShort()
+                }
+
+                else -> number = (number.toInt() or (bytes[0].toInt() and 0xFF shl 0)).toShort()
+            }
+            return number.toInt().toChar()
+        }
+
+        fun from(b0: Byte, b1: Byte): Char {
+            return ((b0.toInt() and 0xFF shl 8) or
+                    (b1.toInt() and 0xFF shl 0)).toChar()
+        }
+
+        fun from(buff: ByteBuffer): Char {
+            return from(buff.get(), buff.get())
+        }
+
+        @Throws(IOException::class)
+        fun from(inputStream: InputStream, length: Int = 2): Char {
+            var number: Short = 0
+            when (length) {
+                2 -> {
+                    number = (number.toInt() or (inputStream.read() and 0xFF shl 8)).toShort()
+                    number = (number.toInt() or (inputStream.read() and 0xFF shl 0)).toShort()
+                }
+
+                else -> number = (number.toInt() or (inputStream.read() and 0xFF shl 0)).toShort()
+            }
+            return number.toInt().toChar()
+        }
+
+        @Throws(IOException::class)
+        fun from(raf: RandomAccessFile, length: Int = 2): Char {
+            var number: Short = 0
+            when (length) {
+                2 -> {
+                    number = (number.toInt() or (raf.read() and 0xFF shl 8)).toShort()
+                    number = (number.toInt() or (raf.read() and 0xFF shl 0)).toShort()
+                }
+
+                else -> number = (number.toInt() or (raf.read() and 0xFF shl 0)).toShort()
+            }
+            return number.toInt().toChar()
+        }
+
+        fun toBytes(x: Char): ByteArray {
+            val i = x.code
+            return byteArrayOf((i shr 8).toByte(), (i shr 0).toByte())
+        }
+
+        fun toBytes(x: Char, bytes: ByteArray, offset: Int) {
+            val i = x.code
+            bytes[offset + 0] = (i shr 8).toByte()
+            bytes[offset + 1] = (i shr 0).toByte()
+        }
+
+        fun toBytes(x: Char, bytes: ByteArray) {
+            val i = x.code
+            bytes[0] = (i shr 8).toByte()
+            bytes[1] = (i shr 0).toByte()
+        }
+    }
+
+    /**
      * SHORT to and from bytes
      */
     object Short_ {
-        fun from(bytes: ByteArray, offset: Int, bytenum: Int): Short {
+        fun from(bytes: ByteArray, offset: Int, byteNumber: Int): Short {
             var number: Short = 0
-            when (bytenum) {
+            when (byteNumber) {
                 2 -> {
                     number = (number.toInt() or (bytes[offset + 0].toInt() and 0xFF shl 8)).toShort()
                     number = (number.toInt() or (bytes[offset + 1].toInt() and 0xFF shl 0)).toShort()
@@ -107,17 +271,20 @@ object BigEndian {
         }
 
         fun toBytes(x: Short): ByteArray {
-            return byteArrayOf((x.toInt() shr 8).toByte(), (x.toInt() shr 0).toByte())
+            val i = x.toInt()
+            return byteArrayOf((i shr 8).toByte(), (i shr 0).toByte())
         }
 
         fun toBytes(x: Short, bytes: ByteArray, offset: Int) {
-            bytes[offset + 0] = (x.toInt() shr 8).toByte()
-            bytes[offset + 1] = (x.toInt() shr 0).toByte()
+            val i = x.toInt()
+            bytes[offset + 0] = (i shr 8).toByte()
+            bytes[offset + 1] = (i shr 0).toByte()
         }
 
         fun toBytes(x: Short, bytes: ByteArray) {
-            bytes[0] = (x.toInt() shr 8).toByte()
-            bytes[1] = (x.toInt() shr 0).toByte()
+            val i = x.toInt()
+            bytes[0] = (i shr 8).toByte()
+            bytes[1] = (i shr 0).toByte()
         }
     }
 

@@ -1,5 +1,5 @@
 /*
- * Copyright 2023 dorkbox, llc
+ * Copyright 2026 dorkbox, llc
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,6 +20,86 @@ import java.io.InputStream
 import java.io.RandomAccessFile
 import java.nio.ByteBuffer
 
+// NOTE: CHAR and SHORT are the exact same.
+fun Char.toBytesLE() = LittleEndian.Char_.toBytes(this)
+fun Char.toBytesLE(bytes: ByteArray, offset: Int) = LittleEndian.Char_.toBytes(this, bytes, offset)
+fun Char.toBytesLE(bytes: ByteArray) = LittleEndian.Char_.toBytes(this, bytes)
+
+fun ByteArray.toCharLE(offset: Int, byteNumber: Int) = LittleEndian.Char_.from(this, offset, byteNumber)
+fun ByteArray.toCharLE() = LittleEndian.Char_.from(this)
+fun ByteBuffer.toCharLE() = LittleEndian.Char_.from(this)
+fun InputStream.toCharLE(length: Int = 2) = LittleEndian.Char_.from(this, length)
+fun RandomAccessFile.toCharLE(length: Int = 2) = LittleEndian.Char_.from(this, length)
+
+
+fun Short.toBytesLE() = LittleEndian.Short_.toBytes(this)
+fun Short.toBytesLE(bytes: ByteArray, offset: Int) = LittleEndian.Short_.toBytes(this, bytes, offset)
+fun Short.toBytesLE(bytes: ByteArray) = LittleEndian.Short_.toBytes(this, bytes)
+
+fun ByteArray.toShortLE(offset: Int, byteNumber: Int) = LittleEndian.Short_.from(this, offset, byteNumber)
+fun ByteArray.toShortLE() = LittleEndian.Short_.from(this)
+fun ByteBuffer.toShortLE() = LittleEndian.Short_.from(this)
+fun InputStream.toShortLE(length: Int = 2) = LittleEndian.Short_.from(this, length)
+fun RandomAccessFile.toShortLE(length: Int = 2) = LittleEndian.Short_.from(this, length)
+
+
+fun UShort.toBytesLE() = LittleEndian.UShort_.toBytes(this)
+fun UShort.toBytesLE(bytes: ByteArray, offset: Int) = LittleEndian.UShort_.toBytes(this, bytes, offset)
+fun UShort.toBytesLE(bytes: ByteArray) = LittleEndian.UShort_.toBytes(this, bytes)
+
+fun ByteArray.toUShortLE(offset: Int, byteNumber: Int) = LittleEndian.UShort_.from(this, offset, byteNumber)
+fun ByteArray.toUShortLE() = LittleEndian.UShort_.from(this)
+fun ByteBuffer.toUShortLE() = LittleEndian.UShort_.from(this)
+fun InputStream.toUShortLE(length: Int = 2) = LittleEndian.UShort_.from(this, length)
+fun RandomAccessFile.toUShortLE(length: Int = 2) = LittleEndian.UShort_.from(this, length)
+
+
+fun Int.toBytesLE() = LittleEndian.Int_.toBytes(this)
+fun Int.toBytesLE(bytes: ByteArray, offset: Int) = LittleEndian.Int_.toBytes(this, bytes, offset)
+fun Int.toBytesLE(bytes: ByteArray) = LittleEndian.Int_.toBytes(this, bytes)
+
+fun ByteArray.toIntLE(offset: Int, byteNumber: Int) = LittleEndian.Int_.from(this, offset, byteNumber)
+fun ByteArray.toIntLE() = LittleEndian.Int_.from(this)
+fun ByteBuffer.toIntLE() = LittleEndian.Int_.from(this)
+fun InputStream.toIntLE(length: Int = 4) = LittleEndian.Int_.from(this, length)
+fun RandomAccessFile.toIntLE(length: Int = 4) = LittleEndian.Int_.from(this, length)
+
+
+fun UInt.toBytesLE() = LittleEndian.UInt_.toBytes(this)
+fun UInt.toBytesLE(bytes: ByteArray, offset: Int) = LittleEndian.UInt_.toBytes(this, bytes, offset)
+fun UInt.toBytesLE(bytes: ByteArray) = LittleEndian.UInt_.toBytes(this, bytes)
+
+fun ByteArray.toUIntLE(offset: Int, byteNumber: Int) = LittleEndian.UInt_.from(this, offset, byteNumber)
+fun ByteArray.toUIntLE() = LittleEndian.UInt_.from(this)
+fun ByteBuffer.toUIntLE() = LittleEndian.UInt_.from(this)
+fun InputStream.toUIntLE(length: Int = 4) = LittleEndian.UInt_.from(this, length)
+fun RandomAccessFile.toUIntLE(length: Int = 4) = LittleEndian.UInt_.from(this, length)
+
+
+fun Long.toBytesLE() = LittleEndian.Long_.toBytes(this)
+fun Long.toBytesLE(bytes: ByteArray, offset: Int) = LittleEndian.Long_.toBytes(this, bytes, offset)
+fun Long.toBytesLE(bytes: ByteArray) = LittleEndian.Long_.toBytes(this, bytes)
+
+fun ByteArray.toLongLE(offset: Int, byteNumber: Int) = LittleEndian.Long_.from(this, offset, byteNumber)
+fun ByteArray.toLongLE() = LittleEndian.Long_.from(this)
+fun ByteBuffer.toLongLE() = LittleEndian.Long_.from(this)
+fun InputStream.toLongLE(length: Int = 8) = LittleEndian.Long_.from(this, length)
+fun RandomAccessFile.toLongLE(length: Int = 8) = LittleEndian.Long_.from(this, length)
+
+
+fun ULong.toBytesLE() = LittleEndian.ULong_.toBytes(this)
+fun ULong.toBytesLE(bytes: ByteArray, offset: Int) = LittleEndian.ULong_.toBytes(this, bytes, offset)
+fun ULong.toBytesLE(bytes: ByteArray) = LittleEndian.ULong_.toBytes(this, bytes)
+
+fun ByteArray.toULongLE(offset: Int, byteNumber: Int) = LittleEndian.ULong_.from(this, offset, byteNumber)
+fun ByteArray.toULongLE() = LittleEndian.ULong_.from(this)
+fun ByteBuffer.toULongLE() = LittleEndian.ULong_.from(this)
+fun InputStream.toULongLE(length: Int = 8) = LittleEndian.ULong_.from(this, length)
+fun RandomAccessFile.toULongLE(length: Int = 8) = LittleEndian.ULong_.from(this, length)
+
+
+
+
 /**
  * This is intel/amd/arm arch!
  *
@@ -39,6 +119,97 @@ object LittleEndian {
 
 
     // NOTE: CHAR and SHORT are the exact same.
+
+    /**
+     * SHORT to and from bytes
+     */
+    object Char_ {
+        fun from(bytes: ByteArray, offset: Int, byteNumber: Int): Char {
+            var number: Short = 0
+            when (byteNumber) {
+                2 -> {
+                    number = (number.toInt() or (bytes[offset + 1].toInt() and 0xFF shl 8)).toShort()
+                    number = (number.toInt() or (bytes[offset + 0].toInt() and 0xFF shl 0)).toShort()
+                }
+
+                else -> number = (number.toInt() or (bytes[offset + 0].toInt() and 0xFF shl 0)).toShort()
+            }
+            return number.toInt().toChar()
+        }
+
+        fun from(bytes: ByteArray): Char {
+            var number: Short = 0
+            when (bytes.size) {
+                2 -> {
+                    number = (number.toInt() or (bytes[1].toInt() and 0xFF shl 8)).toShort()
+                    number = (number.toInt() or (bytes[0].toInt() and 0xFF shl 0)).toShort()
+                }
+
+                else -> number = (number.toInt() or (bytes[0].toInt() and 0xFF shl 0)).toShort()
+            }
+            return number.toInt().toChar()
+        }
+
+        fun from(b0: Byte, b1: Byte): Char {
+            return ((b1.toInt() and 0xFF shl 8) or
+                    (b0.toInt() and 0xFF shl 0)).toChar()
+        }
+
+        fun from(buff: ByteBuffer): Char {
+            return from(buff.get(), buff.get())
+        }
+
+        @Throws(IOException::class)
+        fun from(inputStream: InputStream, length: Int = 2): Char {
+            var number: Short = 0
+            when (length) {
+                2 -> {
+                    val b0 = inputStream.read()
+                    val b1 = inputStream.read()
+
+                    number = (number.toInt() or (b1 and 0xFF shl 8)).toShort()
+                    number = (number.toInt() or (b0 and 0xFF shl 0)).toShort()
+                }
+
+                else -> number = (number.toInt() or (inputStream.read() and 0xFF shl 0)).toShort()
+            }
+            return number.toInt().toChar()
+        }
+
+        @Throws(IOException::class)
+        fun from(raf: RandomAccessFile, length: Int = 2): Char {
+            var number: Short = 0
+            when (length) {
+                2 -> {
+                    val b0 = raf.read()
+                    val b1 = raf.read()
+
+                    number = (number.toInt() or (b1 and 0xFF shl 8)).toShort()
+                    number = (number.toInt() or (b0 and 0xFF shl 0)).toShort()
+                }
+
+                else -> number = (number.toInt() or (raf.read() and 0xFF shl 0)).toShort()
+            }
+            return number.toInt().toChar()
+        }
+
+        fun toBytes(x: Char): ByteArray {
+            val i = x.code
+            return byteArrayOf((i shr 0).toByte(), (i shr 8).toByte())
+        }
+
+        fun toBytes(x: Char, bytes: ByteArray, offset: Int) {
+            val i = x.code
+            bytes[offset + 1] = (i shr 8).toByte()
+            bytes[offset + 0] = (i shr 0).toByte()
+        }
+
+        fun toBytes(x: Char, bytes: ByteArray) {
+            val i = x.code
+            bytes[1] = (i shr 8).toByte()
+            bytes[0] = (i shr 0).toByte()
+        }
+    }
 
     /**
      * SHORT to and from bytes
